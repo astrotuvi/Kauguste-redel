@@ -84,9 +84,9 @@ supernova luminosity. This is then applied to 166 distant supernovae
 (0.023 < z < 0.06, up to about 250 Mpc). Their velocity–distance plot gives
 H₀, which is compared with the third part and with Planck (67.4 km/s/Mpc).
 
-To keep the physics simple for school pupils, velocities are `v = cz` and
-distances are not corrected for the expansion of the Universe. At these
-redshifts this lowers H₀ by about 2–3 %.
+Velocities are `v = cz (1 + 0.775 z)`. The small factor corrects for the
+expansion of the Universe while the light travelled, with deceleration
+parameter q₀ = −0.55 as in SH0ES. Without it, H₀ comes out about 3 % low.
 
 ## Method
 
