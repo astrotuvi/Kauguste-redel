@@ -25,8 +25,9 @@ queries the data services directly from the browser.
    that move together. Each lasso adds stars to the selection, and
    **Tühista valik** clears it. The selected stars are highlighted in the sky
    view, the colour–magnitude diagram and the table.
-4. Read the mean parallax and the distance in parsecs, light years and
-   kilometres below the plots. You can download the selected stars as a CSV
+4. Read the number of selected stars and the distance in parsecs, light
+   years, astronomical units and kilometres below the plots. The parallax histogram marks the
+   mean parallax. You can download the selected stars as a CSV
    file.
 
 ## Method
@@ -36,8 +37,8 @@ queries the data services directly from the browser.
 - The distance is `d = 1000 / ⟨ϖ⟩` pc, where `⟨ϖ⟩` is the inverse-variance
   weighted mean parallax in mas. The parallaxes are averaged before inverting,
   because the mean of 1/ϖ is biased.
-- By default the global DR3 parallax zero-point of −0.017 mas
-  (Lindegren et al. 2021) is corrected. This can be switched off.
+- The global DR3 parallax zero-point of −0.017 mas (Lindegren et al. 2021)
+  is always corrected.
 - A 0.010 mas systematic error is added in quadrature to the statistical
   error. Angularly correlated parallax errors do not average down
   (Lindegren et al. 2021; Maíz Apellániz et al. 2021).

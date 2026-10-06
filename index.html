@@ -143,7 +143,7 @@ ol.steps li::before {
 .results { margin-top: 14px; }
 .results-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 12px; }
 .opts { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
-.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .tile { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; background: var(--bg); }
 .tile .label { font-size: 0.78rem; color: var(--text-2); font-weight: 550; }
 .tile .value { font-size: 1.7rem; font-weight: 650; line-height: 1.2; margin-top: 4px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
@@ -153,9 +153,8 @@ ol.steps li::before {
 .note { border-radius: 7px; padding: 8px 12px; font-size: 0.85rem; margin-top: 12px; }
 .note.warn { background: var(--warn-bg); color: var(--warn-text); }
 .note.error { background: var(--err-bg); color: var(--err-text); }
-table.detail { border-collapse: collapse; width: 100%; margin-top: 14px; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
-table.detail td { padding: 5px 8px; border-top: 1px solid var(--border); vertical-align: top; }
-table.detail td:first-child { color: var(--text-2); width: 42%; }
+.counts { margin: 0 0 12px; font-size: 0.9rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.counts b { color: var(--text-1); font-weight: 650; }
 .formula { color: var(--text-3); font-size: 0.82rem; margin-top: 10px; }
 
 /* Data table */
@@ -292,7 +291,6 @@ footer a { color: inherit; }
     <div class="results-head">
       <h2>Parve kaugus</h2>
       <div class="opts">
-        <label class="toggle"><input type="checkbox" id="zp" checked> Nullpunkti parandus (+0,017 mas)</label>
         <button type="button" id="download" disabled>Laadi valik alla (CSV)</button>
       </div>
     </div>
@@ -345,6 +343,7 @@ const RUWE_MAX = 1.4; // astrometric quality cut applied in every query
 const PAGE_SIZE = 10;  // data table rows per page
 const PC_LY = 3.261563777;
 const PC_KM = 3.0856775814913673e13;
+const PC_AU = 206264.80624709636;
 
 const EXAMPLES = [
   { name: "Pleiades", r: 2.0, g: 17 },
@@ -570,12 +569,6 @@ function parseCSV(text) {
 
 /* ---------- Statistics ---------- */
 
-function median(a) {
-  const s = Float64Array.from(a).sort();
-  const m = s.length >> 1;
-  return s.length % 2 ? s[m] : 0.5 * (s[m - 1] + s[m]);
-}
-
 function percentile(a, q) {
   const s = Float64Array.from(a.filter((v) => v !== null && isFinite(v))).sort();
   if (!s.length) return NaN;
@@ -586,10 +579,9 @@ function percentile(a, q) {
 
 function computeStats(idx) {
   const d = S.d;
-  const off = $("zp").checked ? -ZP : 0;
+  const off = -ZP;     // the zero-point correction is always applied
   const use = idx;
 
-  const vals = use.map((i) => d.plx[i] + off);
   let sw = 0, swp = 0;
   for (const i of use) {
     const w = 1 / (d.eplx[i] * d.eplx[i]);
@@ -600,18 +592,12 @@ function computeStats(idx) {
   const wmean = swp / sw;
   const estat = 1 / Math.sqrt(sw);
   const etot = Math.hypot(estat, SYS);
-  const mean = vals.reduce((a, b) => a + b, 0) / n;
-  const std = n > 1 ? Math.sqrt(vals.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1)) : NaN;
   let chi2 = 0;
   for (const i of use) chi2 += ((d.plx[i] + off - wmean) / d.eplx[i]) ** 2;
 
   return {
-    use, off, n, wmean, estat, etot, mean, std,
-    sem: std / Math.sqrt(n),
-    med: median(vals),
+    use, off, n, wmean, etot,
     redchi2: n > 1 ? chi2 / (n - 1) : NaN,
-    pmra: median(use.map((i) => d.pmra[i])),
-    pmdec: median(use.map((i) => d.pmdec[i])),
   };
 }
 
@@ -627,10 +613,12 @@ function valErr(v, e) {
   return [fmtN(v, dp), fmtN(e, dp)];
 }
 
-function sciValErr(v, e) {
-  const exp = Math.floor(Math.log10(Math.abs(v)));
-  const [a, b] = valErr(v / 10 ** exp, e / 10 ** exp);
-  return { a, b, exp };
+// value rounded to the decimal place of the 2nd significant figure of its error,
+// written out in full with zeros (BigInt keeps the trailing zeros exact)
+function rounded(v, e) {
+  const place = Math.floor(Math.log10(e)) - 1;
+  if (place <= 0) return fmtN(v, -place);
+  return (BigInt(Math.round(v / 10 ** place)) * 10n ** BigInt(place)).toLocaleString("et-EE");
 }
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -781,10 +769,10 @@ function drawHist() {
     hoverinfo: "skip",
   }];
   Plotly.react("hist", traces, baseLayout({
-    uirevision: `${S.rev}-${st.off}`,
+    uirevision: S.rev,
     dragmode: "zoom",
     bargap: 0,
-    xaxis: axis(st.off ? "parallaks + 0,017 mas (nullpunkt parandatud)" : "parallaks (mas)"),
+    xaxis: axis("parallaks (mas)"),
     yaxis: axis("tähti"),
     shapes: [{
       type: "line", xref: "x", yref: "paper", x0: st.wmean, x1: st.wmean, y0: 0, y1: 1,
@@ -803,9 +791,9 @@ function drawResults() {
   const st = S.stats;
   $("download").disabled = !(S.idx && S.idx.length);
   if (!S.d) { el.innerHTML = `<p class="empty">Andmeid pole laaditud.</p>`; return; }
-  const queried = `Päritud ${fmt(S.n)} ${S.n === 1 ? "täht" : "tähte"}. `;
-  if (!S.idx) { el.innerHTML = `<p class="empty">${queried}Ühtegi tähte pole veel valitud — märgi omaliikumiste joonisel parve kogum lassoga.</p>`; return; }
-  if (!st) { el.innerHTML = `<p class="empty">${queried}Valik on tühi — lasso sees pole ühtegi tähte.</p>`; return; }
+  const counts = `<p class="counts">Valitud tähti: <b>${fmt(S.idx ? S.idx.length : 0)}</b> · Kokku tähti: <b>${fmt(S.n)}</b></p>`;
+  if (!S.idx) { el.innerHTML = `${counts}<p class="empty">Ühtegi tähte pole veel valitud — märgi omaliikumiste joonisel parve kogum lassoga.</p>`; return; }
+  if (!st) { el.innerHTML = `${counts}<p class="empty">Valik on tühi — lasso sees pole ühtegi tähte.</p>`; return; }
 
   const notes = [];
   let tiles;
@@ -817,32 +805,22 @@ function drawResults() {
     const epc = (dpc * st.etot) / st.wmean;
     const [pcV, pcE] = valErr(dpc, epc);
     const [lyV, lyE] = valErr(dpc * PC_LY, epc * PC_LY);
-    const km = sciValErr(dpc * PC_KM, epc * PC_KM);
+    const auV = rounded(dpc * PC_AU, epc * PC_AU);
+    const kmV = rounded(dpc * PC_KM, epc * PC_KM);
     tiles = `<div class="tiles">
       <div class="tile"><div class="label">Kaugus</div><div class="value">${pcV} <small>± ${pcE}</small></div><div class="unit">parsekit</div></div>
       <div class="tile"><div class="label">Kaugus</div><div class="value">${lyV} <small>± ${lyE}</small></div><div class="unit">valgusaastat</div></div>
-      <div class="tile"><div class="label">Kaugus</div><div class="value">${km.a}<small> ± ${km.b}</small> <small>× 10<sup>${km.exp}</sup></small></div><div class="unit">kilomeetrit</div></div>
+      <div class="tile"><div class="label">Kaugus</div><div class="value">${auV}</div><div class="unit">astronoomilist ühikut</div></div>
+      <div class="tile"><div class="label">Kaugus</div><div class="value">${kmV}</div><div class="unit">kilomeetrit</div></div>
     </div>`;
     if (st.etot / st.wmean > 0.1) notes.push(`<div class="note warn">Parallaksi suhteline viga on ${fmtN(100 * st.etot / st.wmean, 0)}%. Üle ~10% muutub 1/ϖ nihkega ja asümmeetriliseks kauguse hinnanguks.</div>`);
   }
   if (st.n < 10) notes.push(`<div class="note warn">Valitud on ainult ${st.n} ${st.n === 1 ? "täht" : "tähte"} — keskmine on ebakindel.</div>`);
   if (st.redchi2 > 3 && st.n >= 10) notes.push(`<div class="note warn">Parallakside hajuvus on ${fmtN(Math.sqrt(st.redchi2), 1)}× suurem, kui antud vead ennustavad (χ²/vabadusaste = ${fmtN(st.redchi2, 1)}). Valikus on tõenäoliselt taustatähti — kitsenda omaliikumiste lassot.</div>`);
 
-  const [wv, we] = valErr(st.wmean, st.etot);
-  const zpNote = st.off ? " (koos +0,017 mas nullpunkti parandusega)" : " (ilma nullpunkti paranduseta)";
-  el.innerHTML = `${tiles}${notes.join("")}
-    <table class="detail"><tbody>
-      <tr><td>Tähti päritud / valitud</td><td>${fmt(S.n)} / ${fmt(st.n)}</td></tr>
-      <tr><td>Kaalutud keskmine parallaks ⟨ϖ⟩</td><td><b>${wv} ± ${we} mas</b>${zpNote}</td></tr>
-      <tr><td>&nbsp;&nbsp;statistiline / süstemaatiline viga</td><td>${fmtN(st.estat, 4)} / ${fmtN(SYS, 3)} mas, liidetud ruutudena</td></tr>
-      <tr><td>Kaalumata keskmine ± standardviga</td><td>${isFinite(st.sem) ? `${fmtN(st.mean, 4)} ± ${fmtN(st.sem, 4)}` : fmtN(st.mean, 4)} mas</td></tr>
-      <tr><td>Parallakside mediaan</td><td>${fmtN(st.med, 4)} mas</td></tr>
-      <tr><td>Parallakside standardhälve</td><td>${isFinite(st.std) ? fmtN(st.std, 4) + " mas" : "—"}</td></tr>
-      <tr><td>Taandatud χ² keskmise suhtes</td><td>${isFinite(st.redchi2) ? fmtN(st.redchi2, 2) : "—"}</td></tr>
-      <tr><td>Omaliikumise mediaan (μ<sub>α*</sub>, μ<sub>δ</sub>)</td><td>${fmtN(st.pmra, 3)}; ${fmtN(st.pmdec, 3)} mas/a</td></tr>
-    </tbody></table>
+  el.innerHTML = `${counts}${tiles}${notes.join("")}
     <p class="formula">d [pc] = 1000 / ⟨ϖ⟩ [mas]. Keskmista kõigepealt parallaksid ja alles siis pööra ümber — 1/ϖ keskmine on nihkega.
-    1 pc = 3,2616 valgusaastat = 3,0857 × 10<sup>13</sup> km = 206 265 aü.</p>`;
+    1 pc = 3,2616 valgusaastat = 30 856 775 814 914 km = 206 265 aü.</p>`;
 }
 
 /* ---------- Data table ---------- */
@@ -1027,7 +1005,7 @@ $("clear").addEventListener("click", clearSelection);
 $("download").addEventListener("click", downloadSelection);
 $("prevPage").addEventListener("click", () => { S.page--; drawTable(); });
 $("nextPage").addEventListener("click", () => { S.page++; drawTable(); });
-for (const id of ["zp", "cmdAbs"]) $(id).addEventListener("change", refresh);
+$("cmdAbs").addEventListener("change", refresh);
 
 for (const ex of EXAMPLES) {
   const b = document.createElement("button");
