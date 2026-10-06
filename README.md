@@ -1,7 +1,10 @@
-# Kauguste redel
+# Kosmiliste kauguste redel
 
-A single-page web app for measuring the distance to an open star cluster from
-*Gaia* DR3 parallaxes. The user interface is in Estonian.
+A web app for climbing the cosmic distance ladder. The user interface is in
+Estonian.
+
+The first rung is implemented: measuring the distance to an open star cluster
+from *Gaia* DR3 parallaxes.
 
 The app queries *Gaia* DR3 stars around a cluster. The user then picks the
 cluster members by their common proper motion, and the app averages the
