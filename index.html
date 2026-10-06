@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cluster Distance Lab</title>
+<meta name="description" content="Measure the distance to an open star cluster from Gaia DR3 parallaxes: query a field, select co-moving stars, and average their parallaxes.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/3.1.0/plotly.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f6f4;
+  --surface: #fcfcfb;
+  --border: #e3e2dd;
+  --text-1: #0b0b0b;
+  --text-2: #52514e;
+  --text-3: #75746e;
+  --grid: #ecebe7;
+  --axis: #c4c3bd;
+  --field: #8f8e88;
+  --field-dim: #c9c8c2;
+  --sel: #2a78d6;
+  --accent: #eb6834;
+  --btn: #2a78d6;
+  --btn-text: #ffffff;
+  --chip: #eeede9;
+  --warn-bg: #fff4dc;
+  --warn-text: #7a4a00;
+  --err-bg: #fdeaea;
+  --err-text: #9b2323;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --border: #2f2f2c;
+    --text-1: #ffffff;
+    --text-2: #c3c2b7;
+    --text-3: #959489;
+    --grid: #282826;
+    --axis: #4a4a46;
+    --field: #8a8982;
+    --field-dim: #46463f;
+    --sel: #3987e5;
+    --accent: #d95926;
+    --btn: #3987e5;
+    --btn-text: #ffffff;
+    --chip: #262624;
+    --warn-bg: #362a10;
+    --warn-text: #f0c56e;
+    --err-bg: #3a1a1a;
+    --err-text: #f29a9a;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --border: #2f2f2c;
+  --text-1: #ffffff;
+  --text-2: #c3c2b7;
+  --text-3: #959489;
+  --grid: #282826;
+  --axis: #4a4a46;
+  --field: #8a8982;
+  --field-dim: #46463f;
+  --sel: #3987e5;
+  --accent: #d95926;
+  --btn: #3987e5;
+  --btn-text: #ffffff;
+  --chip: #262624;
+  --warn-bg: #362a10;
+  --warn-text: #f0c56e;
+  --err-bg: #3a1a1a;
+  --err-text: #f29a9a;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 4px; font-weight: 650; letter-spacing: -0.01em; }
+.lede { color: var(--text-2); margin: 0 0 20px; max-width: 70ch; }
+h2 { font-size: 0.95rem; margin: 0; font-weight: 600; }
+.hint { color: var(--text-3); font-size: 0.82rem; margin: 2px 0 0; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+/* Controls */
+form.controls { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 0.78rem; color: var(--text-2); font-weight: 550; }
+.field input {
+  font: inherit; color: var(--text-1); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px; min-width: 0;
+}
+.field input:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
+.field.target { flex: 1 1 260px; }
+.field.num input { width: 92px; }
+button {
+  font: inherit; cursor: pointer; border-radius: 7px; padding: 8px 16px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-1);
+}
+button.primary { background: var(--btn); color: var(--btn-text); border-color: transparent; font-weight: 600; }
+button:disabled { opacity: 0.55; cursor: progress; }
+button:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
+.examples { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; font-size: 0.82rem; color: var(--text-3); }
+.examples button { font-size: 0.82rem; padding: 3px 10px; border-radius: 999px; background: var(--chip); border-color: transparent; color: var(--text-2); }
+
+.status { margin: 12px 0 0; font-size: 0.88rem; color: var(--text-2); min-height: 1.4em; }
+.status.warn { color: var(--warn-text); }
+.status.error { color: var(--err-text); }
+
+/* Steps */
+ol.steps { list-style: none; padding: 0; margin: 18px 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; counter-reset: s; }
+ol.steps li { counter-increment: s; font-size: 0.85rem; color: var(--text-2); display: flex; gap: 8px; }
+ol.steps li::before {
+  content: counter(s); flex: none; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--chip); color: var(--text-1); font-weight: 600; font-size: 0.78rem;
+  display: grid; place-items: center;
+}
+
+/* Plots */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.plot { height: 380px; margin-top: 6px; }
+.card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.toggle { display: flex; gap: 6px; align-items: center; font-size: 0.8rem; color: var(--text-2); white-space: nowrap; }
+
+/* Results */
+.results { margin-top: 14px; }
+.results-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 12px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tile { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; background: var(--bg); }
+.tile .label { font-size: 0.78rem; color: var(--text-2); font-weight: 550; }
+.tile .value { font-size: 1.7rem; font-weight: 650; line-height: 1.2; margin-top: 4px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.tile .value small { font-size: 0.95rem; font-weight: 500; color: var(--text-2); }
+.tile .unit { font-size: 0.82rem; color: var(--text-3); margin-top: 2px; }
+.empty { color: var(--text-3); font-size: 0.9rem; padding: 12px 0; }
+.note { border-radius: 7px; padding: 8px 12px; font-size: 0.85rem; margin-top: 12px; }
+.note.warn { background: var(--warn-bg); color: var(--warn-text); }
+.note.error { background: var(--err-bg); color: var(--err-text); }
+table.detail { border-collapse: collapse; width: 100%; margin-top: 14px; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+table.detail td { padding: 5px 8px; border-top: 1px solid var(--border); vertical-align: top; }
+table.detail td:first-child { color: var(--text-2); width: 42%; }
+.formula { color: var(--text-3); font-size: 0.82rem; margin-top: 10px; }
+
+footer { margin-top: 28px; font-size: 0.78rem; color: var(--text-3); max-width: 90ch; }
+footer a { color: inherit; }
+
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  ol.steps { grid-template-columns: 1fr 1fr; }
+  .tiles { grid-template-columns: 1fr; }
+  .plot { height: 340px; }
+}
+@media (max-width: 520px) {
+  ol.steps { grid-template-columns: 1fr; }
+  .field.num input { width: 80px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Open cluster distances from Gaia parallaxes</h1>
+  <p class="lede">Query Gaia DR3 stars around a cluster, pick out the stars that move together across the sky, and average their parallaxes to get the cluster's distance.</p>
+
+  <section class="card">
+    <form class="controls" id="form" novalidate>
+      <div class="field target">
+        <label for="target">Cluster name or coordinates (RA Dec)</label>
+        <input id="target" name="target" value="M67" autocomplete="off" spellcheck="false"
+               placeholder="e.g. NGC 2516, Pleiades, 132.85 11.81, 08:51:23 +11:48:50">
+      </div>
+      <div class="field num">
+        <label for="radius">Radius (deg)</label>
+        <input id="radius" type="number" value="0.3" min="0.01" max="3" step="0.05">
+      </div>
+      <div class="field num">
+        <label for="gmax">G limit (mag)</label>
+        <input id="gmax" type="number" value="18" min="6" max="21" step="0.5">
+      </div>
+      <div class="field num">
+        <label for="ruwe">RUWE max</label>
+        <input id="ruwe" type="number" value="1.4" min="1" max="10" step="0.1">
+      </div>
+      <button type="submit" class="primary" id="go">Query Gaia</button>
+    </form>
+    <div class="examples" id="examples">Try:</div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <ol class="steps">
+    <li>Query the field around a cluster.</li>
+    <li>Lasso the tight clump of co-moving stars in the proper-motion plot (and optionally a region of the sky).</li>
+    <li>Check the colour–magnitude diagram: members form a clean main sequence.</li>
+    <li>Read the mean parallax and the distance below.</li>
+  </ol>
+
+  <div class="grid">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Sky positions</h2>
+          <p class="hint">Lasso or box-select to restrict to a region. Scroll to zoom, double-click to reset.</p>
+        </div>
+      </div>
+      <div class="plot" id="sky"></div>
+    </section>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Proper motions</h2>
+          <p class="hint">Cluster members share one motion — look for the dense clump and lasso it.</p>
+        </div>
+      </div>
+      <div class="plot" id="pm"></div>
+    </section>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Colour–magnitude (HR) diagram</h2>
+          <p class="hint">Selected stars in colour, the whole field in grey.</p>
+        </div>
+        <label class="toggle"><input type="checkbox" id="cmdAbs"> Absolute M<sub>G</sub></label>
+      </div>
+      <div class="plot" id="cmd"></div>
+    </section>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Parallaxes of selected stars</h2>
+          <p class="hint" id="histHint">Dashed line: weighted mean parallax.</p>
+        </div>
+      </div>
+      <div class="plot" id="hist"></div>
+    </section>
+  </div>
+
+  <section class="card results">
+    <div class="results-head">
+      <h2>Cluster distance</h2>
+      <div class="opts">
+        <label class="toggle"><input type="checkbox" id="zp" checked> Zero-point correction (+0.017 mas)</label>
+        <label class="toggle"><input type="checkbox" id="clip"> Clip 3σ parallax outliers</label>
+        <button type="button" id="clear">Clear selection</button>
+        <button type="button" id="download" disabled>Download selection (CSV)</button>
+      </div>
+    </div>
+    <div id="results"><p class="empty">No stars selected yet.</p></div>
+  </section>
+
+  <footer>
+    Data: ESA <i>Gaia</i> DR3 (Gaia Collaboration 2023), queried from the
+    <a href="https://dc.g-vo.org/tableinfo/gaia.dr3lite" target="_blank" rel="noopener">GAVO Data Center</a> TAP service
+    (fallback: VizieR <a href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/355/gaiadr3" target="_blank" rel="noopener">I/355/gaiadr3</a>).
+    Names resolved with SIMBAD and Sesame (CDS, Strasbourg). Parallax zero-point −0.017 mas from Lindegren et al. (2021);
+    a ~0.010 mas systematic floor is added because angularly correlated parallax errors don't average out
+    (Lindegren et al. 2021; Maíz Apellániz et al. 2021). Extinction is ignored in the absolute-magnitude CMD.
+  </footer>
+</main>
+
+<script>
+"use strict";
+
+// Gaia DR3 services queried directly from the browser, tried in order.
+// (The ESA Gaia archive sends no CORS headers; VizieR currently sends a duplicated
+// Access-Control-Allow-Origin header that browsers reject, so it is only a fallback.)
+const GAIA_SOURCES = [
+  {
+    name: "GAVO Data Center",
+    url: "https://dc.g-vo.org/tap/sync",
+    async: "https://dc.g-vo.org/tap/async",
+    table: "gaia.dr3lite",
+    cols: { src: "source_id", ra: "ra", dec: "dec", plx: "parallax", eplx: "parallax_error", pmra: "pmra", pmdec: "pmdec", g: "phot_g_mean_mag", bprp: "phot_bp_mean_mag - phot_rp_mean_mag", ruwe: "ruwe" },
+  },
+  {
+    name: "VizieR (CDS)",
+    url: "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync",
+    table: '"I/355/gaiadr3"',
+    cols: { src: "Source", ra: "RA_ICRS", dec: "DE_ICRS", plx: "Plx", eplx: "e_Plx", pmra: "pmRA", pmdec: "pmDE", g: "Gmag", bprp: '"BP-RP"', ruwe: "RUWE" },
+  },
+];
+// Name resolvers, all asked at once: SIMBAD plus the Sesame mirrors (Strasbourg, Harvard).
+const SIMBAD_ID = "https://simbad.cds.unistra.fr/simbad/sim-id?";
+const SESAME_MIRRORS = [
+  "https://cds.unistra.fr/cgi-bin/nph-sesame/-oxp/SNV?",
+  "https://vizier.cfa.harvard.edu/viz-bin/nph-sesame/-oxp/SNV?",
+];
+const MAXREC = 60000;
+const ASYNC_RADIUS = 1.5;  // deg; larger fields are queried as async jobs
+const ASYNC_LIMIT = 300;   // s; give up on an async job after this long
+const ZP = -0.017;   // mas, Gaia DR3 global parallax zero-point
+const SYS = 0.010;   // mas, systematic floor for a cluster-mean parallax
+const PC_LY = 3.261563777;
+const PC_KM = 3.0856775814913673e13;
+
+const EXAMPLES = [
+  { name: "Pleiades", r: 2.0, g: 17 },
+  { name: "Praesepe", r: 1.2, g: 17 },
+  { name: "NGC 2516", r: 0.7, g: 17 },
+  { name: "M67", r: 0.3, g: 18 },
+  { name: "NGC 188", r: 0.3, g: 18 },
+];
+
+const $ = (id) => document.getElementById(id);
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+const S = {
+  d: null,            // columnar data
+  n: 0,
+  center: null,       // {ra, dec, label}
+  sel: { sky: null, pm: null },
+  idx: null,          // combined selection (sorted indices) or null
+  stats: null,
+  rev: 0,             // uirevision, bumped per dataset
+  token: 0,
+};
+
+/* ---------- Name / coordinate resolution ---------- */
+
+function checkCoords(ra, dec) {
+  if (!(ra >= 0 && ra < 360 && dec >= -90 && dec <= 90)) {
+    throw new Error("Coordinates out of range: RA must be 0–360°, Dec −90…+90°.");
+  }
+  return { ra, dec };
+}
+
+function parseCoords(text) {
+  const t = text.trim();
+  const dec = t.match(/^([+-]?\d+(?:\.\d+)?)\s*[,\s]\s*([+-]?\d+(?:\.\d+)?)$/);
+  if (dec) return checkCoords(+dec[1], +dec[2]);
+  if (/^[\d\s:hmsd°'"′″.,+-]+$/i.test(t)) {
+    const tok = t.replace(/[hmsd°:'"′″,]/gi, " ").trim().split(/\s+/);
+    if (tok.length === 6 && tok.every((x) => /^[+-]?\d+(\.\d+)?$/.test(x))) {
+      const ra = 15 * (+tok[0] + tok[1] / 60 + tok[2] / 3600);
+      const sign = tok[3].startsWith("-") ? -1 : 1;
+      const de = sign * (Math.abs(+tok[3]) + tok[4] / 60 + tok[5] / 3600);
+      return checkCoords(ra, de);
+    }
+  }
+  return null;
+}
+
+// Fetch a URL and read the whole body, with the timeout covering both.
+async function fetchText(url, ms) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal });
+    return { ok: r.ok, status: r.status, text: await r.text() };
+  } catch (e) {
+    if (e.name === "AbortError") throw new Error("the request timed out");
+    throw new Error("network error or blocked request");
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Sesame is an "nph" CGI that can leave the connection open after sending its answer,
+// so read the stream and stop as soon as the answer (or "nothing found") is complete.
+async function sesameMirror(base, name) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  let xml = "";
+  try {
+    const r = await fetch(base + encodeURIComponent(name), { signal: ctrl.signal });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (value) xml += dec.decode(value, { stream: true });
+      if (done || /<\/Resolver>|<\/Target>|Nothing found/i.test(xml)) break;
+    }
+    reader.cancel().catch(() => {});
+  } finally {
+    clearTimeout(timer);
+  }
+  const ra = xml.match(/<jradeg>\s*([^<]+?)\s*<\/jradeg>/);
+  const de = xml.match(/<jdedeg>\s*([^<]+?)\s*<\/jdedeg>/);
+  if (!ra || !de) return null;                       // a definitive "not found"
+  const otype = xml.match(/<otype>\s*([^<]+?)\s*<\/otype>/);
+  const oname = xml.match(/<oname>\s*([^<]+?)\s*<\/oname>/);
+  return { ra: +ra[1], dec: +de[1], otype: otype && otype[1], oname: oname && oname[1] };
+}
+
+async function simbadId(name) {
+  const params = new URLSearchParams({
+    Ident: name, "output.format": "votable", "output.params": "main_id,ra(d),dec(d),otype", "output.max": "1",
+  });
+  const r = await fetchText(SIMBAD_ID + params, 15000);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const td = [...r.text.matchAll(/<TD>([^<]*)<\/TD>/g)].map((m) => m[1].trim());
+  if (td.length < 3 || !isFinite(parseFloat(td[1]))) {
+    if (/name="Error"/.test(r.text)) return null;    // a definitive "not found"
+    throw new Error("unexpected SIMBAD response");
+  }
+  return { oname: td[0], ra: parseFloat(td[1]), dec: parseFloat(td[2]), otype: td[3] };
+}
+
+// Ask all resolvers at once; the first definitive answer (found or not found) wins.
+function resolveName(name) {
+  const resolvers = [() => simbadId(name), ...SESAME_MIRRORS.map((m) => () => sesameMirror(m, name))];
+  return new Promise((resolve, reject) => {
+    let failed = 0;
+    for (const f of resolvers) {
+      f().then(
+        (res) => res ? resolve(res) : reject(new Error(`Could not resolve “${name}”. Check the spelling or enter coordinates.`)),
+        () => {
+          if (++failed === resolvers.length) {
+            reject(new Error("The name resolvers (SIMBAD, Sesame) are unreachable right now. Enter coordinates instead, e.g. 132.85 11.81."));
+          }
+        });
+    }
+  });
+}
+
+async function resolveTarget(text) {
+  const c = parseCoords(text);
+  if (c) return { ...c, label: `RA ${c.ra.toFixed(4)}°, Dec ${c.dec >= 0 ? "+" : ""}${c.dec.toFixed(4)}°` };
+  const s = await resolveName(text);
+  const kind = s.otype ? ` [${s.otype}]` : "";
+  return { ra: s.ra, dec: s.dec, label: `${(s.oname || text).replace(/\s+/g, " ")}${kind} → RA ${s.ra.toFixed(4)}°, Dec ${s.dec >= 0 ? "+" : ""}${s.dec.toFixed(4)}°` };
+}
+
+/* ---------- Gaia query ---------- */
+
+const FIELDS = ["src", "ra", "dec", "plx", "eplx", "pmra", "pmdec", "g", "bprp", "ruwe"];
+
+async function querySource(s, c, radius, gmax, ruwe, onWait) {
+  const k = s.cols;
+  const adql = `SELECT ${FIELDS.map((f) => k[f]).join(", ")}
+FROM ${s.table}
+WHERE 1 = CONTAINS(POINT('ICRS', ${k.ra}, ${k.dec}), CIRCLE('ICRS', ${c.ra.toFixed(6)}, ${c.dec.toFixed(6)}, ${radius}))
+  AND ${k.plx} IS NOT NULL AND ${k.pmra} IS NOT NULL AND ${k.g} < ${gmax} AND ${k.ruwe} < ${ruwe}`;
+  const params = { REQUEST: "doQuery", LANG: "ADQL", FORMAT: "csv", MAXREC: String(MAXREC), QUERY: adql };
+  // Synchronous queries are cut off after ~20 s on GAVO; large fields go through an async job.
+  if (s.async && radius > ASYNC_RADIUS) return queryAsync(s, params, onWait);
+  try {
+    return await querySync(s, params);
+  } catch (e) {
+    if (s.async && /too long|time ?out|timed out/i.test(e.message)) return queryAsync(s, params, onWait);
+    throw e;
+  }
+}
+
+function tapError(text, status) {
+  const m = text.match(/<INFO[^>]*name="QUERY_STATUS"[^>]*>([\s\S]*?)<\/INFO>/i);
+  return new Error(m && m[1].trim() ? m[1].trim() : `HTTP ${status}`);
+}
+
+async function querySync(s, params) {
+  const r = await fetchText(s.url + "?" + new URLSearchParams(params), 120000);
+  if (!r.ok || r.text.trimStart().startsWith("<")) throw tapError(r.text, r.status);
+  return parseCSV(r.text);
+}
+
+// IVOA UWS job: create, start, poll the phase, fetch the result, delete the job.
+async function queryAsync(s, params, onWait) {
+  const created = await fetch(s.async, { method: "POST", body: new URLSearchParams(params) });
+  const job = created.url;                            // fetch follows the 303 to the job URL
+  if (!created.ok || job.replace(/\/$/, "") === s.async) throw new Error("could not create an async query job");
+  try {
+    await fetch(job + "/phase", { method: "POST", body: new URLSearchParams({ PHASE: "RUN" }) });
+    const t0 = performance.now();
+    for (;;) {
+      const elapsed = (performance.now() - t0) / 1000;
+      if (elapsed > ASYNC_LIMIT) throw new Error(`the query did not finish within ${ASYNC_LIMIT / 60} minutes`);
+      if (onWait && onWait(elapsed) === false) throw new Error("cancelled");
+      const phase = (await fetchText(job + "/phase", 20000)).text.trim();
+      if (phase === "COMPLETED") break;
+      if (phase === "ERROR" || phase === "ABORTED") {
+        const err = await fetchText(job + "/error", 20000).catch(() => ({ text: "", status: phase }));
+        throw tapError(err.text, phase);
+      }
+      await new Promise((res) => setTimeout(res, 2000));
+    }
+    const r = await fetchText(job + "/results/result", 120000);
+    if (!r.ok || r.text.trimStart().startsWith("<")) throw tapError(r.text, r.status);
+    return parseCSV(r.text);
+  } finally {
+    fetch(job, { method: "POST", body: new URLSearchParams({ ACTION: "DELETE" }) }).catch(() => {});
+  }
+}
+
+async function queryGaia(c, radius, gmax, ruwe, onWait) {
+  const failures = [];
+  for (const s of GAIA_SOURCES) {
+    try {
+      return { d: await querySource(s, c, radius, gmax, ruwe, onWait), source: s.name };
+    } catch (e) {
+      if (e.message === "cancelled") throw e;
+      failures.push(`${s.name}: ${e.message}`);
+    }
+  }
+  throw new Error("Gaia query failed — " + failures.join("; "));
+}
+
+// Columns arrive in FIELDS order (CSV of plain numbers; the header row is skipped).
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter((l) => l.length);
+  const n = lines.length - 1;
+  const d = {};
+  for (const f of FIELDS) d[f] = new Array(n);
+  const num = (s) => (s === "" || s === undefined ? null : +s);
+  for (let i = 0; i < n; i++) {
+    const f = lines[i + 1].split(",");
+    if (f.length !== FIELDS.length) throw new Error("Unexpected response format.");
+    d.src[i] = f[0].replace(/"/g, "");
+    for (let j = 1; j < FIELDS.length; j++) d[FIELDS[j]][i] = num(f[j]);
+  }
+  return d;
+}
+
+/* ---------- Statistics ---------- */
+
+function median(a) {
+  const s = Float64Array.from(a).sort();
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : 0.5 * (s[m - 1] + s[m]);
+}
+
+function percentile(a, q) {
+  const s = Float64Array.from(a.filter((v) => v !== null && isFinite(v))).sort();
+  if (!s.length) return NaN;
+  const pos = (s.length - 1) * q;
+  const lo = Math.floor(pos), hi = Math.ceil(pos);
+  return s[lo] + (s[hi] - s[lo]) * (pos - lo);
+}
+
+function computeStats(idx) {
+  const d = S.d;
+  const off = $("zp").checked ? -ZP : 0;
+  let use = idx;
+  if ($("clip").checked && idx.length >= 5) {
+    for (let it = 0; it < 10; it++) {
+      const p = use.map((i) => d.plx[i]);
+      const med = median(p);
+      const mad = 1.4826 * median(p.map((v) => Math.abs(v - med)));
+      if (!(mad > 0)) break;
+      const keep = use.filter((i) => Math.abs(d.plx[i] - med) <= 3 * mad);
+      if (keep.length === use.length || keep.length < 3) break;
+      use = keep;
+    }
+  }
+  const useSet = new Set(use);
+  const clipped = idx.filter((i) => !useSet.has(i));
+
+  const vals = use.map((i) => d.plx[i] + off);
+  let sw = 0, swp = 0;
+  for (const i of use) {
+    const w = 1 / (d.eplx[i] * d.eplx[i]);
+    sw += w;
+    swp += w * (d.plx[i] + off);
+  }
+  const n = use.length;
+  const wmean = swp / sw;
+  const estat = 1 / Math.sqrt(sw);
+  const etot = Math.hypot(estat, SYS);
+  const mean = vals.reduce((a, b) => a + b, 0) / n;
+  const std = n > 1 ? Math.sqrt(vals.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1)) : NaN;
+  let chi2 = 0;
+  for (const i of use) chi2 += ((d.plx[i] + off - wmean) / d.eplx[i]) ** 2;
+
+  return {
+    use, clipped, off, n, wmean, estat, etot, mean, std,
+    sem: std / Math.sqrt(n),
+    med: median(vals),
+    redchi2: n > 1 ? chi2 / (n - 1) : NaN,
+    pmra: median(use.map((i) => d.pmra[i])),
+    pmdec: median(use.map((i) => d.pmdec[i])),
+  };
+}
+
+/* ---------- Formatting ---------- */
+
+const fmtN = (v, dp) => v.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+
+// value ± error, error rounded to 2 significant figures, value to the same decimal place
+function valErr(v, e) {
+  const dp = Math.max(0, 1 - Math.floor(Math.log10(e)));
+  return [fmtN(v, dp), fmtN(e, dp)];
+}
+
+function sciValErr(v, e) {
+  const exp = Math.floor(Math.log10(Math.abs(v)));
+  const [a, b] = valErr(v / 10 ** exp, e / 10 ** exp);
+  return { a, b, exp };
+}
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* ---------- Plotting ---------- */
+
+const CONFIG = {
+  responsive: true,
+  displaylogo: false,
+  scrollZoom: true,
+  modeBarButtonsToRemove: ["autoScale2d", "toggleSpikelines", "hoverClosestCartesian", "hoverCompareCartesian"],
+};
+
+function axis(title, extra = {}) {
+  return {
+    title: { text: title, font: { size: 12, color: css("--text-2") } },
+    gridcolor: css("--grid"),
+    zeroline: false,
+    linecolor: css("--axis"),
+    tickcolor: css("--axis"),
+    ticks: "outside",
+    ticklen: 4,
+    showline: true,
+    automargin: true,
+    ...extra,
+  };
+}
+
+function baseLayout(extra = {}) {
+  return {
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: getComputedStyle(document.body).fontFamily, size: 12, color: css("--text-2") },
+    margin: { l: 58, r: 12, t: 8, b: 46 },
+    hovermode: "closest",
+    showlegend: false,
+    hoverlabel: { bgcolor: css("--surface"), bordercolor: css("--border"), font: { color: css("--text-1") } },
+    uirevision: S.rev,
+    ...extra,
+  };
+}
+
+function emptyPlot(id, msg) {
+  Plotly.react(id, [], baseLayout({
+    xaxis: { visible: false }, yaxis: { visible: false },
+    annotations: [{ text: msg, showarrow: false, xref: "paper", yref: "paper", x: 0.5, y: 0.5, font: { size: 13, color: css("--text-3") } }],
+  }), { ...CONFIG, staticPlot: true });
+}
+
+function linkedTrace(x, y) {
+  return {
+    type: "scattergl", mode: "markers", x, y,
+    text: S.hover, hovertemplate: "%{text}<extra></extra>",
+    marker: { size: 4, color: css("--field"), opacity: 0.6 },
+    selected: { marker: { color: css("--sel"), opacity: 1, size: 5 } },
+    unselected: { marker: { color: css("--field-dim"), opacity: 0.35 } },
+    selectedpoints: S.idx,
+  };
+}
+
+// keep any drawn lasso/box when re-rendering (e.g. on theme change)
+const keptSelections = (id, keep) => (keep && $(id).layout && $(id).layout.selections) || [];
+
+function drawSky(keep = false) {
+  const { ra0, dec0, raPlot } = S.sky;
+  const cosd = Math.max(Math.cos((dec0 * Math.PI) / 180), 0.05);
+  const r = S.radius;
+  Plotly.react("sky", [linkedTrace(raPlot, S.d.dec)], baseLayout({
+    dragmode: "lasso",
+    xaxis: axis("RA (deg)", { autorange: "reversed", scaleanchor: "y", scaleratio: cosd }),
+    yaxis: axis("Dec (deg)"),
+    shapes: [{
+      type: "circle", xref: "x", yref: "y", layer: "below",
+      x0: ra0 - r / cosd, x1: ra0 + r / cosd, y0: dec0 - r, y1: dec0 + r,
+      line: { color: css("--axis"), width: 1, dash: "dot" },
+    }],
+    selections: keptSelections("sky", keep),
+  }), CONFIG);
+}
+
+function drawPM(keep = false) {
+  const d = S.d;
+  const pad = (lo, hi) => { const w = hi - lo || 1; return [lo - 0.1 * w, hi + 0.1 * w]; };
+  const xr = pad(percentile(d.pmra, 0.005), percentile(d.pmra, 0.995));
+  const yr = pad(percentile(d.pmdec, 0.005), percentile(d.pmdec, 0.995));
+  Plotly.react("pm", [linkedTrace(d.pmra, d.pmdec)], baseLayout({
+    dragmode: "lasso",
+    xaxis: axis("μ<sub>α*</sub> (mas/yr)", { range: xr }),
+    yaxis: axis("μ<sub>δ</sub> (mas/yr)", { range: yr, scaleanchor: "x", scaleratio: 1 }),
+    selections: keptSelections("pm", keep),
+  }), CONFIG);
+}
+
+function drawCMD() {
+  const d = S.d;
+  const st = S.stats;
+  const abs = $("cmdAbs").checked && st && st.wmean > 0;
+  const shift = abs ? 5 * Math.log10(st.wmean / 100) : 0;
+  const yAll = abs ? d.g.map((g) => g + shift) : d.g;
+  const sel = S.idx || [];
+  const xr = [percentile(d.bprp, 0.002) - 0.1, percentile(d.bprp, 0.998) + 0.1];
+  Plotly.react("cmd", [
+    {
+      type: "scattergl", mode: "markers", x: d.bprp, y: yAll, hoverinfo: "skip",
+      marker: { size: 3, color: css("--field-dim"), opacity: sel.length ? 0.5 : 0.8 },
+    },
+    {
+      type: "scattergl", mode: "markers",
+      x: sel.map((i) => d.bprp[i]), y: sel.map((i) => yAll[i]),
+      text: sel.map((i) => S.hover[i]), hovertemplate: "%{text}<extra></extra>",
+      marker: { size: 5, color: css("--sel"), line: { width: 0.5, color: css("--surface") } },
+    },
+  ], baseLayout({
+    uirevision: `${S.rev}-${abs}`,
+    dragmode: "zoom",
+    xaxis: axis("G<sub>BP</sub> − G<sub>RP</sub> (mag)", { range: xr }),
+    yaxis: axis(abs ? `M<sub>G</sub> (mag), μ = ${fmtN(-shift, 2)}` : "G (mag)", { autorange: "reversed" }),
+  }), CONFIG);
+}
+
+function drawHist() {
+  const st = S.stats;
+  if (!st) {
+    emptyPlot("hist", S.idx && S.idx.length === 0 ? "The current selection contains no stars." : "Select stars in the sky or proper-motion plot.");
+    return;
+  }
+  const d = S.d;
+  const used = st.use.map((i) => d.plx[i] + st.off);
+  const clip = st.clipped.map((i) => d.plx[i] + st.off);
+  const all = used.concat(clip);
+  let lo = Math.min(...all), hi = Math.max(...all);
+  if (hi - lo < 1e-3) { lo -= 0.05; hi += 0.05; }
+  const q1 = percentile(all, 0.25), q3 = percentile(all, 0.75);
+  let size = 2 * (q3 - q1) / Math.cbrt(all.length);          // Freedman–Diaconis
+  if (!(size > 0)) size = (hi - lo) / 20;
+  size = Math.max(size, (hi - lo) / 80);
+  const bins = { start: lo - size / 2, end: hi + size, size };
+  const traces = [{
+    type: "histogram", x: used, xbins: bins, name: "used",
+    marker: { color: css("--sel"), line: { color: css("--surface"), width: 1 } },
+    hovertemplate: "%{x} mas: %{y} stars<extra></extra>",
+  }];
+  if (clip.length) traces.push({
+    type: "histogram", x: clip, xbins: bins, name: "clipped",
+    marker: { color: css("--field-dim"), line: { color: css("--surface"), width: 1 } },
+    hovertemplate: "clipped %{x} mas: %{y}<extra></extra>",
+  });
+  Plotly.react("hist", traces, baseLayout({
+    uirevision: `${S.rev}-${st.off}`,
+    dragmode: "zoom",
+    barmode: "stack",
+    bargap: 0,
+    xaxis: axis(st.off ? "parallax + 0.017 mas (zero-point corrected)" : "parallax (mas)"),
+    yaxis: axis("stars"),
+    shapes: [{
+      type: "line", xref: "x", yref: "paper", x0: st.wmean, x1: st.wmean, y0: 0, y1: 1,
+      line: { color: css("--accent"), width: 2, dash: "dash" },
+    }],
+    annotations: [{
+      xref: "x", yref: "paper", x: st.wmean, y: 1, yanchor: "top", xanchor: "left", xshift: 6, showarrow: false,
+      text: `⟨ϖ⟩ = ${fmtN(st.wmean, 4)} mas`, font: { size: 12, color: css("--text-1") },
+      bgcolor: css("--surface"),
+    }],
+  }), CONFIG);
+}
+
+function drawResults() {
+  const el = $("results");
+  const st = S.stats;
+  $("download").disabled = !(S.idx && S.idx.length);
+  if (!S.d) { el.innerHTML = `<p class="empty">No data loaded.</p>`; return; }
+  if (!S.idx) { el.innerHTML = `<p class="empty">No stars selected yet — lasso the cluster's clump in the proper-motion plot.</p>`; return; }
+  if (!st) { el.innerHTML = `<p class="empty">The selection is empty: the sky and proper-motion selections don't overlap.</p>`; return; }
+
+  const notes = [];
+  let tiles;
+  if (!(st.wmean > 0)) {
+    notes.push(`<div class="note error">The mean parallax is not positive, so no distance can be derived. Select a cleaner clump of cluster stars.</div>`);
+    tiles = "";
+  } else {
+    const dpc = 1000 / st.wmean;
+    const epc = (dpc * st.etot) / st.wmean;
+    const [pcV, pcE] = valErr(dpc, epc);
+    const [lyV, lyE] = valErr(dpc * PC_LY, epc * PC_LY);
+    const km = sciValErr(dpc * PC_KM, epc * PC_KM);
+    tiles = `<div class="tiles">
+      <div class="tile"><div class="label">Distance</div><div class="value">${pcV} <small>± ${pcE}</small></div><div class="unit">parsecs</div></div>
+      <div class="tile"><div class="label">Distance</div><div class="value">${lyV} <small>± ${lyE}</small></div><div class="unit">light years</div></div>
+      <div class="tile"><div class="label">Distance</div><div class="value">${km.a}<small> ± ${km.b}</small> <small>× 10<sup>${km.exp}</sup></small></div><div class="unit">kilometres</div></div>
+    </div>`;
+    if (st.etot / st.wmean > 0.1) notes.push(`<div class="note warn">The relative parallax error is ${fmtN(100 * st.etot / st.wmean, 0)}%. Above ~10%, 1/ϖ becomes a biased and asymmetric distance estimate.</div>`);
+  }
+  if (st.n < 10) notes.push(`<div class="note warn">Only ${st.n} star${st.n === 1 ? "" : "s"} selected — the mean is fragile.</div>`);
+  if (st.redchi2 > 3 && st.n >= 10) notes.push(`<div class="note warn">The parallax scatter is ${fmtN(Math.sqrt(st.redchi2), 1)}× larger than the quoted errors predict (χ²/dof = ${fmtN(st.redchi2, 1)}). The selection probably contains field stars — tighten the proper-motion lasso or enable clipping.</div>`);
+
+  const [wv, we] = valErr(st.wmean, st.etot);
+  const zpNote = st.off ? " (incl. +0.017 mas zero-point)" : " (no zero-point correction)";
+  el.innerHTML = `${tiles}${notes.join("")}
+    <table class="detail"><tbody>
+      <tr><td>Stars selected / used</td><td>${st.n + st.clipped.length} / ${st.n}${st.clipped.length ? ` (${st.clipped.length} clipped)` : ""}</td></tr>
+      <tr><td>Weighted mean parallax ⟨ϖ⟩</td><td><b>${wv} ± ${we} mas</b>${zpNote}</td></tr>
+      <tr><td>&nbsp;&nbsp;statistical / systematic error</td><td>${fmtN(st.estat, 4)} / ${fmtN(SYS, 3)} mas, added in quadrature</td></tr>
+      <tr><td>Unweighted mean ± s.e.m.</td><td>${isFinite(st.sem) ? `${fmtN(st.mean, 4)} ± ${fmtN(st.sem, 4)}` : fmtN(st.mean, 4)} mas</td></tr>
+      <tr><td>Median parallax</td><td>${fmtN(st.med, 4)} mas</td></tr>
+      <tr><td>Std. deviation of parallaxes</td><td>${isFinite(st.std) ? fmtN(st.std, 4) + " mas" : "—"}</td></tr>
+      <tr><td>Reduced χ² about the mean</td><td>${isFinite(st.redchi2) ? fmtN(st.redchi2, 2) : "—"}</td></tr>
+      <tr><td>Median proper motion (μ<sub>α*</sub>, μ<sub>δ</sub>)</td><td>${fmtN(st.pmra, 3)}, ${fmtN(st.pmdec, 3)} mas/yr</td></tr>
+    </tbody></table>
+    <p class="formula">d [pc] = 1000 / ⟨ϖ⟩ [mas]. Average the parallaxes first, then invert — the mean of 1/ϖ is biased.
+    1 pc = 3.2616 ly = 3.0857 × 10<sup>13</sup> km = 206 265 au.</p>`;
+}
+
+/* ---------- Selection linking ---------- */
+
+function combineSelections() {
+  const sets = Object.values(S.sel).filter(Boolean);
+  if (!sets.length) return null;
+  sets.sort((a, b) => a.size - b.size);
+  const out = [];
+  for (const i of sets[0]) if (sets.every((s) => s.has(i))) out.push(i);
+  return out.sort((a, b) => a - b);
+}
+
+function refresh() {
+  if (!S.d) return;
+  S.stats = S.idx && S.idx.length ? computeStats(S.idx) : null;
+  drawCMD();
+  drawHist();
+  drawResults();
+}
+
+function onSelectionChange() {
+  S.idx = combineSelections();
+  for (const id of ["sky", "pm"]) Plotly.restyle(id, { selectedpoints: [S.idx] }, [0]);
+  refresh();
+}
+
+function attachSelection(id) {
+  const el = $(id);
+  el.on("plotly_selected", (ev) => {
+    // an event with no points and no drawn region means the selection was cleared
+    if (!ev || !ev.points || (!ev.points.length && !(ev.selections && ev.selections.length) && !ev.range && !ev.lassoPoints)) S.sel[id] = null;
+    else S.sel[id] = new Set(ev.points.filter((p) => p.curveNumber === 0).map((p) => p.pointIndex ?? p.pointNumber));
+    onSelectionChange();
+  });
+  el.on("plotly_deselect", () => {
+    S.sel[id] = null;
+    onSelectionChange();
+  });
+}
+
+/* ---------- Main flow ---------- */
+
+function setStatus(msg, kind = "") {
+  const el = $("status");
+  el.textContent = msg;
+  el.className = "status" + (kind ? " " + kind : "");
+}
+
+async function run() {
+  const target = $("target").value.trim();
+  const radius = +$("radius").value;
+  const gmax = +$("gmax").value;
+  const ruwe = +$("ruwe").value;
+  if (!target) { setStatus("Enter a cluster name or coordinates.", "error"); return; }
+  if (!(radius > 0 && radius <= 3)) { setStatus("Radius must be between 0 and 3 degrees.", "error"); return; }
+  if (!(gmax > 0 && gmax <= 21)) { setStatus("G limit must be between 0 and 21 mag.", "error"); return; }
+  if (!(ruwe >= 1)) { setStatus("RUWE limit must be at least 1.", "error"); return; }
+
+  const token = ++S.token;
+  $("go").disabled = true;
+  try {
+    setStatus(`Resolving “${target}”…`);
+    const c = await resolveTarget(target);
+    if (token !== S.token) return;
+    setStatus(`${c.label}. Querying Gaia DR3 within ${radius}°…`);
+    const t0 = performance.now();
+    const { d, source } = await queryGaia(c, radius, gmax, ruwe, (sec) => {
+      if (token !== S.token) return false;
+      setStatus(`${c.label}. Large field — Gaia query running as a background job (${Math.round(sec)} s; usually under a minute)…`);
+    });
+    if (token !== S.token) return;
+    const n = d.src.length;
+    if (!n) { setStatus(`${c.label}. No Gaia stars matched — increase the radius or G limit.`, "warn"); return; }
+
+    S.d = d; S.n = n; S.center = c; S.radius = radius; S.rev++;
+    S.sel = { sky: null, pm: null }; S.idx = null; S.stats = null;
+    S.hover = d.src.map((_, i) =>
+      `Gaia DR3 ${d.src[i]}<br>G = ${d.g[i].toFixed(2)}` +
+      (d.bprp[i] !== null ? `, BP−RP = ${d.bprp[i].toFixed(2)}` : "") +
+      `<br>ϖ = ${d.plx[i].toFixed(3)} ± ${d.eplx[i].toFixed(3)} mas` +
+      `<br>μ = (${d.pmra[i].toFixed(2)}, ${d.pmdec[i].toFixed(2)}) mas/yr`);
+    // unwrap RA around the centre so fields crossing RA = 0 stay contiguous
+    S.sky = {
+      ra0: c.ra, dec0: c.dec,
+      raPlot: d.ra.map((ra) => { let x = ra - c.ra; if (x > 180) x -= 360; if (x < -180) x += 360; return c.ra + x; }),
+    };
+
+    const secs = ((performance.now() - t0) / 1000).toFixed(1);
+    const trunc = n >= MAXREC;
+    setStatus(`${c.label}. ${n.toLocaleString("en-US")} stars (G < ${gmax}, RUWE < ${ruwe}) from ${source} in ${secs} s.` +
+      (trunc ? ` Result truncated at ${MAXREC.toLocaleString("en-US")} rows — reduce the radius or G limit.` : ""), trunc ? "warn" : "");
+
+    drawSky();
+    drawPM();
+    if (!S.attached) { attachSelection("sky"); attachSelection("pm"); S.attached = true; }
+    refresh();
+
+    const url = new URL(location.href);
+    url.search = new URLSearchParams({ target, r: radius, g: gmax, ruwe }).toString();
+    history.replaceState(null, "", url);
+  } catch (e) {
+    if (token === S.token) setStatus(e.message, "error");
+  } finally {
+    if (token === S.token) $("go").disabled = false;
+  }
+}
+
+function clearSelection() {
+  if (!S.d) return;
+  S.sel = { sky: null, pm: null };
+  for (const id of ["sky", "pm"]) Plotly.relayout(id, { selections: [] });
+  onSelectionChange();
+}
+
+function downloadSelection() {
+  if (!S.idx || !S.idx.length) return;
+  const d = S.d;
+  const used = new Set(S.stats ? S.stats.use : []);
+  const rows = ["source_id,ra,dec,parallax,parallax_error,pmra,pmdec,phot_g_mean_mag,bp_rp,ruwe,used_in_mean"];
+  for (const i of S.idx) {
+    rows.push([d.src[i], d.ra[i], d.dec[i], d.plx[i], d.eplx[i], d.pmra[i], d.pmdec[i], d.g[i], d.bprp[i] ?? "", d.ruwe[i], used.has(i) ? 1 : 0].join(","));
+  }
+  const blob = new Blob([rows.join("\n") + "\n"], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${$("target").value.trim().replace(/[^\w.+-]+/g, "_") || "selection"}_gaia_selection.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function redrawAll() {
+  if (!S.d) {
+    for (const id of ["sky", "pm", "cmd", "hist"]) emptyPlot(id, "Query a cluster to begin.");
+    return;
+  }
+  drawSky(true);
+  drawPM(true);
+  refresh();
+}
+
+/* ---------- Wiring ---------- */
+
+$("form").addEventListener("submit", (e) => { e.preventDefault(); run(); });
+$("clear").addEventListener("click", clearSelection);
+$("download").addEventListener("click", downloadSelection);
+for (const id of ["zp", "clip", "cmdAbs"]) $(id).addEventListener("change", refresh);
+
+for (const ex of EXAMPLES) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = ex.name;
+  b.addEventListener("click", () => {
+    $("target").value = ex.name;
+    $("radius").value = ex.r;
+    $("gmax").value = ex.g;
+    run();
+  });
+  $("examples").appendChild(b);
+}
+
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawAll);
+
+(function init() {
+  const p = new URLSearchParams(location.search);
+  if (p.get("target")) $("target").value = p.get("target");
+  if (p.get("r")) $("radius").value = p.get("r");
+  if (p.get("g")) $("gmax").value = p.get("g");
+  if (p.get("ruwe")) $("ruwe").value = p.get("ruwe");
+  redrawAll();
+  drawResults();
+  run();
+})();
+</script>
+</body>
+</html>
