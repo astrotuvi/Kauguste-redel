@@ -3,11 +3,13 @@
 A web app for climbing the cosmic distance ladder. The user interface is in
 Estonian.
 
-Two rungs are implemented:
+Three rungs are implemented:
 
 1. Measuring the distance to an open star cluster from *Gaia* DR3 parallaxes.
 2. Calibrating the Cepheid period-luminosity relation with Cepheids that
    belong to open clusters, using the cluster distances from the first rung.
+3. Measuring distances to galaxies from their Cepheids with that relation,
+   and the Hubble constant from the galaxy velocities and distances.
 
 The app queries *Gaia* DR3 stars around a cluster. The user then picks the
 cluster members by their common proper motion, and the app averages the
@@ -49,6 +51,27 @@ cluster adds its Cepheids to the period-luminosity plot. With two or more
 Cepheids, the app fits a weighted straight line. Stored distances are kept in
 the browser (`localStorage`) and can be removed with **Kustuta**.
 
+When a queried field contains a listed Cepheid, the Cepheid is marked with a
+star in the sky view, the proper-motion plot and the colour–magnitude
+diagram. The period-luminosity plot can show either the *Gaia* Wesenheit
+magnitude W_G or the *HST* Wesenheit magnitude W_H, together with a published
+relation for comparison.
+
+### Hubble law
+
+The third part lists 19 type Ia supernova host galaxies with Cepheids
+observed by *HST*. Each galaxy distance is found from its Cepheids with the
+W_H period-luminosity relation chosen in the menu:
+- the relation fitted in the second part (needs at least two stored Cepheids
+  with W_H);
+- its zero point with the published slope (needs one);
+- or the published relation.
+
+Clicking a galaxy shows its Cepheids with the shifted relation. The
+velocity–distance plot shows a straight line through the origin fitted by
+least squares, and its slope gives the Hubble constant H₀ and the Hubble
+time 1/H₀. Galaxies can be left out of the fit with the checkboxes.
+
 ## Method
 
 - Only stars with RUWE < 1.4 and with a measured parallax and proper motion
@@ -67,10 +90,22 @@ the browser (`localStorage`) and can be removed with **Kustuta**.
 - The colour–magnitude diagram can show absolute magnitudes. Extinction is
   not corrected.
 
-- Cepheid luminosities use the reddening-free Wesenheit magnitude
-  `W = G − 1.90 (BP − RP)` (Ripepi et al. 2019). The absolute magnitude is
-  `M_W = W + 5 log10(ϖ / mas) − 10`, with ϖ the stored cluster parallax. The
-  fit is `M_W = a (log P − 1) + b`, weighted by the parallax errors.
+- Cepheid luminosities use reddening-free Wesenheit magnitudes:
+  `W_G = G − 1.90 (BP − RP)` (Ripepi et al. 2019) from *Gaia*, and
+  `W_H = F160W − 0.386 (F555W − F814W)` from *HST*. The galaxy Cepheids are
+  only observed with *HST*, so the third part uses W_H. The absolute
+  magnitude is `M_W = W + 5 log10(ϖ / mas) − 10`, with ϖ the stored cluster
+  parallax. The fit is `M_W = a (log P − 1) + b`, weighted by the parallax
+  errors.
+- The published relations are
+  `M_G^W = −5.988 − 3.176 (log P − 1)` (Ripepi et al. 2022, solar
+  metallicity) and `M_H^W = −5.914 − 3.29 (log P − 1)` (Cruz Reyes &
+  Anderson 2023).
+- A galaxy distance modulus is the weighted mean of `W_H − M_H^W(P)` over its
+  Cepheids. The galaxy velocity is `v = c z_HD`, from the Pantheon+ redshift
+  of its supernova, which is corrected for peculiar velocities. H₀ is fitted
+  through the origin. Its error combines the scatter about the line and the
+  zero-point error of the period-luminosity relation.
 
 ## Data services
 
@@ -85,7 +120,13 @@ the browser (`localStorage`) and can be removed with **Kustuta**.
   at least 0.5 that pulsate in the fundamental mode are used. Their periods
   and intensity-averaged G, BP and RP magnitudes are from the *Gaia* DR3
   `vari_cepheid` table (VizieR I/358/vcep). These values are built into the
-  page, because no CORS-enabled service offers that table.
+  page, because no CORS-enabled service offers that table. The *HST* W_H
+  magnitudes of the cluster Cepheids are also from Cruz Reyes & Anderson
+  (2023).
+- The galaxy Cepheids (period, F160W, V − I and the total error) come from
+  Riess et al. (2016, ApJ 826, 56; VizieR J/ApJ/826/56). The supernova
+  redshifts come from Pantheon+ (Scolnic et al. 2022; Brout et al. 2022).
+  Both are built into the page.
 
 ## Code
 
