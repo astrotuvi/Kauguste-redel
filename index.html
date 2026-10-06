@@ -255,8 +255,9 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Omaliikumised</h2>
-          <p class="hint">Parve liikmed liiguvad ühtmoodi — leia tihe kogum ja märgi see lassoga.</p>
+          <p class="hint">Parve liikmed liiguvad ühtmoodi — leia tihe kogum ja märgi see lassoga. Iga uus lasso lisab tähed valikule.</p>
         </div>
+        <button type="button" id="clear">Tühista valik</button>
       </div>
       <div class="plot" id="pm"></div>
     </section>
@@ -286,7 +287,6 @@ footer a { color: inherit; }
       <h2>Parve kaugus</h2>
       <div class="opts">
         <label class="toggle"><input type="checkbox" id="zp" checked> Nullpunkti parandus (+0,017 mas)</label>
-        <button type="button" id="clear">Tühista valik</button>
         <button type="button" id="download" disabled>Laadi valik alla (CSV)</button>
       </div>
     </div>
@@ -355,10 +355,11 @@ const S = {
   d: null,            // columnar data
   n: 0,
   center: null,       // {ra, dec, label}
-  sel: { pm: null },
+  picked: new Set(),  // stars picked with the lasso, accumulated across lasso moves
   idx: null,          // combined selection (sorted indices) or null
   stats: null,
   rev: 0,             // uirevision, bumped per dataset
+  selRev: 0,          // selectionrevision, bumped on every selection update so Plotly drops its own lasso selection
   token: 0,
   page: 0,            // data table page
 };
@@ -672,27 +673,35 @@ function emptyPlot(id, msg) {
   }), { ...CONFIG, staticPlot: true });
 }
 
-// only the sky view shows per-star hover labels
-function linkedTrace(x, y, hover) {
-  return {
-    type: "scattergl", mode: "markers", x, y,
-    ...(hover ? { text: S.hover, hovertemplate: "%{text}<extra></extra>" } : { hoverinfo: "none" }),
-    marker: { size: 4, color: css("--field"), opacity: 0.6 },
-    selected: { marker: { color: css("--sel"), opacity: 1, size: 5 } },
-    unselected: { marker: { color: css("--field-dim"), opacity: 0.35 } },
-    selectedpoints: S.idx,
-  };
+// All stars, plus the picked stars drawn on top in the selection colour. Plotly restyles
+// points inside a lasso while it is drawn; "unselected" keeps the rest looking unchanged.
+// Only the sky view shows per-star hover labels.
+function linkedTraces(x, y, hover) {
+  const sel = S.idx || [];
+  const label = (text) => (hover ? { text, hovertemplate: "%{text}<extra></extra>" } : { hoverinfo: "none" });
+  const base = { size: 4, color: css("--field"), opacity: 0.6 };
+  const picked = { size: 5, color: css("--sel"), opacity: 1 };
+  return [
+    {
+      type: "scattergl", mode: "markers", x, y, ...label(S.hover),
+      marker: base, selected: { marker: picked }, unselected: { marker: base },
+    },
+    {
+      type: "scattergl", mode: "markers", x: sel.map((i) => x[i]), y: sel.map((i) => y[i]),
+      ...label(sel.map((i) => S.hover[i])),
+      marker: picked, selected: { marker: picked }, unselected: { marker: picked },
+    },
+  ];
 }
 
-// keep any drawn lasso/box when re-rendering (e.g. on theme change)
-const keptSelections = (id, keep) => (keep && $(id).layout && $(id).layout.selections) || [];
 
 function drawSky() {
   const { ra0, dec0, raPlot } = S.sky;
   const cosd = Math.max(Math.cos((dec0 * Math.PI) / 180), 0.05);
   const r = S.radius;
-  Plotly.react("sky", [linkedTrace(raPlot, S.d.dec, true)], baseLayout({
+  return Plotly.react("sky", linkedTraces(raPlot, S.d.dec, true), baseLayout({
     dragmode: "zoom",
+    selectionrevision: S.selRev,
     xaxis: axis("otsetõus α (°)", { autorange: "reversed", scaleanchor: "y", scaleratio: cosd }),
     yaxis: axis("kääne δ (°)"),
     shapes: [{
@@ -703,16 +712,16 @@ function drawSky() {
   }), { ...CONFIG, modeBarButtonsToRemove: [...CONFIG.modeBarButtonsToRemove, "select2d", "lasso2d"] });
 }
 
-function drawPM(keep = false) {
+function drawPM() {
   const d = S.d;
   const pad = (lo, hi) => { const w = hi - lo || 1; return [lo - 0.1 * w, hi + 0.1 * w]; };
   const xr = pad(percentile(d.pmra, 0.005), percentile(d.pmra, 0.995));
   const yr = pad(percentile(d.pmdec, 0.005), percentile(d.pmdec, 0.995));
-  Plotly.react("pm", [linkedTrace(d.pmra, d.pmdec, false)], baseLayout({
+  return Plotly.react("pm", linkedTraces(d.pmra, d.pmdec, false), baseLayout({
     dragmode: "lasso",
+    selectionrevision: S.selRev,
     xaxis: axis("μ<sub>α*</sub> (mas/a)", { range: xr }),
     yaxis: axis("μ<sub>δ</sub> (mas/a)", { range: yr, scaleanchor: "x", scaleratio: 1 }),
-    selections: keptSelections("pm", keep),
   }), CONFIG);
 }
 
@@ -856,14 +865,6 @@ function drawTable() {
 
 /* ---------- Selection linking ---------- */
 
-function combineSelections() {
-  const sets = Object.values(S.sel).filter(Boolean);
-  if (!sets.length) return null;
-  sets.sort((a, b) => a.size - b.size);
-  const out = [];
-  for (const i of sets[0]) if (sets.every((s) => s.has(i))) out.push(i);
-  return out.sort((a, b) => a - b);
-}
 
 function refresh() {
   if (!S.d) return;
@@ -874,24 +875,33 @@ function refresh() {
   drawResults();
 }
 
+// Redraw both linked plots with the accumulated selection; this also removes the drawn
+// lasso outline and Plotly's own selection. Events Plotly emits meanwhile are ignored.
+async function applySelection() {
+  S.syncing = true;
+  S.selRev++;
+  try {
+    await Promise.all([drawSky(), drawPM()]);
+  } finally {
+    S.syncing = false;
+  }
+}
+
 function onSelectionChange() {
-  S.idx = combineSelections();
-  for (const id of ["sky", "pm"]) Plotly.restyle(id, { selectedpoints: [S.idx] }, [0]);
+  S.idx = S.picked.size ? [...S.picked].sort((a, b) => a - b) : null;
+  applySelection();
   refresh();
 }
 
-function attachSelection(id) {
-  const el = $(id);
+function attachSelection() {
+  const el = $("pm");
   el.on("plotly_selected", (ev) => {
-    // an event with no points and no drawn region means the selection was cleared
-    if (!ev || !ev.points || (!ev.points.length && !(ev.selections && ev.selections.length) && !ev.range && !ev.lassoPoints)) S.sel[id] = null;
-    else S.sel[id] = new Set(ev.points.filter((p) => p.curveNumber === 0).map((p) => p.pointIndex ?? p.pointNumber));
+    if (S.syncing || !ev || !ev.points) return;
+    for (const p of ev.points) if (p.curveNumber === 0) S.picked.add(p.pointIndex ?? p.pointNumber);
     onSelectionChange();
   });
-  el.on("plotly_deselect", () => {
-    S.sel[id] = null;
-    onSelectionChange();
-  });
+  // a click or double-click makes Plotly drop its own selection; only the reset button clears ours
+  el.on("plotly_deselect", () => { if (!S.syncing) applySelection(); });
 }
 
 /* ---------- Main flow ---------- */
@@ -927,7 +937,7 @@ async function run() {
     if (!n) { setStatus(`${c.label}. Ühtegi sobivat Gaia tähte ei leitud — suurenda raadiust või G piiri.`, "warn"); return; }
 
     S.d = d; S.n = n; S.center = c; S.radius = radius; S.rev++;
-    S.sel = { pm: null }; S.idx = null; S.stats = null; S.page = 0;
+    S.picked = new Set(); S.idx = null; S.stats = null; S.page = 0;
     S.hover = d.src.map((_, i) =>
       `Gaia DR3 ${d.src[i]}<br>G = ${fmtN(d.g[i], 2)}` +
       (d.bprp[i] !== null ? `, BP−RP = ${fmtN(d.bprp[i], 2)}` : "") +
@@ -946,7 +956,7 @@ async function run() {
 
     drawSky();
     drawPM();
-    if (!S.attached) { attachSelection("pm"); S.attached = true; }
+    if (!S.attached) { attachSelection(); S.attached = true; }
     refresh();
 
     const url = new URL(location.href);
@@ -961,8 +971,7 @@ async function run() {
 
 function clearSelection() {
   if (!S.d) return;
-  S.sel = { pm: null };
-  Plotly.relayout("pm", { selections: [] });
+  S.picked = new Set();
   onSelectionChange();
 }
 
@@ -987,7 +996,7 @@ function redrawAll() {
     return;
   }
   drawSky();
-  drawPM(true);
+  drawPM();
   refresh();
 }
 
