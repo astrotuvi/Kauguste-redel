@@ -372,7 +372,6 @@ const S = {
   idx: null,          // combined selection (sorted indices) or null
   stats: null,
   rev: 0,             // uirevision, bumped per dataset
-  selRev: 0,          // selectionrevision, bumped on every selection update so Plotly drops its own lasso selection
   token: 0,
   coordsFor: null,    // name-box text that the coordinate box belongs to
   coordsLabel: null,  // status label for those coordinates, when they came from a name lookup
@@ -705,7 +704,6 @@ function drawSky() {
   const r = S.radius;
   return Plotly.react("sky", linkedTraces(raPlot, S.d.dec, true), baseLayout({
     dragmode: "zoom",
-    selectionrevision: S.selRev,
     xaxis: axis("otsetõus α (°)", { autorange: "reversed", scaleanchor: "y", scaleratio: cosd }),
     yaxis: axis("kääne δ (°)"),
     shapes: [{
@@ -724,7 +722,6 @@ function drawPM() {
   const yr = pad(percentile(d.pmdec, 0), percentile(d.pmdec, 1));
   return Plotly.react("pm", linkedTraces(d.pmra, d.pmdec, false), baseLayout({
     dragmode: "lasso",
-    selectionrevision: S.selRev,
     xaxis: axis("μ<sub>α*</sub> (mas/a)", { range: xr }),
     yaxis: axis("μ<sub>δ</sub> (mas/a)", { range: yr, scaleanchor: "x", scaleratio: 1 }),
   }), CONFIG);
@@ -885,13 +882,19 @@ function refresh() {
   drawResults();
 }
 
-// Redraw both linked plots with the accumulated selection; this also removes the drawn
-// lasso outline and Plotly's own selection. Events Plotly emits meanwhile are ignored.
+// Show the accumulated selection in both linked plots by updating only the overlay trace,
+// so the current zoom is kept. In the proper-motion plot this also removes the drawn lasso
+// outline and Plotly's own selection. Events Plotly emits meanwhile are ignored.
 async function applySelection() {
   S.syncing = true;
-  S.selRev++;
+  const sel = S.idx || [];
+  const pick = (a) => [sel.map((i) => a[i])];
   try {
-    await Promise.all([drawSky(), drawPM()]);
+    await Promise.all([
+      Plotly.restyle("sky", { x: pick(S.sky.raPlot), y: pick(S.d.dec), text: pick(S.hover) }, [1]),
+      Plotly.update("pm", { selectedpoints: [null] }, { selections: [] }, [0])
+        .then(() => Plotly.restyle("pm", { x: pick(S.d.pmra), y: pick(S.d.pmdec) }, [1])),
+    ]);
   } finally {
     S.syncing = false;
   }
