@@ -128,8 +128,10 @@ parameter q₀ = −0.55 as in SH0ES. Without it, H₀ comes out about 3 % low.
 - *Gaia* DR3 data come from the
   [GAVO Data Center](https://dc.g-vo.org/tableinfo/gaia.dr3lite) TAP service,
   with VizieR [I/355/gaiadr3](https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/355/gaiadr3)
-  as a fallback. Fields larger than 1.5° are queried as asynchronous jobs,
-  and results are capped at 60 000 rows.
+  and the [ARI Heidelberg](https://gaia.ari.uni-heidelberg.de/) Gaia archive
+  as fallbacks, in that order. GAVO is queried directly; the fallbacks are
+  reached through the [TAP proxy](#tap-proxy). Fields larger than 1.5° are
+  queried as asynchronous jobs, and results are capped at 60 000 rows.
 - Cluster names are resolved with SIMBAD and Sesame (CDS, Strasbourg).
 - The cluster–Cepheid pairs come from Cruz Reyes & Anderson (2023, A&A 672,
   A85; VizieR J/A+A/672/A85). Only Cepheids with a membership probability of
@@ -150,4 +152,26 @@ parameter q₀ = −0.55 as in SH0ES. Without it, H₀ comes out about 3 % low.
 
 Everything is in `index.html`: the HTML, the CSS and the JavaScript. The only
 external dependency is [Plotly.js](https://plotly.com/javascript/), loaded
-from cdnjs.
+from cdnjs. The TAP proxy in `proxy/` runs separately on Cloudflare.
+
+### TAP proxy
+
+Browsers reject the answers of the VizieR and ARI Heidelberg TAP services,
+because VizieR sends its `Access-Control-Allow-Origin` header twice and ARI
+sends none. `proxy/worker.js` is a Cloudflare Worker that forwards the
+queries to them and returns the answers with one valid CORS header. It only
+forwards the TAP `sync` and `async` endpoints and the async job resources,
+and rewrites the async job redirects so that they point back to the proxy:
+
+- `https://<worker>/vizier/sync` → `https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync`
+- `https://<worker>/ari/sync` → `https://gaia.ari.uni-heidelberg.de/tap/sync`
+
+The app uses the deployed Worker at
+`https://kauguste-redel-tap.taavi-tuvikene.workers.dev` (`TAP_PROXY` in
+`index.html`).
+
+To deploy it without installing anything, create a Worker in the Cloudflare
+dashboard (*Workers & Pages → Create → Start with Hello World*), open
+*Edit code*, replace the code with `proxy/worker.js` and press *Deploy*.
+With Node.js installed, `npx wrangler deploy` in the `proxy` folder does
+the same.

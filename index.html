@@ -455,7 +455,8 @@ footer a { color: inherit; }
   <footer>
     Andmed: ESA <i>Gaia</i> DR3 (Gaia Collaboration 2023), päritud
     <a href="https://dc.g-vo.org/tableinfo/gaia.dr3lite" target="_blank" rel="noopener">GAVO Data Centeri</a> TAP-teenusest
-    (varuvariant: VizieR <a href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/355/gaiadr3" target="_blank" rel="noopener">I/355/gaiadr3</a>).
+    (varuvariandid: VizieR <a href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/355/gaiadr3" target="_blank" rel="noopener">I/355/gaiadr3</a>
+    ja <a href="https://gaia.ari.uni-heidelberg.de/" target="_blank" rel="noopener">ARI Heidelbergi Gaia-andmekeskus</a>).
     Nimed lahendatakse SIMBADi ja Sesame abil (CDS, Strasbourg). Parallaksi nullpunkt −0,017 mas pärineb tööst Lindegren jt (2021);
     lisatud on ~0,010 mas süstemaatiline viga, sest nurga järgi korreleeruvad parallaksivead keskmistamisel ei vähene
     (Lindegren jt 2021; Maíz Apellániz jt 2021). Absoluutse tähesuurusega HR-diagrammil on ekstinktsioon arvestamata.
@@ -472,9 +473,11 @@ footer a { color: inherit; }
 <script>
 "use strict";
 
-// Gaia DR3 services queried directly from the browser, tried in order.
-// (The ESA Gaia archive sends no CORS headers; VizieR currently sends a duplicated
-// Access-Control-Allow-Origin header that browsers reject, so it is only a fallback.)
+// Gaia DR3 services queried from the browser, tried in order. GAVO is queried directly.
+// VizieR (duplicated Access-Control-Allow-Origin header) and ARI Heidelberg (no CORS
+// headers) are reached through our Cloudflare Worker (proxy/worker.js), which fixes the
+// headers. The ESA Gaia archive sends no CORS headers and is not used.
+const TAP_PROXY = "https://kauguste-redel-tap.taavi-tuvikene.workers.dev";
 const GAIA_SOURCES = [
   {
     name: "GAVO Data Center",
@@ -485,9 +488,17 @@ const GAIA_SOURCES = [
   },
   {
     name: "VizieR (CDS)",
-    url: "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync",
+    url: TAP_PROXY + "/vizier/sync",
+    async: TAP_PROXY + "/vizier/async",
     table: '"I/355/gaiadr3"',
     cols: { src: "Source", ra: "RA_ICRS", dec: "DE_ICRS", plx: "Plx", eplx: "e_Plx", pmra: "pmRA", pmdec: "pmDE", g: "Gmag", bprp: '"BP-RP"', ruwe: "RUWE" },
+  },
+  {
+    name: "ARI Heidelberg",
+    url: TAP_PROXY + "/ari/sync",
+    async: TAP_PROXY + "/ari/async",
+    table: "gaiadr3.gaia_source",
+    cols: { src: "source_id", ra: "ra", dec: "dec", plx: "parallax", eplx: "parallax_error", pmra: "pmra", pmdec: "pmdec", g: "phot_g_mean_mag", bprp: "phot_bp_mean_mag - phot_rp_mean_mag", ruwe: "ruwe" },
   },
 ];
 // Name resolvers, all asked at once: SIMBAD plus the Sesame mirrors (Strasbourg, Harvard).
