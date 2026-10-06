@@ -14,9 +14,12 @@ page needs an internet connection, because it loads Plotly from a CDN and
 queries the data services directly from the browser.
 
 1. Enter a cluster name (e.g. `M67`, `Pleiades`, `NGC 2516`) or coordinates
-   (`132.85 11.81` or `08:51:23 +11:48:50`). Set the search radius and the G
-   magnitude limit, then press **Päri Gaiast**. The example buttons fill in
-   suitable values for a few well-known clusters.
+   in the left box, or decimal-degree coordinates (`132.85 11.81`) in the
+   right box. Set the search radius and the G magnitude limit, then press
+   **Päri Gaiast**. A name is resolved when the query runs, and its
+   coordinates appear in the right box. The example buttons fill in suitable
+   values for a few well-known clusters. A query runs only when you press
+   the button (or Enter).
 2. Check the queried stars in the table, which shows 10 rows per page.
 3. On the proper-motion plot, use the lasso to mark the dense clump of stars
    that move together. Each lasso adds stars to the selection, and
@@ -25,9 +28,6 @@ queries the data services directly from the browser.
 4. Read the mean parallax and the distance in parsecs, light years and
    kilometres below the plots. You can download the selected stars as a CSV
    file.
-
-The query parameters are kept in the page URL (`?target=M67&r=0.3&g=18`), so
-a link reopens the same field.
 
 ## Method
 

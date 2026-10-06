@@ -106,6 +106,8 @@ form.controls { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: fle
 }
 .field input:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
 .field.target { flex: 1 1 260px; }
+.field.coords { flex: 0 1 220px; }
+.field.coords input { width: 100%; }
 .field.num input { width: 92px; }
 button {
   font: inherit; cursor: pointer; border-radius: 7px; padding: 8px 16px;
@@ -192,13 +194,17 @@ footer a { color: inherit; }
   <section class="card">
     <form class="controls" id="form" novalidate>
       <div class="field target">
-        <label for="target">Parve nimi või koordinaadid (α δ)</label>
+        <label for="target">Parve nimi või koordinaadid</label>
         <input id="target" name="target" value="M67" autocomplete="off" spellcheck="false"
-               placeholder="nt NGC 2516, Pleiades, 132.85 11.81, 08:51:23 +11:48:50">
+               placeholder="nt NGC 2516, Pleiades, 08:51:23 +11:48:50">
+      </div>
+      <div class="field coords">
+        <label for="coords">α δ (kümnendkraadides)</label>
+        <input id="coords" name="coords" autocomplete="off" spellcheck="false" placeholder="nt 132.85 11.81">
       </div>
       <div class="field num">
         <label for="radius">Raadius (°)</label>
-        <input id="radius" type="number" value="0.3" min="0.01" max="3" step="0.05">
+        <input id="radius" type="number" value="0.3" min="0.1" max="3" step="0.1">
       </div>
       <div class="field num">
         <label for="gmax">G piir (mag)</label>
@@ -361,6 +367,8 @@ const S = {
   rev: 0,             // uirevision, bumped per dataset
   selRev: 0,          // selectionrevision, bumped on every selection update so Plotly drops its own lasso selection
   token: 0,
+  coordsFor: null,    // name-box text that the coordinate box belongs to
+  coordsLabel: null,  // status label for those coordinates, when they came from a name lookup
   page: 0,            // data table page
 };
 
@@ -914,18 +922,30 @@ function setStatus(msg, kind = "") {
 
 async function run() {
   const target = $("target").value.trim();
+  const coordText = $("coords").value.trim();
   const radius = +$("radius").value;
   const gmax = +$("gmax").value;
-  if (!target) { setStatus("Sisesta parve nimi või koordinaadid.", "error"); return; }
+  if (!target && !coordText) { setStatus("Sisesta parve nimi või koordinaadid.", "error"); return; }
   if (!(radius > 0 && radius <= 3)) { setStatus("Raadius peab olema vahemikus 0 kuni 3 kraadi.", "error"); return; }
   if (!(gmax > 0 && gmax <= 21)) { setStatus("G piir peab olema vahemikus 0 kuni 21 mag.", "error"); return; }
 
   const token = ++S.token;
   $("go").disabled = true;
   try {
-    setStatus(`Otsin „${target}“…`);
-    const c = await resolveTarget(target);
-    if (token !== S.token) return;
+    let c;
+    // use the coordinate box when it belongs to the current name (or was typed in directly)
+    if (coordText && (!target || S.coordsFor === target)) {
+      const p = parseCoords(coordText);
+      if (!p) throw new Error("Koordinaadid peavad olema kujul α δ kümnendkraadides, nt 132.85 11.81.");
+      c = { ...p, label: S.coordsLabel || `α = ${fmtN(p.ra, 4)}°, δ = ${p.dec >= 0 ? "+" : ""}${fmtN(p.dec, 4)}°` };
+    } else {
+      setStatus(`Otsin „${target}“…`);
+      c = await resolveTarget(target);
+      if (token !== S.token) return;
+      $("coords").value = `${c.ra.toFixed(5)} ${c.dec.toFixed(5)}`;
+      S.coordsFor = target;
+      S.coordsLabel = c.label;
+    }
     setStatus(`${c.label}. Pärin Gaia DR3 tähti ${fmt(radius)}° raadiuses…`);
     const t0 = performance.now();
     const { d, source } = await queryGaia(c, radius, gmax, (sec) => {
@@ -958,10 +978,6 @@ async function run() {
     drawPM();
     if (!S.attached) { attachSelection(); S.attached = true; }
     refresh();
-
-    const url = new URL(location.href);
-    url.search = new URLSearchParams({ target, r: radius, g: gmax }).toString();
-    history.replaceState(null, "", url);
   } catch (e) {
     if (token === S.token) setStatus(e.message, "error");
   } finally {
@@ -985,7 +1001,7 @@ function downloadSelection() {
   const blob = new Blob([rows.join("\n") + "\n"], { type: "text/csv" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `${$("target").value.trim().replace(/[^\w.+-]+/g, "_") || "valik"}_gaia_valik.csv`;
+  a.download = `${($("target").value.trim() || $("coords").value.trim()).replace(/[^\w.+-]+/g, "_") || "valik"}_gaia_valik.csv`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
@@ -1003,6 +1019,10 @@ function redrawAll() {
 /* ---------- Wiring ---------- */
 
 $("form").addEventListener("submit", (e) => { e.preventDefault(); run(); });
+// a new name makes the coordinate box stale; typed coordinates are used as they are
+function clearCoords() { $("coords").value = ""; S.coordsFor = S.coordsLabel = null; }
+$("target").addEventListener("input", clearCoords);
+$("coords").addEventListener("input", () => { S.coordsFor = $("target").value.trim(); S.coordsLabel = null; });
 $("clear").addEventListener("click", clearSelection);
 $("download").addEventListener("click", downloadSelection);
 $("prevPage").addEventListener("click", () => { S.page--; drawTable(); });
@@ -1015,6 +1035,7 @@ for (const ex of EXAMPLES) {
   b.textContent = ex.name;
   b.addEventListener("click", () => {
     $("target").value = ex.name;
+    clearCoords();
     $("radius").value = ex.r;
     $("gmax").value = ex.g;
     $("target").focus();
@@ -1024,15 +1045,8 @@ for (const ex of EXAMPLES) {
 
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawAll);
 
-(function init() {
-  const p = new URLSearchParams(location.search);
-  if (p.get("target")) $("target").value = p.get("target");
-  if (p.get("r")) $("radius").value = p.get("r");
-  if (p.get("g")) $("gmax").value = p.get("g");
-  redrawAll();
-  drawResults();
-  run();
-})();
+redrawAll();
+drawResults();
 </script>
 </body>
 </html>
