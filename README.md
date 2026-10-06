@@ -26,8 +26,8 @@ queries the data services directly from the browser.
    **Tühista valik** clears it. The selected stars are highlighted in the sky
    view, the colour–magnitude diagram and the table.
 4. Optionally refine the selection in the colour–magnitude diagram: clicking
-   a selected star removes it, and **Taasta valik** brings the removed stars
-   back. Any change to the lasso selection discards these removals.
+   a selected star removes it, clicking a removed star puts it back, and
+   **Taasta valik** brings all removed stars back. Any change to the lasso selection discards these removals.
 5. Read the number of selected stars and the distance in parsecs, light
    years, astronomical units and kilometres below the plots. The parallax
    histogram marks the mean parallax. You can download the selected stars

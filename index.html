@@ -270,7 +270,7 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Värvus-heledusdiagramm (HR-diagramm)</h2>
-          <p class="hint">Valitud tähed värviliselt, kõik ülejäänud hallilt. Klõpsa valitud tähel, et see valikust eemaldada (eemaldatud tähed on rõngana).</p>
+          <p class="hint">Valitud tähed värviliselt, kõik ülejäänud hallilt. Klõpsa valitud tähel, et see valikust eemaldada; eemaldatud täht (rõngas) tuleb uuel klõpsul valikusse tagasi.</p>
         </div>
         <div class="opts">
           <label class="toggle"><input type="checkbox" id="cmdAbs"> Absoluutne M<sub>G</sub></label>
@@ -366,6 +366,7 @@ const S = {
   picked: new Set(),  // stars picked with the lasso, accumulated across lasso moves
   removed: new Set(), // picked stars removed again in the HR diagram; cleared whenever the lasso selection changes
   cmdSel: [],         // star indices of the selected-star trace in the HR diagram
+  cmdRemoved: [],     // star indices of the removed-star trace in the HR diagram
   idx: null,          // combined selection (sorted indices) or null
   stats: null,
   rev: 0,             // uirevision, bumped per dataset
@@ -715,9 +716,10 @@ function drawSky() {
 
 function drawPM() {
   const d = S.d;
-  const pad = (lo, hi) => { const w = hi - lo || 1; return [lo - 0.1 * w, hi + 0.1 * w]; };
-  const xr = pad(percentile(d.pmra, 0.005), percentile(d.pmra, 0.995));
-  const yr = pad(percentile(d.pmdec, 0.005), percentile(d.pmdec, 0.995));
+  // full range of the data, so that every star is visible initially
+  const pad = (lo, hi) => { const w = hi - lo || 1; return [lo - 0.03 * w, hi + 0.03 * w]; };
+  const xr = pad(percentile(d.pmra, 0), percentile(d.pmra, 1));
+  const yr = pad(percentile(d.pmdec, 0), percentile(d.pmdec, 1));
   return Plotly.react("pm", linkedTraces(d.pmra, d.pmdec, false), baseLayout({
     dragmode: "lasso",
     selectionrevision: S.selRev,
@@ -735,8 +737,12 @@ function drawCMD() {
   const sel = S.idx || [];
   const removed = [...S.removed];
   S.cmdSel = sel;
+  S.cmdRemoved = removed;
   $("restore").disabled = !removed.length;
-  const xr = [percentile(d.bprp, 0.002) - 0.1, percentile(d.bprp, 0.998) + 0.1];
+  // full colour range of the data, so that every star is visible initially
+  const lo = percentile(d.bprp, 0), hi = percentile(d.bprp, 1);
+  const padX = 0.03 * (hi - lo || 1);
+  const xr = [lo - padX, hi + padX];
   Plotly.react("cmd", [
     {
       type: "scattergl", mode: "markers", x: d.bprp, y: yAll, hoverinfo: "skip",
@@ -745,13 +751,13 @@ function drawCMD() {
     {
       type: "scattergl", mode: "markers",
       x: sel.map((i) => d.bprp[i]), y: sel.map((i) => yAll[i]),
-      hoverinfo: "none",    // no label, but clicks still arrive
+      text: sel.map((i) => S.hover[i]), hovertemplate: "%{text}<extra></extra>",
       marker: { size: 5, color: css("--sel"), line: { width: 0.5, color: css("--surface") } },
     },
     {
       type: "scattergl", mode: "markers",
       x: removed.map((i) => d.bprp[i]), y: removed.map((i) => yAll[i]),
-      hoverinfo: "skip",
+      hoverinfo: "none",
       marker: { size: 6, symbol: "circle-open", color: css("--text-3"), line: { width: 1 } },
     },
   ], baseLayout({
@@ -908,11 +914,14 @@ function attachSelection() {
   // a click or double-click makes Plotly drop its own selection; only the reset button clears ours
   el.on("plotly_deselect", () => { if (!S.syncing) applySelection(); });
 
-  // clicking a selected star in the HR diagram removes it from the selection
+  // clicking a selected star in the HR diagram removes it from the selection,
+  // clicking a removed star puts it back
   $("cmd").on("plotly_click", (ev) => {
-    const p = ev && ev.points && ev.points.find((q) => q.curveNumber === 1);
+    const p = ev && ev.points && ev.points.find((q) => q.curveNumber === 1 || q.curveNumber === 2);
     if (!p) return;
-    S.removed.add(S.cmdSel[p.pointIndex ?? p.pointNumber]);
+    const k = p.pointIndex ?? p.pointNumber;
+    if (p.curveNumber === 1) S.removed.add(S.cmdSel[k]);
+    else S.removed.delete(S.cmdRemoved[k]);
     onSelectionChange(false);
   });
 }
