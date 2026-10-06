@@ -132,7 +132,8 @@ ol.steps li::before {
 
 /* Plots */
 .grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
-.plot { height: 460px; margin-top: 6px; }
+.plot { aspect-ratio: 3 / 2; margin-top: 6px; }
+.plot.wide { aspect-ratio: 2 / 1; }
 .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .toggle { display: flex; gap: 6px; align-items: center; font-size: 0.8rem; color: var(--text-2); white-space: nowrap; }
 
@@ -173,9 +174,9 @@ footer { margin-top: 28px; font-size: 0.78rem; color: var(--text-3); max-width: 
 footer a { color: inherit; }
 
 @media (max-width: 900px) {
+  .plot, .plot.wide { aspect-ratio: auto; height: 340px; }
   ol.steps { grid-template-columns: 1fr 1fr; }
   .tiles { grid-template-columns: 1fr; }
-  .plot { height: 340px; }
 }
 @media (max-width: 520px) {
   ol.steps { grid-template-columns: 1fr; }
@@ -211,7 +212,7 @@ footer a { color: inherit; }
 
   <ol class="steps">
     <li>Päri tähed parve ümbrusest.</li>
-    <li>Märgi lassoga omaliikumiste joonisel koos liikuvate tähtede tihe kogum (ja soovi korral ka piirkond taevas).</li>
+    <li>Märgi lassoga omaliikumiste joonisel koos liikuvate tähtede tihe kogum.</li>
     <li>Kontrolli värvus-heledusdiagrammi: parve liikmed moodustavad selge peajada.</li>
     <li>Loe allpool keskmine parallaks ja kaugus.</li>
   </ol>
@@ -245,7 +246,7 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Asukohad taevas</h2>
-          <p class="hint">Piirkonna valimiseks kasuta lassot või ristkülikut. Keri suumimiseks, topeltklõps taastab vaate.</p>
+          <p class="hint">Omaliikumiste joonisel valitud tähed on esile tõstetud; tähe andmete nägemiseks vii kursor selle kohale. Keri suumimiseks, topeltklõps taastab vaate.</p>
         </div>
       </div>
       <div class="plot" id="sky"></div>
@@ -276,7 +277,7 @@ footer a { color: inherit; }
           <p class="hint" id="histHint">Katkendjoon: kaalutud keskmine parallaks.</p>
         </div>
       </div>
-      <div class="plot" id="hist"></div>
+      <div class="plot wide" id="hist"></div>
     </section>
   </div>
 
@@ -354,7 +355,7 @@ const S = {
   d: null,            // columnar data
   n: 0,
   center: null,       // {ra, dec, label}
-  sel: { sky: null, pm: null },
+  sel: { pm: null },
   idx: null,          // combined selection (sorted indices) or null
   stats: null,
   rev: 0,             // uirevision, bumped per dataset
@@ -671,10 +672,11 @@ function emptyPlot(id, msg) {
   }), { ...CONFIG, staticPlot: true });
 }
 
-function linkedTrace(x, y) {
+// only the sky view shows per-star hover labels
+function linkedTrace(x, y, hover) {
   return {
     type: "scattergl", mode: "markers", x, y,
-    text: S.hover, hovertemplate: "%{text}<extra></extra>",
+    ...(hover ? { text: S.hover, hovertemplate: "%{text}<extra></extra>" } : { hoverinfo: "none" }),
     marker: { size: 4, color: css("--field"), opacity: 0.6 },
     selected: { marker: { color: css("--sel"), opacity: 1, size: 5 } },
     unselected: { marker: { color: css("--field-dim"), opacity: 0.35 } },
@@ -685,21 +687,20 @@ function linkedTrace(x, y) {
 // keep any drawn lasso/box when re-rendering (e.g. on theme change)
 const keptSelections = (id, keep) => (keep && $(id).layout && $(id).layout.selections) || [];
 
-function drawSky(keep = false) {
+function drawSky() {
   const { ra0, dec0, raPlot } = S.sky;
   const cosd = Math.max(Math.cos((dec0 * Math.PI) / 180), 0.05);
   const r = S.radius;
-  Plotly.react("sky", [linkedTrace(raPlot, S.d.dec)], baseLayout({
-    dragmode: "lasso",
+  Plotly.react("sky", [linkedTrace(raPlot, S.d.dec, true)], baseLayout({
+    dragmode: "zoom",
     xaxis: axis("otsetõus α (°)", { autorange: "reversed", scaleanchor: "y", scaleratio: cosd }),
-    yaxis: axis("käänak δ (°)"),
+    yaxis: axis("kääne δ (°)"),
     shapes: [{
       type: "circle", xref: "x", yref: "y", layer: "below",
       x0: ra0 - r / cosd, x1: ra0 + r / cosd, y0: dec0 - r, y1: dec0 + r,
       line: { color: css("--axis"), width: 1, dash: "dot" },
     }],
-    selections: keptSelections("sky", keep),
-  }), CONFIG);
+  }), { ...CONFIG, modeBarButtonsToRemove: [...CONFIG.modeBarButtonsToRemove, "select2d", "lasso2d"] });
 }
 
 function drawPM(keep = false) {
@@ -707,7 +708,7 @@ function drawPM(keep = false) {
   const pad = (lo, hi) => { const w = hi - lo || 1; return [lo - 0.1 * w, hi + 0.1 * w]; };
   const xr = pad(percentile(d.pmra, 0.005), percentile(d.pmra, 0.995));
   const yr = pad(percentile(d.pmdec, 0.005), percentile(d.pmdec, 0.995));
-  Plotly.react("pm", [linkedTrace(d.pmra, d.pmdec)], baseLayout({
+  Plotly.react("pm", [linkedTrace(d.pmra, d.pmdec, false)], baseLayout({
     dragmode: "lasso",
     xaxis: axis("μ<sub>α*</sub> (mas/a)", { range: xr }),
     yaxis: axis("μ<sub>δ</sub> (mas/a)", { range: yr, scaleanchor: "x", scaleratio: 1 }),
@@ -731,7 +732,7 @@ function drawCMD() {
     {
       type: "scattergl", mode: "markers",
       x: sel.map((i) => d.bprp[i]), y: sel.map((i) => yAll[i]),
-      text: sel.map((i) => S.hover[i]), hovertemplate: "%{text}<extra></extra>",
+      hoverinfo: "skip",
       marker: { size: 5, color: css("--sel"), line: { width: 0.5, color: css("--surface") } },
     },
   ], baseLayout({
@@ -745,7 +746,7 @@ function drawCMD() {
 function drawHist() {
   const st = S.stats;
   if (!st) {
-    emptyPlot("hist", S.idx && S.idx.length === 0 ? "Praegune valik ei sisalda ühtegi tähte." : "Vali tähed taeva- või omaliikumiste joonisel.");
+    emptyPlot("hist", S.idx && S.idx.length === 0 ? "Praegune valik ei sisalda ühtegi tähte." : "Märgi tähed lassoga omaliikumiste joonisel.");
     return;
   }
   const d = S.d;
@@ -760,7 +761,7 @@ function drawHist() {
   const traces = [{
     type: "histogram", x: all, xbins: bins,
     marker: { color: css("--sel"), line: { color: css("--surface"), width: 1 } },
-    hovertemplate: "%{x} mas: %{y} tähte<extra></extra>",
+    hoverinfo: "skip",
   }];
   Plotly.react("hist", traces, baseLayout({
     uirevision: `${S.rev}-${st.off}`,
@@ -787,7 +788,7 @@ function drawResults() {
   if (!S.d) { el.innerHTML = `<p class="empty">Andmeid pole laaditud.</p>`; return; }
   const queried = `Päritud ${fmt(S.n)} ${S.n === 1 ? "täht" : "tähte"}. `;
   if (!S.idx) { el.innerHTML = `<p class="empty">${queried}Ühtegi tähte pole veel valitud — märgi omaliikumiste joonisel parve kogum lassoga.</p>`; return; }
-  if (!st) { el.innerHTML = `<p class="empty">${queried}Valik on tühi: taeva- ja omaliikumiste joonise valikud ei kattu.</p>`; return; }
+  if (!st) { el.innerHTML = `<p class="empty">${queried}Valik on tühi — lasso sees pole ühtegi tähte.</p>`; return; }
 
   const notes = [];
   let tiles;
@@ -926,7 +927,7 @@ async function run() {
     if (!n) { setStatus(`${c.label}. Ühtegi sobivat Gaia tähte ei leitud — suurenda raadiust või G piiri.`, "warn"); return; }
 
     S.d = d; S.n = n; S.center = c; S.radius = radius; S.rev++;
-    S.sel = { sky: null, pm: null }; S.idx = null; S.stats = null; S.page = 0;
+    S.sel = { pm: null }; S.idx = null; S.stats = null; S.page = 0;
     S.hover = d.src.map((_, i) =>
       `Gaia DR3 ${d.src[i]}<br>G = ${fmtN(d.g[i], 2)}` +
       (d.bprp[i] !== null ? `, BP−RP = ${fmtN(d.bprp[i], 2)}` : "") +
@@ -945,7 +946,7 @@ async function run() {
 
     drawSky();
     drawPM();
-    if (!S.attached) { attachSelection("sky"); attachSelection("pm"); S.attached = true; }
+    if (!S.attached) { attachSelection("pm"); S.attached = true; }
     refresh();
 
     const url = new URL(location.href);
@@ -960,8 +961,8 @@ async function run() {
 
 function clearSelection() {
   if (!S.d) return;
-  S.sel = { sky: null, pm: null };
-  for (const id of ["sky", "pm"]) Plotly.relayout(id, { selections: [] });
+  S.sel = { pm: null };
+  Plotly.relayout("pm", { selections: [] });
   onSelectionChange();
 }
 
@@ -985,7 +986,7 @@ function redrawAll() {
     for (const id of ["sky", "pm", "cmd", "hist"]) emptyPlot(id, "Alustamiseks päri mõne parve andmed.");
     return;
   }
-  drawSky(true);
+  drawSky();
   drawPM(true);
   refresh();
 }
