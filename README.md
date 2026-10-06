@@ -3,8 +3,11 @@
 A web app for climbing the cosmic distance ladder. The user interface is in
 Estonian.
 
-The first rung is implemented: measuring the distance to an open star cluster
-from *Gaia* DR3 parallaxes.
+Two rungs are implemented:
+
+1. Measuring the distance to an open star cluster from *Gaia* DR3 parallaxes.
+2. Calibrating the Cepheid period-luminosity relation with Cepheids that
+   belong to open clusters, using the cluster distances from the first rung.
 
 The app queries *Gaia* DR3 stars around a cluster. The user then picks the
 cluster members by their common proper motion, and the app averages the
@@ -36,6 +39,16 @@ queries the data services directly from the browser.
    histogram marks the mean parallax. You can download the selected stars
    as a CSV file.
 
+### Cepheids
+
+The second part of the page lists 15 classical Cepheids in 13 open clusters.
+**Mõõda** fills in the query form for a cluster, but you still start the query
+yourself. After selecting the cluster members, press **Salvesta parve … kaugus**
+below the distance tiles to store the mean cluster parallax. Each stored
+cluster adds its Cepheids to the period-luminosity plot. With two or more
+Cepheids, the app fits a weighted straight line. Stored distances are kept in
+the browser (`localStorage`) and can be removed with **Kustuta**.
+
 ## Method
 
 - Only stars with RUWE < 1.4 and with a measured parallax and proper motion
@@ -54,6 +67,11 @@ queries the data services directly from the browser.
 - The colour–magnitude diagram can show absolute magnitudes. Extinction is
   not corrected.
 
+- Cepheid luminosities use the reddening-free Wesenheit magnitude
+  `W = G − 1.90 (BP − RP)` (Ripepi et al. 2019). The absolute magnitude is
+  `M_W = W + 5 log10(ϖ / mas) − 10`, with ϖ the stored cluster parallax. The
+  fit is `M_W = a (log P − 1) + b`, weighted by the parallax errors.
+
 ## Data services
 
 - *Gaia* DR3 data come from the
@@ -62,6 +80,12 @@ queries the data services directly from the browser.
   as a fallback. Fields larger than 1.5° are queried as asynchronous jobs,
   and results are capped at 60 000 rows.
 - Cluster names are resolved with SIMBAD and Sesame (CDS, Strasbourg).
+- The cluster–Cepheid pairs come from Cruz Reyes & Anderson (2023, A&A 672,
+  A85; VizieR J/A+A/672/A85). Only Cepheids with a membership probability of
+  at least 0.5 that pulsate in the fundamental mode are used. Their periods
+  and intensity-averaged G, BP and RP magnitudes are from the *Gaia* DR3
+  `vari_cepheid` table (VizieR I/358/vcep). These values are built into the
+  page, because no CORS-enabled service offers that table.
 
 ## Code
 
