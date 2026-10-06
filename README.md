@@ -3,13 +3,15 @@
 A web app for climbing the cosmic distance ladder. The user interface is in
 Estonian.
 
-Three rungs are implemented:
+Four rungs are implemented:
 
 1. Measuring the distance to an open star cluster from *Gaia* DR3 parallaxes.
 2. Calibrating the Cepheid period-luminosity relation with Cepheids that
    belong to open clusters, using the cluster distances from the first rung.
 3. Measuring distances to galaxies from their Cepheids with that relation,
    and the Hubble constant from the galaxy velocities and distances.
+4. Calibrating the peak brightness of type Ia supernovae in those galaxies,
+   and measuring the Hubble constant with distant supernovae.
 
 The app queries *Gaia* DR3 stars around a cluster. The user then picks the
 cluster members by their common proper motion, and the app averages the
@@ -73,6 +75,19 @@ velocity–distance plot shows a straight line through the origin fitted by
 least squares, and its slope gives the Hubble constant H₀ and the Hubble
 time 1/H₀. Galaxies can be left out of the fit with the checkboxes.
 
+### Type Ia supernovae
+
+The fourth part appears together with the third. Each Cepheid galaxy hosted
+a type Ia supernova. Its absolute peak magnitude is `M_B = m_B − μ`, with μ
+from the third part. The mean over the galaxies selected there gives the
+supernova luminosity. This is then applied to 166 distant supernovae
+(0.023 < z < 0.06, up to about 250 Mpc). Their velocity–distance plot gives
+H₀, which is compared with the third part and with Planck (67.4 km/s/Mpc).
+
+To keep the physics simple for school pupils, velocities are `v = cz` and
+distances are not corrected for the expansion of the Universe. At these
+redshifts this lowers H₀ by about 2–3 %.
+
 ## Method
 
 - Only stars with RUWE < 1.4 and with a measured parallax and proper motion
@@ -127,7 +142,9 @@ time 1/H₀. Galaxies can be left out of the fit with the checkboxes.
 - The galaxy Cepheids (period, F160W, V − I and the total error) come from
   Riess et al. (2016, ApJ 826, 56; VizieR J/ApJ/826/56). The supernova
   redshifts come from Pantheon+ (Scolnic et al. 2022; Brout et al. 2022).
-  Both are built into the page.
+  Both are built into the page, as are the standardised peak magnitudes
+  `m_b_corr` of the calibrator supernovae (averaged over surveys) and the
+  redshifts and magnitudes of the distant SH0ES Hubble-flow supernovae.
 
 ## Code
 
