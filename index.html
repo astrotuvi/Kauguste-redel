@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="et">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cluster Distance Lab</title>
-<meta name="description" content="Measure the distance to an open star cluster from Gaia DR3 parallaxes: query a field, select co-moving stars, and average their parallaxes.">
+<title>Täheparvede kaugused</title>
+<meta name="description" content="Mõõda hajusparve kaugust Gaia DR3 parallaksidest: päri tähed parve ümbrusest, vali koos liikuvad tähed ja keskmista nende parallaksid.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/3.1.0/plotly.min.js"></script>
 <style>
 :root {
@@ -172,47 +172,47 @@ footer a { color: inherit; }
 </head>
 <body>
 <main>
-  <h1>Open cluster distances from Gaia parallaxes</h1>
-  <p class="lede">Query Gaia DR3 stars around a cluster, pick out the stars that move together across the sky, and average their parallaxes to get the cluster's distance.</p>
+  <h1>Hajusparvede kaugused Gaia parallaksidest</h1>
+  <p class="lede">Päri Gaia DR3 tähed parve ümbrusest, vali välja koos üle taeva liikuvad tähed ja keskmista nende parallaksid, et leida parve kaugus.</p>
 
   <section class="card">
     <form class="controls" id="form" novalidate>
       <div class="field target">
-        <label for="target">Cluster name or coordinates (RA Dec)</label>
+        <label for="target">Parve nimi või koordinaadid (α δ)</label>
         <input id="target" name="target" value="M67" autocomplete="off" spellcheck="false"
-               placeholder="e.g. NGC 2516, Pleiades, 132.85 11.81, 08:51:23 +11:48:50">
+               placeholder="nt NGC 2516, Pleiades, 132.85 11.81, 08:51:23 +11:48:50">
       </div>
       <div class="field num">
-        <label for="radius">Radius (deg)</label>
+        <label for="radius">Raadius (°)</label>
         <input id="radius" type="number" value="0.3" min="0.01" max="3" step="0.05">
       </div>
       <div class="field num">
-        <label for="gmax">G limit (mag)</label>
+        <label for="gmax">G piir (mag)</label>
         <input id="gmax" type="number" value="18" min="6" max="21" step="0.5">
       </div>
       <div class="field num">
         <label for="ruwe">RUWE max</label>
         <input id="ruwe" type="number" value="1.4" min="1" max="10" step="0.1">
       </div>
-      <button type="submit" class="primary" id="go">Query Gaia</button>
+      <button type="submit" class="primary" id="go">Päri Gaiast</button>
     </form>
-    <div class="examples" id="examples">Try:</div>
+    <div class="examples" id="examples">Proovi:</div>
     <p class="status" id="status" role="status" aria-live="polite"></p>
   </section>
 
   <ol class="steps">
-    <li>Query the field around a cluster.</li>
-    <li>Lasso the tight clump of co-moving stars in the proper-motion plot (and optionally a region of the sky).</li>
-    <li>Check the colour–magnitude diagram: members form a clean main sequence.</li>
-    <li>Read the mean parallax and the distance below.</li>
+    <li>Päri tähed parve ümbrusest.</li>
+    <li>Märgi lassoga omaliikumiste joonisel koos liikuvate tähtede tihe kogum (ja soovi korral ka piirkond taevas).</li>
+    <li>Kontrolli värvus-heledusdiagrammi: parve liikmed moodustavad selge peajada.</li>
+    <li>Loe allpool keskmine parallaks ja kaugus.</li>
   </ol>
 
   <div class="grid">
     <section class="card">
       <div class="card-head">
         <div>
-          <h2>Sky positions</h2>
-          <p class="hint">Lasso or box-select to restrict to a region. Scroll to zoom, double-click to reset.</p>
+          <h2>Asukohad taevas</h2>
+          <p class="hint">Piirkonna valimiseks kasuta lassot või ristkülikut. Keri suumimiseks, topeltklõps taastab vaate.</p>
         </div>
       </div>
       <div class="plot" id="sky"></div>
@@ -220,8 +220,8 @@ footer a { color: inherit; }
     <section class="card">
       <div class="card-head">
         <div>
-          <h2>Proper motions</h2>
-          <p class="hint">Cluster members share one motion — look for the dense clump and lasso it.</p>
+          <h2>Omaliikumised</h2>
+          <p class="hint">Parve liikmed liiguvad ühtmoodi — leia tihe kogum ja märgi see lassoga.</p>
         </div>
       </div>
       <div class="plot" id="pm"></div>
@@ -229,18 +229,18 @@ footer a { color: inherit; }
     <section class="card">
       <div class="card-head">
         <div>
-          <h2>Colour–magnitude (HR) diagram</h2>
-          <p class="hint">Selected stars in colour, the whole field in grey.</p>
+          <h2>Värvus-heledusdiagramm (HR-diagramm)</h2>
+          <p class="hint">Valitud tähed värviliselt, kõik ülejäänud hallilt.</p>
         </div>
-        <label class="toggle"><input type="checkbox" id="cmdAbs"> Absolute M<sub>G</sub></label>
+        <label class="toggle"><input type="checkbox" id="cmdAbs"> Absoluutne M<sub>G</sub></label>
       </div>
       <div class="plot" id="cmd"></div>
     </section>
     <section class="card">
       <div class="card-head">
         <div>
-          <h2>Parallaxes of selected stars</h2>
-          <p class="hint" id="histHint">Dashed line: weighted mean parallax.</p>
+          <h2>Valitud tähtede parallaksid</h2>
+          <p class="hint" id="histHint">Katkendjoon: kaalutud keskmine parallaks.</p>
         </div>
       </div>
       <div class="plot" id="hist"></div>
@@ -249,24 +249,24 @@ footer a { color: inherit; }
 
   <section class="card results">
     <div class="results-head">
-      <h2>Cluster distance</h2>
+      <h2>Parve kaugus</h2>
       <div class="opts">
-        <label class="toggle"><input type="checkbox" id="zp" checked> Zero-point correction (+0.017 mas)</label>
-        <label class="toggle"><input type="checkbox" id="clip"> Clip 3σ parallax outliers</label>
-        <button type="button" id="clear">Clear selection</button>
-        <button type="button" id="download" disabled>Download selection (CSV)</button>
+        <label class="toggle"><input type="checkbox" id="zp" checked> Nullpunkti parandus (+0,017 mas)</label>
+        <label class="toggle"><input type="checkbox" id="clip"> Jäta välja 3σ kõrvalekalded</label>
+        <button type="button" id="clear">Tühista valik</button>
+        <button type="button" id="download" disabled>Laadi valik alla (CSV)</button>
       </div>
     </div>
-    <div id="results"><p class="empty">No stars selected yet.</p></div>
+    <div id="results"><p class="empty">Ühtegi tähte pole veel valitud.</p></div>
   </section>
 
   <footer>
-    Data: ESA <i>Gaia</i> DR3 (Gaia Collaboration 2023), queried from the
-    <a href="https://dc.g-vo.org/tableinfo/gaia.dr3lite" target="_blank" rel="noopener">GAVO Data Center</a> TAP service
-    (fallback: VizieR <a href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/355/gaiadr3" target="_blank" rel="noopener">I/355/gaiadr3</a>).
-    Names resolved with SIMBAD and Sesame (CDS, Strasbourg). Parallax zero-point −0.017 mas from Lindegren et al. (2021);
-    a ~0.010 mas systematic floor is added because angularly correlated parallax errors don't average out
-    (Lindegren et al. 2021; Maíz Apellániz et al. 2021). Extinction is ignored in the absolute-magnitude CMD.
+    Andmed: ESA <i>Gaia</i> DR3 (Gaia Collaboration 2023), päritud
+    <a href="https://dc.g-vo.org/tableinfo/gaia.dr3lite" target="_blank" rel="noopener">GAVO Data Centeri</a> TAP-teenusest
+    (varuvariant: VizieR <a href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/355/gaiadr3" target="_blank" rel="noopener">I/355/gaiadr3</a>).
+    Nimed lahendatakse SIMBADi ja Sesame abil (CDS, Strasbourg). Parallaksi nullpunkt −0,017 mas pärineb tööst Lindegren jt (2021);
+    lisatud on ~0,010 mas süstemaatiline viga, sest nurga järgi korreleeruvad parallaksivead keskmistamisel ei vähene
+    (Lindegren jt 2021; Maíz Apellániz jt 2021). Absoluutse tähesuurusega HR-diagrammil on ekstinktsioon arvestamata.
   </footer>
 </main>
 
@@ -331,7 +331,7 @@ const S = {
 
 function checkCoords(ra, dec) {
   if (!(ra >= 0 && ra < 360 && dec >= -90 && dec <= 90)) {
-    throw new Error("Coordinates out of range: RA must be 0–360°, Dec −90…+90°.");
+    throw new Error("Koordinaadid on lubatud vahemikust väljas: α peab olema 0–360°, δ −90…+90°.");
   }
   return { ra, dec };
 }
@@ -360,8 +360,8 @@ async function fetchText(url, ms) {
     const r = await fetch(url, { signal: ctrl.signal });
     return { ok: r.ok, status: r.status, text: await r.text() };
   } catch (e) {
-    if (e.name === "AbortError") throw new Error("the request timed out");
-    throw new Error("network error or blocked request");
+    if (e.name === "AbortError") throw new Error("päring aegus");
+    throw new Error("võrguviga või blokeeritud päring");
   } finally {
     clearTimeout(timer);
   }
@@ -404,7 +404,7 @@ async function simbadId(name) {
   const td = [...r.text.matchAll(/<TD>([^<]*)<\/TD>/g)].map((m) => m[1].trim());
   if (td.length < 3 || !isFinite(parseFloat(td[1]))) {
     if (/name="Error"/.test(r.text)) return null;    // a definitive "not found"
-    throw new Error("unexpected SIMBAD response");
+    throw new Error("ootamatu SIMBADi vastus");
   }
   return { oname: td[0], ra: parseFloat(td[1]), dec: parseFloat(td[2]), otype: td[3] };
 }
@@ -416,10 +416,10 @@ function resolveName(name) {
     let failed = 0;
     for (const f of resolvers) {
       f().then(
-        (res) => res ? resolve(res) : reject(new Error(`Could not resolve “${name}”. Check the spelling or enter coordinates.`)),
+        (res) => res ? resolve(res) : reject(new Error(`Nime „${name}“ ei leitud. Kontrolli kirjapilti või sisesta koordinaadid.`)),
         () => {
           if (++failed === resolvers.length) {
-            reject(new Error("The name resolvers (SIMBAD, Sesame) are unreachable right now. Enter coordinates instead, e.g. 132.85 11.81."));
+            reject(new Error("Nimelahendajad (SIMBAD, Sesame) ei ole praegu kättesaadavad. Sisesta selle asemel koordinaadid, nt 132.85 11.81."));
           }
         });
     }
@@ -428,10 +428,10 @@ function resolveName(name) {
 
 async function resolveTarget(text) {
   const c = parseCoords(text);
-  if (c) return { ...c, label: `RA ${c.ra.toFixed(4)}°, Dec ${c.dec >= 0 ? "+" : ""}${c.dec.toFixed(4)}°` };
+  if (c) return { ...c, label: `α = ${fmtN(c.ra, 4)}°, δ = ${c.dec >= 0 ? "+" : ""}${fmtN(c.dec, 4)}°` };
   const s = await resolveName(text);
   const kind = s.otype ? ` [${s.otype}]` : "";
-  return { ra: s.ra, dec: s.dec, label: `${(s.oname || text).replace(/\s+/g, " ")}${kind} → RA ${s.ra.toFixed(4)}°, Dec ${s.dec >= 0 ? "+" : ""}${s.dec.toFixed(4)}°` };
+  return { ra: s.ra, dec: s.dec, label: `${(s.oname || text).replace(/\s+/g, " ")}${kind} → α = ${fmtN(s.ra, 4)}°, δ = ${s.dec >= 0 ? "+" : ""}${fmtN(s.dec, 4)}°` };
 }
 
 /* ---------- Gaia query ---------- */
@@ -450,7 +450,7 @@ WHERE 1 = CONTAINS(POINT('ICRS', ${k.ra}, ${k.dec}), CIRCLE('ICRS', ${c.ra.toFix
   try {
     return await querySync(s, params);
   } catch (e) {
-    if (s.async && /too long|time ?out|timed out/i.test(e.message)) return queryAsync(s, params, onWait);
+    if (s.async && /too long|time ?out|timed out|aegus/i.test(e.message)) return queryAsync(s, params, onWait);
     throw e;
   }
 }
@@ -470,13 +470,13 @@ async function querySync(s, params) {
 async function queryAsync(s, params, onWait) {
   const created = await fetch(s.async, { method: "POST", body: new URLSearchParams(params) });
   const job = created.url;                            // fetch follows the 303 to the job URL
-  if (!created.ok || job.replace(/\/$/, "") === s.async) throw new Error("could not create an async query job");
+  if (!created.ok || job.replace(/\/$/, "") === s.async) throw new Error("taustapäringu loomine ebaõnnestus");
   try {
     await fetch(job + "/phase", { method: "POST", body: new URLSearchParams({ PHASE: "RUN" }) });
     const t0 = performance.now();
     for (;;) {
       const elapsed = (performance.now() - t0) / 1000;
-      if (elapsed > ASYNC_LIMIT) throw new Error(`the query did not finish within ${ASYNC_LIMIT / 60} minutes`);
+      if (elapsed > ASYNC_LIMIT) throw new Error(`päring ei lõppenud ${ASYNC_LIMIT / 60} minuti jooksul`);
       if (onWait && onWait(elapsed) === false) throw new Error("cancelled");
       const phase = (await fetchText(job + "/phase", 20000)).text.trim();
       if (phase === "COMPLETED") break;
@@ -504,7 +504,7 @@ async function queryGaia(c, radius, gmax, ruwe, onWait) {
       failures.push(`${s.name}: ${e.message}`);
     }
   }
-  throw new Error("Gaia query failed — " + failures.join("; "));
+  throw new Error("Gaia päring ebaõnnestus — " + failures.join("; "));
 }
 
 // Columns arrive in FIELDS order (CSV of plain numbers; the header row is skipped).
@@ -516,7 +516,7 @@ function parseCSV(text) {
   const num = (s) => (s === "" || s === undefined ? null : +s);
   for (let i = 0; i < n; i++) {
     const f = lines[i + 1].split(",");
-    if (f.length !== FIELDS.length) throw new Error("Unexpected response format.");
+    if (f.length !== FIELDS.length) throw new Error("Ootamatu vastuse vorming.");
     d.src[i] = f[0].replace(/"/g, "");
     for (let j = 1; j < FIELDS.length; j++) d[FIELDS[j]][i] = num(f[j]);
   }
@@ -585,7 +585,9 @@ function computeStats(idx) {
 
 /* ---------- Formatting ---------- */
 
-const fmtN = (v, dp) => v.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+const NF = {};
+const fmtN = (v, dp) => (NF[dp] ??= new Intl.NumberFormat("et-EE", { minimumFractionDigits: dp, maximumFractionDigits: dp })).format(v);
+const fmt = (v) => v.toLocaleString("et-EE", { maximumFractionDigits: 3 });
 
 // value ± error, error rounded to 2 significant figures, value to the same decimal place
 function valErr(v, e) {
@@ -632,6 +634,7 @@ function baseLayout(extra = {}) {
     font: { family: getComputedStyle(document.body).fontFamily, size: 12, color: css("--text-2") },
     margin: { l: 58, r: 12, t: 8, b: 46 },
     hovermode: "closest",
+    separators: ", ",
     showlegend: false,
     hoverlabel: { bgcolor: css("--surface"), bordercolor: css("--border"), font: { color: css("--text-1") } },
     uirevision: S.rev,
@@ -666,8 +669,8 @@ function drawSky(keep = false) {
   const r = S.radius;
   Plotly.react("sky", [linkedTrace(raPlot, S.d.dec)], baseLayout({
     dragmode: "lasso",
-    xaxis: axis("RA (deg)", { autorange: "reversed", scaleanchor: "y", scaleratio: cosd }),
-    yaxis: axis("Dec (deg)"),
+    xaxis: axis("otsetõus α (°)", { autorange: "reversed", scaleanchor: "y", scaleratio: cosd }),
+    yaxis: axis("käänak δ (°)"),
     shapes: [{
       type: "circle", xref: "x", yref: "y", layer: "below",
       x0: ra0 - r / cosd, x1: ra0 + r / cosd, y0: dec0 - r, y1: dec0 + r,
@@ -684,8 +687,8 @@ function drawPM(keep = false) {
   const yr = pad(percentile(d.pmdec, 0.005), percentile(d.pmdec, 0.995));
   Plotly.react("pm", [linkedTrace(d.pmra, d.pmdec)], baseLayout({
     dragmode: "lasso",
-    xaxis: axis("μ<sub>α*</sub> (mas/yr)", { range: xr }),
-    yaxis: axis("μ<sub>δ</sub> (mas/yr)", { range: yr, scaleanchor: "x", scaleratio: 1 }),
+    xaxis: axis("μ<sub>α*</sub> (mas/a)", { range: xr }),
+    yaxis: axis("μ<sub>δ</sub> (mas/a)", { range: yr, scaleanchor: "x", scaleratio: 1 }),
     selections: keptSelections("pm", keep),
   }), CONFIG);
 }
@@ -720,7 +723,7 @@ function drawCMD() {
 function drawHist() {
   const st = S.stats;
   if (!st) {
-    emptyPlot("hist", S.idx && S.idx.length === 0 ? "The current selection contains no stars." : "Select stars in the sky or proper-motion plot.");
+    emptyPlot("hist", S.idx && S.idx.length === 0 ? "Praegune valik ei sisalda ühtegi tähte." : "Vali tähed taeva- või omaliikumiste joonisel.");
     return;
   }
   const d = S.d;
@@ -737,20 +740,20 @@ function drawHist() {
   const traces = [{
     type: "histogram", x: used, xbins: bins, name: "used",
     marker: { color: css("--sel"), line: { color: css("--surface"), width: 1 } },
-    hovertemplate: "%{x} mas: %{y} stars<extra></extra>",
+    hovertemplate: "%{x} mas: %{y} tähte<extra></extra>",
   }];
   if (clip.length) traces.push({
     type: "histogram", x: clip, xbins: bins, name: "clipped",
     marker: { color: css("--field-dim"), line: { color: css("--surface"), width: 1 } },
-    hovertemplate: "clipped %{x} mas: %{y}<extra></extra>",
+    hovertemplate: "välja jäetud %{x} mas: %{y}<extra></extra>",
   });
   Plotly.react("hist", traces, baseLayout({
     uirevision: `${S.rev}-${st.off}`,
     dragmode: "zoom",
     barmode: "stack",
     bargap: 0,
-    xaxis: axis(st.off ? "parallax + 0.017 mas (zero-point corrected)" : "parallax (mas)"),
-    yaxis: axis("stars"),
+    xaxis: axis(st.off ? "parallaks + 0,017 mas (nullpunkt parandatud)" : "parallaks (mas)"),
+    yaxis: axis("tähti"),
     shapes: [{
       type: "line", xref: "x", yref: "paper", x0: st.wmean, x1: st.wmean, y0: 0, y1: 1,
       line: { color: css("--accent"), width: 2, dash: "dash" },
@@ -767,14 +770,14 @@ function drawResults() {
   const el = $("results");
   const st = S.stats;
   $("download").disabled = !(S.idx && S.idx.length);
-  if (!S.d) { el.innerHTML = `<p class="empty">No data loaded.</p>`; return; }
-  if (!S.idx) { el.innerHTML = `<p class="empty">No stars selected yet — lasso the cluster's clump in the proper-motion plot.</p>`; return; }
-  if (!st) { el.innerHTML = `<p class="empty">The selection is empty: the sky and proper-motion selections don't overlap.</p>`; return; }
+  if (!S.d) { el.innerHTML = `<p class="empty">Andmeid pole laaditud.</p>`; return; }
+  if (!S.idx) { el.innerHTML = `<p class="empty">Ühtegi tähte pole veel valitud — märgi omaliikumiste joonisel parve kogum lassoga.</p>`; return; }
+  if (!st) { el.innerHTML = `<p class="empty">Valik on tühi: taeva- ja omaliikumiste joonise valikud ei kattu.</p>`; return; }
 
   const notes = [];
   let tiles;
   if (!(st.wmean > 0)) {
-    notes.push(`<div class="note error">The mean parallax is not positive, so no distance can be derived. Select a cleaner clump of cluster stars.</div>`);
+    notes.push(`<div class="note error">Keskmine parallaks ei ole positiivne, seega kaugust leida ei saa. Vali puhtam parve tähtede kogum.</div>`);
     tiles = "";
   } else {
     const dpc = 1000 / st.wmean;
@@ -783,30 +786,30 @@ function drawResults() {
     const [lyV, lyE] = valErr(dpc * PC_LY, epc * PC_LY);
     const km = sciValErr(dpc * PC_KM, epc * PC_KM);
     tiles = `<div class="tiles">
-      <div class="tile"><div class="label">Distance</div><div class="value">${pcV} <small>± ${pcE}</small></div><div class="unit">parsecs</div></div>
-      <div class="tile"><div class="label">Distance</div><div class="value">${lyV} <small>± ${lyE}</small></div><div class="unit">light years</div></div>
-      <div class="tile"><div class="label">Distance</div><div class="value">${km.a}<small> ± ${km.b}</small> <small>× 10<sup>${km.exp}</sup></small></div><div class="unit">kilometres</div></div>
+      <div class="tile"><div class="label">Kaugus</div><div class="value">${pcV} <small>± ${pcE}</small></div><div class="unit">parsekit</div></div>
+      <div class="tile"><div class="label">Kaugus</div><div class="value">${lyV} <small>± ${lyE}</small></div><div class="unit">valgusaastat</div></div>
+      <div class="tile"><div class="label">Kaugus</div><div class="value">${km.a}<small> ± ${km.b}</small> <small>× 10<sup>${km.exp}</sup></small></div><div class="unit">kilomeetrit</div></div>
     </div>`;
-    if (st.etot / st.wmean > 0.1) notes.push(`<div class="note warn">The relative parallax error is ${fmtN(100 * st.etot / st.wmean, 0)}%. Above ~10%, 1/ϖ becomes a biased and asymmetric distance estimate.</div>`);
+    if (st.etot / st.wmean > 0.1) notes.push(`<div class="note warn">Parallaksi suhteline viga on ${fmtN(100 * st.etot / st.wmean, 0)}%. Üle ~10% muutub 1/ϖ nihkega ja asümmeetriliseks kauguse hinnanguks.</div>`);
   }
-  if (st.n < 10) notes.push(`<div class="note warn">Only ${st.n} star${st.n === 1 ? "" : "s"} selected — the mean is fragile.</div>`);
-  if (st.redchi2 > 3 && st.n >= 10) notes.push(`<div class="note warn">The parallax scatter is ${fmtN(Math.sqrt(st.redchi2), 1)}× larger than the quoted errors predict (χ²/dof = ${fmtN(st.redchi2, 1)}). The selection probably contains field stars — tighten the proper-motion lasso or enable clipping.</div>`);
+  if (st.n < 10) notes.push(`<div class="note warn">Valitud on ainult ${st.n} ${st.n === 1 ? "täht" : "tähte"} — keskmine on ebakindel.</div>`);
+  if (st.redchi2 > 3 && st.n >= 10) notes.push(`<div class="note warn">Parallakside hajuvus on ${fmtN(Math.sqrt(st.redchi2), 1)}× suurem, kui antud vead ennustavad (χ²/vabadusaste = ${fmtN(st.redchi2, 1)}). Valikus on tõenäoliselt taustatähti — kitsenda omaliikumiste lassot või lülita sisse kõrvalekallete väljajätmine.</div>`);
 
   const [wv, we] = valErr(st.wmean, st.etot);
-  const zpNote = st.off ? " (incl. +0.017 mas zero-point)" : " (no zero-point correction)";
+  const zpNote = st.off ? " (koos +0,017 mas nullpunkti parandusega)" : " (ilma nullpunkti paranduseta)";
   el.innerHTML = `${tiles}${notes.join("")}
     <table class="detail"><tbody>
-      <tr><td>Stars selected / used</td><td>${st.n + st.clipped.length} / ${st.n}${st.clipped.length ? ` (${st.clipped.length} clipped)` : ""}</td></tr>
-      <tr><td>Weighted mean parallax ⟨ϖ⟩</td><td><b>${wv} ± ${we} mas</b>${zpNote}</td></tr>
-      <tr><td>&nbsp;&nbsp;statistical / systematic error</td><td>${fmtN(st.estat, 4)} / ${fmtN(SYS, 3)} mas, added in quadrature</td></tr>
-      <tr><td>Unweighted mean ± s.e.m.</td><td>${isFinite(st.sem) ? `${fmtN(st.mean, 4)} ± ${fmtN(st.sem, 4)}` : fmtN(st.mean, 4)} mas</td></tr>
-      <tr><td>Median parallax</td><td>${fmtN(st.med, 4)} mas</td></tr>
-      <tr><td>Std. deviation of parallaxes</td><td>${isFinite(st.std) ? fmtN(st.std, 4) + " mas" : "—"}</td></tr>
-      <tr><td>Reduced χ² about the mean</td><td>${isFinite(st.redchi2) ? fmtN(st.redchi2, 2) : "—"}</td></tr>
-      <tr><td>Median proper motion (μ<sub>α*</sub>, μ<sub>δ</sub>)</td><td>${fmtN(st.pmra, 3)}, ${fmtN(st.pmdec, 3)} mas/yr</td></tr>
+      <tr><td>Tähti valitud / kasutatud</td><td>${st.n + st.clipped.length} / ${st.n}${st.clipped.length ? ` (${st.clipped.length} välja jäetud)` : ""}</td></tr>
+      <tr><td>Kaalutud keskmine parallaks ⟨ϖ⟩</td><td><b>${wv} ± ${we} mas</b>${zpNote}</td></tr>
+      <tr><td>&nbsp;&nbsp;statistiline / süstemaatiline viga</td><td>${fmtN(st.estat, 4)} / ${fmtN(SYS, 3)} mas, liidetud ruutudena</td></tr>
+      <tr><td>Kaalumata keskmine ± standardviga</td><td>${isFinite(st.sem) ? `${fmtN(st.mean, 4)} ± ${fmtN(st.sem, 4)}` : fmtN(st.mean, 4)} mas</td></tr>
+      <tr><td>Parallakside mediaan</td><td>${fmtN(st.med, 4)} mas</td></tr>
+      <tr><td>Parallakside standardhälve</td><td>${isFinite(st.std) ? fmtN(st.std, 4) + " mas" : "—"}</td></tr>
+      <tr><td>Taandatud χ² keskmise suhtes</td><td>${isFinite(st.redchi2) ? fmtN(st.redchi2, 2) : "—"}</td></tr>
+      <tr><td>Omaliikumise mediaan (μ<sub>α*</sub>, μ<sub>δ</sub>)</td><td>${fmtN(st.pmra, 3)}; ${fmtN(st.pmdec, 3)} mas/a</td></tr>
     </tbody></table>
-    <p class="formula">d [pc] = 1000 / ⟨ϖ⟩ [mas]. Average the parallaxes first, then invert — the mean of 1/ϖ is biased.
-    1 pc = 3.2616 ly = 3.0857 × 10<sup>13</sup> km = 206 265 au.</p>`;
+    <p class="formula">d [pc] = 1000 / ⟨ϖ⟩ [mas]. Keskmista kõigepealt parallaksid ja alles siis pööra ümber — 1/ϖ keskmine on nihkega.
+    1 pc = 3,2616 valgusaastat = 3,0857 × 10<sup>13</sup> km = 206 265 aü.</p>`;
 }
 
 /* ---------- Selection linking ---------- */
@@ -861,44 +864,44 @@ async function run() {
   const radius = +$("radius").value;
   const gmax = +$("gmax").value;
   const ruwe = +$("ruwe").value;
-  if (!target) { setStatus("Enter a cluster name or coordinates.", "error"); return; }
-  if (!(radius > 0 && radius <= 3)) { setStatus("Radius must be between 0 and 3 degrees.", "error"); return; }
-  if (!(gmax > 0 && gmax <= 21)) { setStatus("G limit must be between 0 and 21 mag.", "error"); return; }
-  if (!(ruwe >= 1)) { setStatus("RUWE limit must be at least 1.", "error"); return; }
+  if (!target) { setStatus("Sisesta parve nimi või koordinaadid.", "error"); return; }
+  if (!(radius > 0 && radius <= 3)) { setStatus("Raadius peab olema vahemikus 0 kuni 3 kraadi.", "error"); return; }
+  if (!(gmax > 0 && gmax <= 21)) { setStatus("G piir peab olema vahemikus 0 kuni 21 mag.", "error"); return; }
+  if (!(ruwe >= 1)) { setStatus("RUWE piir peab olema vähemalt 1.", "error"); return; }
 
   const token = ++S.token;
   $("go").disabled = true;
   try {
-    setStatus(`Resolving “${target}”…`);
+    setStatus(`Otsin „${target}“…`);
     const c = await resolveTarget(target);
     if (token !== S.token) return;
-    setStatus(`${c.label}. Querying Gaia DR3 within ${radius}°…`);
+    setStatus(`${c.label}. Pärin Gaia DR3 tähti ${fmt(radius)}° raadiuses…`);
     const t0 = performance.now();
     const { d, source } = await queryGaia(c, radius, gmax, ruwe, (sec) => {
       if (token !== S.token) return false;
-      setStatus(`${c.label}. Large field — Gaia query running as a background job (${Math.round(sec)} s; usually under a minute)…`);
+      setStatus(`${c.label}. Suur väli — Gaia päring töötab taustal (${Math.round(sec)} s; tavaliselt alla minuti)…`);
     });
     if (token !== S.token) return;
     const n = d.src.length;
-    if (!n) { setStatus(`${c.label}. No Gaia stars matched — increase the radius or G limit.`, "warn"); return; }
+    if (!n) { setStatus(`${c.label}. Ühtegi sobivat Gaia tähte ei leitud — suurenda raadiust või G piiri.`, "warn"); return; }
 
     S.d = d; S.n = n; S.center = c; S.radius = radius; S.rev++;
     S.sel = { sky: null, pm: null }; S.idx = null; S.stats = null;
     S.hover = d.src.map((_, i) =>
-      `Gaia DR3 ${d.src[i]}<br>G = ${d.g[i].toFixed(2)}` +
-      (d.bprp[i] !== null ? `, BP−RP = ${d.bprp[i].toFixed(2)}` : "") +
-      `<br>ϖ = ${d.plx[i].toFixed(3)} ± ${d.eplx[i].toFixed(3)} mas` +
-      `<br>μ = (${d.pmra[i].toFixed(2)}, ${d.pmdec[i].toFixed(2)}) mas/yr`);
+      `Gaia DR3 ${d.src[i]}<br>G = ${fmtN(d.g[i], 2)}` +
+      (d.bprp[i] !== null ? `, BP−RP = ${fmtN(d.bprp[i], 2)}` : "") +
+      `<br>ϖ = ${fmtN(d.plx[i], 3)} ± ${fmtN(d.eplx[i], 3)} mas` +
+      `<br>μ = (${fmtN(d.pmra[i], 2)}; ${fmtN(d.pmdec[i], 2)}) mas/a`);
     // unwrap RA around the centre so fields crossing RA = 0 stay contiguous
     S.sky = {
       ra0: c.ra, dec0: c.dec,
       raPlot: d.ra.map((ra) => { let x = ra - c.ra; if (x > 180) x -= 360; if (x < -180) x += 360; return c.ra + x; }),
     };
 
-    const secs = ((performance.now() - t0) / 1000).toFixed(1);
+    const secs = fmtN((performance.now() - t0) / 1000, 1);
     const trunc = n >= MAXREC;
-    setStatus(`${c.label}. ${n.toLocaleString("en-US")} stars (G < ${gmax}, RUWE < ${ruwe}) from ${source} in ${secs} s.` +
-      (trunc ? ` Result truncated at ${MAXREC.toLocaleString("en-US")} rows — reduce the radius or G limit.` : ""), trunc ? "warn" : "");
+    setStatus(`${c.label}. ${fmt(n)} tähte (G < ${fmt(gmax)}, RUWE < ${fmt(ruwe)}) allikast ${source}, ${secs} s.` +
+      (trunc ? ` Tulemus on kärbitud ${fmt(MAXREC)} reani — vähenda raadiust või G piiri.` : ""), trunc ? "warn" : "");
 
     drawSky();
     drawPM();
@@ -933,14 +936,14 @@ function downloadSelection() {
   const blob = new Blob([rows.join("\n") + "\n"], { type: "text/csv" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `${$("target").value.trim().replace(/[^\w.+-]+/g, "_") || "selection"}_gaia_selection.csv`;
+  a.download = `${$("target").value.trim().replace(/[^\w.+-]+/g, "_") || "valik"}_gaia_valik.csv`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 function redrawAll() {
   if (!S.d) {
-    for (const id of ["sky", "pm", "cmd", "hist"]) emptyPlot(id, "Query a cluster to begin.");
+    for (const id of ["sky", "pm", "cmd", "hist"]) emptyPlot(id, "Alustamiseks päri mõne parve andmed.");
     return;
   }
   drawSky(true);
