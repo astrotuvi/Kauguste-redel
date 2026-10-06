@@ -270,9 +270,12 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Värvus-heledusdiagramm (HR-diagramm)</h2>
-          <p class="hint">Valitud tähed värviliselt, kõik ülejäänud hallilt.</p>
+          <p class="hint">Valitud tähed värviliselt, kõik ülejäänud hallilt. Klõpsa valitud tähel, et see valikust eemaldada (eemaldatud tähed on rõngana).</p>
         </div>
-        <label class="toggle"><input type="checkbox" id="cmdAbs"> Absoluutne M<sub>G</sub></label>
+        <div class="opts">
+          <label class="toggle"><input type="checkbox" id="cmdAbs"> Absoluutne M<sub>G</sub></label>
+          <button type="button" id="restore" disabled>Taasta valik</button>
+        </div>
       </div>
       <div class="plot" id="cmd"></div>
     </section>
@@ -361,6 +364,8 @@ const S = {
   n: 0,
   center: null,       // {ra, dec, label}
   picked: new Set(),  // stars picked with the lasso, accumulated across lasso moves
+  removed: new Set(), // picked stars removed again in the HR diagram; cleared whenever the lasso selection changes
+  cmdSel: [],         // star indices of the selected-star trace in the HR diagram
   idx: null,          // combined selection (sorted indices) or null
   stats: null,
   rev: 0,             // uirevision, bumped per dataset
@@ -728,6 +733,9 @@ function drawCMD() {
   const shift = abs ? 5 * Math.log10(st.wmean / 100) : 0;
   const yAll = abs ? d.g.map((g) => g + shift) : d.g;
   const sel = S.idx || [];
+  const removed = [...S.removed];
+  S.cmdSel = sel;
+  $("restore").disabled = !removed.length;
   const xr = [percentile(d.bprp, 0.002) - 0.1, percentile(d.bprp, 0.998) + 0.1];
   Plotly.react("cmd", [
     {
@@ -737,12 +745,19 @@ function drawCMD() {
     {
       type: "scattergl", mode: "markers",
       x: sel.map((i) => d.bprp[i]), y: sel.map((i) => yAll[i]),
-      hoverinfo: "skip",
+      hoverinfo: "none",    // no label, but clicks still arrive
       marker: { size: 5, color: css("--sel"), line: { width: 0.5, color: css("--surface") } },
+    },
+    {
+      type: "scattergl", mode: "markers",
+      x: removed.map((i) => d.bprp[i]), y: removed.map((i) => yAll[i]),
+      hoverinfo: "skip",
+      marker: { size: 6, symbol: "circle-open", color: css("--text-3"), line: { width: 1 } },
     },
   ], baseLayout({
     uirevision: `${S.rev}-${abs}`,
     dragmode: "zoom",
+    hoverdistance: 8,
     xaxis: axis("G<sub>BP</sub> − G<sub>RP</sub> (mag)", { range: xr }),
     yaxis: axis(abs ? `M<sub>G</sub> (mag), μ = ${fmtN(-shift, 2)}` : "G (mag)", { autorange: "reversed" }),
   }), CONFIG);
@@ -791,9 +806,10 @@ function drawResults() {
   const st = S.stats;
   $("download").disabled = !(S.idx && S.idx.length);
   if (!S.d) { el.innerHTML = `<p class="empty">Andmeid pole laaditud.</p>`; return; }
-  const counts = `<p class="counts">Valitud tähti: <b>${fmt(S.idx ? S.idx.length : 0)}</b> · Kokku tähti: <b>${fmt(S.n)}</b></p>`;
+  const counts = `<p class="counts">Valitud tähti: <b>${fmt(S.idx ? S.idx.length : 0)}</b>` +
+    (S.removed.size ? ` (HR-diagrammil eemaldatud ${fmt(S.removed.size)})` : "") + ` · Kokku tähti: <b>${fmt(S.n)}</b></p>`;
   if (!S.idx) { el.innerHTML = `${counts}<p class="empty">Ühtegi tähte pole veel valitud — märgi omaliikumiste joonisel parve kogum lassoga.</p>`; return; }
-  if (!st) { el.innerHTML = `${counts}<p class="empty">Valik on tühi — lasso sees pole ühtegi tähte.</p>`; return; }
+  if (!st) { el.innerHTML = `${counts}<p class="empty">Valik on tühi — kõik tähed on HR-diagrammil eemaldatud.</p>`; return; }
 
   const notes = [];
   let tiles;
@@ -873,8 +889,11 @@ async function applySelection() {
   }
 }
 
-function onSelectionChange() {
-  S.idx = S.picked.size ? [...S.picked].sort((a, b) => a - b) : null;
+// The lasso selection minus the stars removed in the HR diagram. A change in the lasso
+// selection discards the HR-diagram removals, which only refine it.
+function onSelectionChange(lassoChanged) {
+  if (lassoChanged) S.removed = new Set();
+  S.idx = S.picked.size ? [...S.picked].filter((i) => !S.removed.has(i)).sort((a, b) => a - b) : null;
   applySelection();
   refresh();
 }
@@ -884,10 +903,24 @@ function attachSelection() {
   el.on("plotly_selected", (ev) => {
     if (S.syncing || !ev || !ev.points) return;
     for (const p of ev.points) if (p.curveNumber === 0) S.picked.add(p.pointIndex ?? p.pointNumber);
-    onSelectionChange();
+    onSelectionChange(true);
   });
   // a click or double-click makes Plotly drop its own selection; only the reset button clears ours
   el.on("plotly_deselect", () => { if (!S.syncing) applySelection(); });
+
+  // clicking a selected star in the HR diagram removes it from the selection
+  $("cmd").on("plotly_click", (ev) => {
+    const p = ev && ev.points && ev.points.find((q) => q.curveNumber === 1);
+    if (!p) return;
+    S.removed.add(S.cmdSel[p.pointIndex ?? p.pointNumber]);
+    onSelectionChange(false);
+  });
+}
+
+function restoreSelection() {
+  if (!S.removed.size) return;
+  S.removed = new Set();
+  onSelectionChange(false);
 }
 
 /* ---------- Main flow ---------- */
@@ -935,7 +968,7 @@ async function run() {
     if (!n) { setStatus(`${c.label}. Ühtegi sobivat Gaia tähte ei leitud — suurenda raadiust või G piiri.`, "warn"); return; }
 
     S.d = d; S.n = n; S.center = c; S.radius = radius; S.rev++;
-    S.picked = new Set(); S.idx = null; S.stats = null; S.page = 0;
+    S.picked = new Set(); S.removed = new Set(); S.idx = null; S.stats = null; S.page = 0;
     S.hover = d.src.map((_, i) =>
       `Gaia DR3 ${d.src[i]}<br>G = ${fmtN(d.g[i], 2)}` +
       (d.bprp[i] !== null ? `, BP−RP = ${fmtN(d.bprp[i], 2)}` : "") +
@@ -966,7 +999,7 @@ async function run() {
 function clearSelection() {
   if (!S.d) return;
   S.picked = new Set();
-  onSelectionChange();
+  onSelectionChange(true);
 }
 
 function downloadSelection() {
@@ -1006,6 +1039,7 @@ $("download").addEventListener("click", downloadSelection);
 $("prevPage").addEventListener("click", () => { S.page--; drawTable(); });
 $("nextPage").addEventListener("click", () => { S.page++; drawTable(); });
 $("cmdAbs").addEventListener("change", refresh);
+$("restore").addEventListener("click", restoreSelection);
 
 for (const ex of EXAMPLES) {
   const b = document.createElement("button");
