@@ -131,8 +131,8 @@ ol.steps li::before {
 }
 
 /* Plots */
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.plot { height: 380px; margin-top: 6px; }
+.grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.plot { height: 460px; margin-top: 6px; }
 .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .toggle { display: flex; gap: 6px; align-items: center; font-size: 0.8rem; color: var(--text-2); white-space: nowrap; }
 
@@ -155,11 +155,24 @@ table.detail td { padding: 5px 8px; border-top: 1px solid var(--border); vertica
 table.detail td:first-child { color: var(--text-2); width: 42%; }
 .formula { color: var(--text-3); font-size: 0.82rem; margin-top: 10px; }
 
+/* Data table */
+.data { margin-bottom: 14px; }
+.count { font-size: 0.85rem; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.table-wrap { overflow-x: auto; margin-top: 10px; }
+table.data-table { border-collapse: collapse; width: 100%; font-size: 0.84rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.data-table th { text-align: right; font-weight: 550; color: var(--text-2); font-size: 0.78rem; padding: 6px 8px; border-bottom: 1px solid var(--axis); }
+table.data-table td { text-align: right; padding: 4px 8px; border-top: 1px solid var(--border); }
+table.data-table th:first-child, table.data-table td:first-child { text-align: left; }
+table.data-table tr.sel td { background: color-mix(in srgb, var(--sel) 14%, transparent); }
+table.data-table tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--sel); }
+.pager { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: flex-end; margin-top: 10px; font-size: 0.85rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.pager button { padding: 4px 12px; font-size: 0.85rem; }
+.pager button:disabled { cursor: default; opacity: 0.4; }
+
 footer { margin-top: 28px; font-size: 0.78rem; color: var(--text-3); max-width: 90ch; }
 footer a { color: inherit; }
 
 @media (max-width: 900px) {
-  .grid { grid-template-columns: 1fr; }
   ol.steps { grid-template-columns: 1fr 1fr; }
   .tiles { grid-template-columns: 1fr; }
   .plot { height: 340px; }
@@ -190,10 +203,6 @@ footer a { color: inherit; }
         <label for="gmax">G piir (mag)</label>
         <input id="gmax" type="number" value="18" min="6" max="21" step="0.5">
       </div>
-      <div class="field num">
-        <label for="ruwe">RUWE max</label>
-        <input id="ruwe" type="number" value="1.4" min="1" max="10" step="0.1">
-      </div>
       <button type="submit" class="primary" id="go">Päri Gaiast</button>
     </form>
     <div class="examples" id="examples">Proovi:</div>
@@ -206,6 +215,30 @@ footer a { color: inherit; }
     <li>Kontrolli värvus-heledusdiagrammi: parve liikmed moodustavad selge peajada.</li>
     <li>Loe allpool keskmine parallaks ja kaugus.</li>
   </ol>
+
+  <section class="card data" id="dataCard" hidden>
+    <div class="card-head">
+      <div>
+        <h2>Päritud tähed</h2>
+        <p class="hint">Valitud tähed on esile tõstetud.</p>
+      </div>
+      <span class="count" id="dataCount"></span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr>
+          <th>Gaia DR3 source_id</th><th>α (°)</th><th>δ (°)</th><th>ϖ (mas)</th><th>σ<sub>ϖ</sub> (mas)</th>
+          <th>μ<sub>α*</sub> (mas/a)</th><th>μ<sub>δ</sub> (mas/a)</th><th>G (mag)</th><th>BP−RP (mag)</th>
+        </tr></thead>
+        <tbody id="dataBody"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span id="pageInfo"></span>
+      <button type="button" id="prevPage" aria-label="Eelmine lehekülg">‹ Eelmine</button>
+      <button type="button" id="nextPage" aria-label="Järgmine lehekülg">Järgmine ›</button>
+    </div>
+  </section>
 
   <div class="grid">
     <section class="card">
@@ -252,7 +285,6 @@ footer a { color: inherit; }
       <h2>Parve kaugus</h2>
       <div class="opts">
         <label class="toggle"><input type="checkbox" id="zp" checked> Nullpunkti parandus (+0,017 mas)</label>
-        <label class="toggle"><input type="checkbox" id="clip"> Jäta välja 3σ kõrvalekalded</label>
         <button type="button" id="clear">Tühista valik</button>
         <button type="button" id="download" disabled>Laadi valik alla (CSV)</button>
       </div>
@@ -302,6 +334,8 @@ const ASYNC_RADIUS = 1.5;  // deg; larger fields are queried as async jobs
 const ASYNC_LIMIT = 300;   // s; give up on an async job after this long
 const ZP = -0.017;   // mas, Gaia DR3 global parallax zero-point
 const SYS = 0.010;   // mas, systematic floor for a cluster-mean parallax
+const RUWE_MAX = 1.4; // astrometric quality cut applied in every query
+const PAGE_SIZE = 10;  // data table rows per page
 const PC_LY = 3.261563777;
 const PC_KM = 3.0856775814913673e13;
 
@@ -325,6 +359,7 @@ const S = {
   stats: null,
   rev: 0,             // uirevision, bumped per dataset
   token: 0,
+  page: 0,            // data table page
 };
 
 /* ---------- Name / coordinate resolution ---------- */
@@ -438,12 +473,12 @@ async function resolveTarget(text) {
 
 const FIELDS = ["src", "ra", "dec", "plx", "eplx", "pmra", "pmdec", "g", "bprp", "ruwe"];
 
-async function querySource(s, c, radius, gmax, ruwe, onWait) {
+async function querySource(s, c, radius, gmax, onWait) {
   const k = s.cols;
   const adql = `SELECT ${FIELDS.map((f) => k[f]).join(", ")}
 FROM ${s.table}
 WHERE 1 = CONTAINS(POINT('ICRS', ${k.ra}, ${k.dec}), CIRCLE('ICRS', ${c.ra.toFixed(6)}, ${c.dec.toFixed(6)}, ${radius}))
-  AND ${k.plx} IS NOT NULL AND ${k.pmra} IS NOT NULL AND ${k.g} < ${gmax} AND ${k.ruwe} < ${ruwe}`;
+  AND ${k.plx} IS NOT NULL AND ${k.pmra} IS NOT NULL AND ${k.g} < ${gmax} AND ${k.ruwe} < ${RUWE_MAX}`;
   const params = { REQUEST: "doQuery", LANG: "ADQL", FORMAT: "csv", MAXREC: String(MAXREC), QUERY: adql };
   // Synchronous queries are cut off after ~20 s on GAVO; large fields go through an async job.
   if (s.async && radius > ASYNC_RADIUS) return queryAsync(s, params, onWait);
@@ -494,11 +529,11 @@ async function queryAsync(s, params, onWait) {
   }
 }
 
-async function queryGaia(c, radius, gmax, ruwe, onWait) {
+async function queryGaia(c, radius, gmax, onWait) {
   const failures = [];
   for (const s of GAIA_SOURCES) {
     try {
-      return { d: await querySource(s, c, radius, gmax, ruwe, onWait), source: s.name };
+      return { d: await querySource(s, c, radius, gmax, onWait), source: s.name };
     } catch (e) {
       if (e.message === "cancelled") throw e;
       failures.push(`${s.name}: ${e.message}`);
@@ -542,20 +577,7 @@ function percentile(a, q) {
 function computeStats(idx) {
   const d = S.d;
   const off = $("zp").checked ? -ZP : 0;
-  let use = idx;
-  if ($("clip").checked && idx.length >= 5) {
-    for (let it = 0; it < 10; it++) {
-      const p = use.map((i) => d.plx[i]);
-      const med = median(p);
-      const mad = 1.4826 * median(p.map((v) => Math.abs(v - med)));
-      if (!(mad > 0)) break;
-      const keep = use.filter((i) => Math.abs(d.plx[i] - med) <= 3 * mad);
-      if (keep.length === use.length || keep.length < 3) break;
-      use = keep;
-    }
-  }
-  const useSet = new Set(use);
-  const clipped = idx.filter((i) => !useSet.has(i));
+  const use = idx;
 
   const vals = use.map((i) => d.plx[i] + off);
   let sw = 0, swp = 0;
@@ -574,7 +596,7 @@ function computeStats(idx) {
   for (const i of use) chi2 += ((d.plx[i] + off - wmean) / d.eplx[i]) ** 2;
 
   return {
-    use, clipped, off, n, wmean, estat, etot, mean, std,
+    use, off, n, wmean, estat, etot, mean, std,
     sem: std / Math.sqrt(n),
     med: median(vals),
     redchi2: n > 1 ? chi2 / (n - 1) : NaN,
@@ -727,9 +749,7 @@ function drawHist() {
     return;
   }
   const d = S.d;
-  const used = st.use.map((i) => d.plx[i] + st.off);
-  const clip = st.clipped.map((i) => d.plx[i] + st.off);
-  const all = used.concat(clip);
+  const all = st.use.map((i) => d.plx[i] + st.off);
   let lo = Math.min(...all), hi = Math.max(...all);
   if (hi - lo < 1e-3) { lo -= 0.05; hi += 0.05; }
   const q1 = percentile(all, 0.25), q3 = percentile(all, 0.75);
@@ -738,19 +758,13 @@ function drawHist() {
   size = Math.max(size, (hi - lo) / 80);
   const bins = { start: lo - size / 2, end: hi + size, size };
   const traces = [{
-    type: "histogram", x: used, xbins: bins, name: "used",
+    type: "histogram", x: all, xbins: bins,
     marker: { color: css("--sel"), line: { color: css("--surface"), width: 1 } },
     hovertemplate: "%{x} mas: %{y} tähte<extra></extra>",
   }];
-  if (clip.length) traces.push({
-    type: "histogram", x: clip, xbins: bins, name: "clipped",
-    marker: { color: css("--field-dim"), line: { color: css("--surface"), width: 1 } },
-    hovertemplate: "välja jäetud %{x} mas: %{y}<extra></extra>",
-  });
   Plotly.react("hist", traces, baseLayout({
     uirevision: `${S.rev}-${st.off}`,
     dragmode: "zoom",
-    barmode: "stack",
     bargap: 0,
     xaxis: axis(st.off ? "parallaks + 0,017 mas (nullpunkt parandatud)" : "parallaks (mas)"),
     yaxis: axis("tähti"),
@@ -771,8 +785,9 @@ function drawResults() {
   const st = S.stats;
   $("download").disabled = !(S.idx && S.idx.length);
   if (!S.d) { el.innerHTML = `<p class="empty">Andmeid pole laaditud.</p>`; return; }
-  if (!S.idx) { el.innerHTML = `<p class="empty">Ühtegi tähte pole veel valitud — märgi omaliikumiste joonisel parve kogum lassoga.</p>`; return; }
-  if (!st) { el.innerHTML = `<p class="empty">Valik on tühi: taeva- ja omaliikumiste joonise valikud ei kattu.</p>`; return; }
+  const queried = `Päritud ${fmt(S.n)} ${S.n === 1 ? "täht" : "tähte"}. `;
+  if (!S.idx) { el.innerHTML = `<p class="empty">${queried}Ühtegi tähte pole veel valitud — märgi omaliikumiste joonisel parve kogum lassoga.</p>`; return; }
+  if (!st) { el.innerHTML = `<p class="empty">${queried}Valik on tühi: taeva- ja omaliikumiste joonise valikud ei kattu.</p>`; return; }
 
   const notes = [];
   let tiles;
@@ -793,13 +808,13 @@ function drawResults() {
     if (st.etot / st.wmean > 0.1) notes.push(`<div class="note warn">Parallaksi suhteline viga on ${fmtN(100 * st.etot / st.wmean, 0)}%. Üle ~10% muutub 1/ϖ nihkega ja asümmeetriliseks kauguse hinnanguks.</div>`);
   }
   if (st.n < 10) notes.push(`<div class="note warn">Valitud on ainult ${st.n} ${st.n === 1 ? "täht" : "tähte"} — keskmine on ebakindel.</div>`);
-  if (st.redchi2 > 3 && st.n >= 10) notes.push(`<div class="note warn">Parallakside hajuvus on ${fmtN(Math.sqrt(st.redchi2), 1)}× suurem, kui antud vead ennustavad (χ²/vabadusaste = ${fmtN(st.redchi2, 1)}). Valikus on tõenäoliselt taustatähti — kitsenda omaliikumiste lassot või lülita sisse kõrvalekallete väljajätmine.</div>`);
+  if (st.redchi2 > 3 && st.n >= 10) notes.push(`<div class="note warn">Parallakside hajuvus on ${fmtN(Math.sqrt(st.redchi2), 1)}× suurem, kui antud vead ennustavad (χ²/vabadusaste = ${fmtN(st.redchi2, 1)}). Valikus on tõenäoliselt taustatähti — kitsenda omaliikumiste lassot.</div>`);
 
   const [wv, we] = valErr(st.wmean, st.etot);
   const zpNote = st.off ? " (koos +0,017 mas nullpunkti parandusega)" : " (ilma nullpunkti paranduseta)";
   el.innerHTML = `${tiles}${notes.join("")}
     <table class="detail"><tbody>
-      <tr><td>Tähti valitud / kasutatud</td><td>${st.n + st.clipped.length} / ${st.n}${st.clipped.length ? ` (${st.clipped.length} välja jäetud)` : ""}</td></tr>
+      <tr><td>Tähti päritud / valitud</td><td>${fmt(S.n)} / ${fmt(st.n)}</td></tr>
       <tr><td>Kaalutud keskmine parallaks ⟨ϖ⟩</td><td><b>${wv} ± ${we} mas</b>${zpNote}</td></tr>
       <tr><td>&nbsp;&nbsp;statistiline / süstemaatiline viga</td><td>${fmtN(st.estat, 4)} / ${fmtN(SYS, 3)} mas, liidetud ruutudena</td></tr>
       <tr><td>Kaalumata keskmine ± standardviga</td><td>${isFinite(st.sem) ? `${fmtN(st.mean, 4)} ± ${fmtN(st.sem, 4)}` : fmtN(st.mean, 4)} mas</td></tr>
@@ -810,6 +825,32 @@ function drawResults() {
     </tbody></table>
     <p class="formula">d [pc] = 1000 / ⟨ϖ⟩ [mas]. Keskmista kõigepealt parallaksid ja alles siis pööra ümber — 1/ϖ keskmine on nihkega.
     1 pc = 3,2616 valgusaastat = 3,0857 × 10<sup>13</sup> km = 206 265 aü.</p>`;
+}
+
+/* ---------- Data table ---------- */
+
+function drawTable() {
+  const card = $("dataCard");
+  if (!S.d) { card.hidden = true; return; }
+  card.hidden = false;
+  const d = S.d;
+  const pages = Math.max(1, Math.ceil(S.n / PAGE_SIZE));
+  S.page = Math.min(Math.max(S.page, 0), pages - 1);
+  const first = S.page * PAGE_SIZE;
+  const last = Math.min(first + PAGE_SIZE, S.n);
+  const sel = new Set(S.idx || []);
+  const num = (v, dp) => (v === null ? "—" : fmtN(v, dp));
+  const rows = [];
+  for (let i = first; i < last; i++) {
+    rows.push(`<tr${sel.has(i) ? ' class="sel"' : ""}><td>${esc(d.src[i])}</td><td>${num(d.ra[i], 5)}</td><td>${num(d.dec[i], 5)}</td>` +
+      `<td>${num(d.plx[i], 4)}</td><td>${num(d.eplx[i], 4)}</td><td>${num(d.pmra[i], 3)}</td><td>${num(d.pmdec[i], 3)}</td>` +
+      `<td>${num(d.g[i], 3)}</td><td>${num(d.bprp[i], 3)}</td></tr>`);
+  }
+  $("dataBody").innerHTML = rows.join("");
+  $("dataCount").textContent = `${fmt(S.n)} rida` + (S.idx ? `, neist valitud ${fmt(S.idx.length)}` : "");
+  $("pageInfo").textContent = `Read ${fmt(first + 1)}–${fmt(last)} / ${fmt(S.n)} · lehekülg ${fmt(S.page + 1)} / ${fmt(pages)}`;
+  $("prevPage").disabled = S.page === 0;
+  $("nextPage").disabled = S.page >= pages - 1;
 }
 
 /* ---------- Selection linking ---------- */
@@ -826,6 +867,7 @@ function combineSelections() {
 function refresh() {
   if (!S.d) return;
   S.stats = S.idx && S.idx.length ? computeStats(S.idx) : null;
+  drawTable();
   drawCMD();
   drawHist();
   drawResults();
@@ -863,11 +905,9 @@ async function run() {
   const target = $("target").value.trim();
   const radius = +$("radius").value;
   const gmax = +$("gmax").value;
-  const ruwe = +$("ruwe").value;
   if (!target) { setStatus("Sisesta parve nimi või koordinaadid.", "error"); return; }
   if (!(radius > 0 && radius <= 3)) { setStatus("Raadius peab olema vahemikus 0 kuni 3 kraadi.", "error"); return; }
   if (!(gmax > 0 && gmax <= 21)) { setStatus("G piir peab olema vahemikus 0 kuni 21 mag.", "error"); return; }
-  if (!(ruwe >= 1)) { setStatus("RUWE piir peab olema vähemalt 1.", "error"); return; }
 
   const token = ++S.token;
   $("go").disabled = true;
@@ -877,7 +917,7 @@ async function run() {
     if (token !== S.token) return;
     setStatus(`${c.label}. Pärin Gaia DR3 tähti ${fmt(radius)}° raadiuses…`);
     const t0 = performance.now();
-    const { d, source } = await queryGaia(c, radius, gmax, ruwe, (sec) => {
+    const { d, source } = await queryGaia(c, radius, gmax, (sec) => {
       if (token !== S.token) return false;
       setStatus(`${c.label}. Suur väli — Gaia päring töötab taustal (${Math.round(sec)} s; tavaliselt alla minuti)…`);
     });
@@ -886,7 +926,7 @@ async function run() {
     if (!n) { setStatus(`${c.label}. Ühtegi sobivat Gaia tähte ei leitud — suurenda raadiust või G piiri.`, "warn"); return; }
 
     S.d = d; S.n = n; S.center = c; S.radius = radius; S.rev++;
-    S.sel = { sky: null, pm: null }; S.idx = null; S.stats = null;
+    S.sel = { sky: null, pm: null }; S.idx = null; S.stats = null; S.page = 0;
     S.hover = d.src.map((_, i) =>
       `Gaia DR3 ${d.src[i]}<br>G = ${fmtN(d.g[i], 2)}` +
       (d.bprp[i] !== null ? `, BP−RP = ${fmtN(d.bprp[i], 2)}` : "") +
@@ -900,7 +940,7 @@ async function run() {
 
     const secs = fmtN((performance.now() - t0) / 1000, 1);
     const trunc = n >= MAXREC;
-    setStatus(`${c.label}. ${fmt(n)} tähte (G < ${fmt(gmax)}, RUWE < ${fmt(ruwe)}) allikast ${source}, ${secs} s.` +
+    setStatus(`${c.label}. ${fmt(n)} tähte (G < ${fmt(gmax)}) allikast ${source}, ${secs} s.` +
       (trunc ? ` Tulemus on kärbitud ${fmt(MAXREC)} reani — vähenda raadiust või G piiri.` : ""), trunc ? "warn" : "");
 
     drawSky();
@@ -909,7 +949,7 @@ async function run() {
     refresh();
 
     const url = new URL(location.href);
-    url.search = new URLSearchParams({ target, r: radius, g: gmax, ruwe }).toString();
+    url.search = new URLSearchParams({ target, r: radius, g: gmax }).toString();
     history.replaceState(null, "", url);
   } catch (e) {
     if (token === S.token) setStatus(e.message, "error");
@@ -928,10 +968,9 @@ function clearSelection() {
 function downloadSelection() {
   if (!S.idx || !S.idx.length) return;
   const d = S.d;
-  const used = new Set(S.stats ? S.stats.use : []);
-  const rows = ["source_id,ra,dec,parallax,parallax_error,pmra,pmdec,phot_g_mean_mag,bp_rp,ruwe,used_in_mean"];
+  const rows = ["source_id,ra,dec,parallax,parallax_error,pmra,pmdec,phot_g_mean_mag,bp_rp,ruwe"];
   for (const i of S.idx) {
-    rows.push([d.src[i], d.ra[i], d.dec[i], d.plx[i], d.eplx[i], d.pmra[i], d.pmdec[i], d.g[i], d.bprp[i] ?? "", d.ruwe[i], used.has(i) ? 1 : 0].join(","));
+    rows.push([d.src[i], d.ra[i], d.dec[i], d.plx[i], d.eplx[i], d.pmra[i], d.pmdec[i], d.g[i], d.bprp[i] ?? "", d.ruwe[i]].join(","));
   }
   const blob = new Blob([rows.join("\n") + "\n"], { type: "text/csv" });
   const a = document.createElement("a");
@@ -956,7 +995,9 @@ function redrawAll() {
 $("form").addEventListener("submit", (e) => { e.preventDefault(); run(); });
 $("clear").addEventListener("click", clearSelection);
 $("download").addEventListener("click", downloadSelection);
-for (const id of ["zp", "clip", "cmdAbs"]) $(id).addEventListener("change", refresh);
+$("prevPage").addEventListener("click", () => { S.page--; drawTable(); });
+$("nextPage").addEventListener("click", () => { S.page++; drawTable(); });
+for (const id of ["zp", "cmdAbs"]) $(id).addEventListener("change", refresh);
 
 for (const ex of EXAMPLES) {
   const b = document.createElement("button");
@@ -966,7 +1007,7 @@ for (const ex of EXAMPLES) {
     $("target").value = ex.name;
     $("radius").value = ex.r;
     $("gmax").value = ex.g;
-    run();
+    $("target").focus();
   });
   $("examples").appendChild(b);
 }
@@ -978,7 +1019,6 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", red
   if (p.get("target")) $("target").value = p.get("target");
   if (p.get("r")) $("radius").value = p.get("r");
   if (p.get("g")) $("gmax").value = p.get("g");
-  if (p.get("ruwe")) $("ruwe").value = p.get("ruwe");
   redrawAll();
   drawResults();
   run();
