@@ -59,13 +59,14 @@ relation for comparison.
 
 ### Hubble law
 
-The third part lists 19 type Ia supernova host galaxies with Cepheids
-observed by *HST*. Each galaxy distance is found from its Cepheids with the
-W_H period-luminosity relation chosen in the menu:
-- the relation fitted in the second part (needs at least two stored Cepheids
-  with W_H);
-- its zero point with the published slope (needs one);
-- or the published relation.
+The third part uses 19 type Ia supernova host galaxies with Cepheids
+observed by *HST*. It stays hidden until you have fitted your own W_H
+period-luminosity relation in the second part, which takes at least two
+stored Cepheids with W_H. Each galaxy distance is then found from its
+Cepheids with the relation chosen in the menu:
+- the relation fitted in the second part;
+- its zero point with the published slope;
+- or the published relation, for comparison.
 
 Clicking a galaxy shows its Cepheids with the shifted relation. The
 velocity–distance plot shows a straight line through the origin fitted by

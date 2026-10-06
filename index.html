@@ -77,6 +77,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
   background: var(--bg);
@@ -371,7 +372,7 @@ footer a { color: inherit; }
           <p class="hint">Kauguse moodul μ on galaktika tsefeiidide W<sub>H</sub> − M<sub>H</sub><sup>W</sup>(P) kaalutud keskmine. Kiirus v = cz,
             kus z on galaktikas plahvatanud supernoova punanihe, mis on parandatud galaktika omaliikumise jaoks. Klõpsa real, et näha galaktika tsefeiide.</p>
         </div>
-        <div class="field">
+        <div class="field" id="calibField">
           <label for="calib">Periood-heledus seos</label>
           <select id="calib">
             <option value="own">Minu seos (2. osa)</option>
@@ -381,7 +382,7 @@ footer a { color: inherit; }
         </div>
       </div>
       <p class="fit" id="calibInfo"></p>
-      <div class="table-wrap">
+      <div class="table-wrap" id="galWrap">
         <table class="data-table">
           <thead><tr>
             <th>Galaktika</th><th>Supernoova</th><th>Tsefeiide</th><th>μ (mag)</th><th>Kaugus (Mpc)</th><th>Kiirus (km/s)</th><th>v / d (km/s/Mpc)</th><th>Sobitusse</th>
@@ -391,7 +392,7 @@ footer a { color: inherit; }
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="galCard">
       <div class="card-head">
         <div>
           <h2 id="galTitle">Galaktika tsefeiidid</h2>
@@ -401,7 +402,7 @@ footer a { color: inherit; }
       <div class="plot" id="gpl"></div>
     </section>
 
-    <section class="card">
+    <section class="card" id="hubCard">
       <div class="card-head">
         <div>
           <h2>Kiiruse ja kauguse seos</h2>
@@ -1267,21 +1268,19 @@ function fitHubble(gals, cal) {
   return { H, eStat, eCal, e: Math.hypot(eStat, eCal), n };
 }
 
+// The Hubble law, and the choice of relation, appear only once the user has fitted an own
+// W_H period-luminosity relation in part 2 (at least two Cepheids).
 function drawHubble() {
-  const cal = calibration();
-  const opt = (v) => $("calib").querySelector(`option[value="${v}"]`);
-  const nH = cepheidPoints("H").length;
-  opt("own").disabled = nH < 2;
-  opt("ownzp").disabled = nH < 1;
-  if (!cal) {
-    $("calibInfo").innerHTML = `Oma seose kasutamiseks salvesta 2. osas vähemalt ${S.calib === "own" ? "kahe" : "ühe"} W<sub>H</sub>-ga tsefeiidi parve kaugus ` +
-      `(${CEPHEIDS.filter((x) => x.WH != null).map((x) => esc(x.cep)).join(", ")}) või vali avaldatud seos.`;
-    $("galBody").innerHTML = "";
-    emptyPlot("gpl", "Periood-heledus seos puudub.");
-    emptyPlot("hub", "Periood-heledus seos puudub.");
-    $("h0").innerHTML = "";
+  const ready = cepheidPoints("H").length >= 2;
+  for (const id of ["calibField", "galWrap", "galCard", "hubCard"]) $(id).hidden = !ready;
+  if (!ready) {
+    S.calib = $("calib").value = "own";
+    $("calibInfo").innerHTML = `Hubble'i seaduse jaoks on vaja sinu enda periood-heledus seost. Salvesta 2. osas vähemalt kahe parve kaugus, ` +
+      `mille tsefeiidil on W<sub>H</sub> (${CEPHEIDS.filter((x) => x.WH != null).map((x) => esc(x.cep)).join(", ")}).`;
     return;
   }
+  const cal = calibration();
+  const nH = cepheidPoints("H").length;
   const what = S.calib === "pub" ? `avaldatud seos (${PL_SYS.H.pub.ref})`
     : S.calib === "ownzp" ? `sinu nullpunkt ${nH} tsefeiidist, avaldatud tõus` : `sinu seos ${nH} tsefeiidist`;
   $("calibInfo").innerHTML = `Kasutusel: <b>${plFormula(cal, "H", S.calib !== "pub")}</b> — ${what}.`;
@@ -1607,8 +1606,6 @@ for (const ex of EXAMPLES) {
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawAll);
 
 S.stored = loadStored();
-S.calib = cepheidPoints("H").length >= 2 ? "own" : "pub";
-$("calib").value = S.calib;
 redrawAll();
 drawResults();
 </script>
