@@ -89,6 +89,8 @@ body {
 }
 main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
 h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 10px; font-weight: 650; letter-spacing: -0.01em; }
+.intro a, .lede a { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
+.intro a:hover, .lede a:hover { color: var(--sel); text-decoration-style: solid; }
 .intro { color: var(--text-1); margin: 0 0 28px; max-width: 75ch; }
 h2.rung { font-size: 1.15rem; margin: 0 0 4px; color: var(--text-2); }
 .lede { color: var(--text-2); margin: 0 0 20px; max-width: 70ch; }
@@ -237,14 +239,14 @@ footer a { color: inherit; }
 <body>
 <main>
   <h1>Kosmiliste kauguste redel</h1>
-  <p class="intro">Kaugusi kosmoses ei saa mõõta ühe meetodiga. Lähedaste tähtede kauguse annab otse parallaks — tähe näiv nihe taevas,
-    mis tekib Maa liikumisest ümber Päikese. Kaugemal on parallaks liiga väike ja appi tulevad <i>standardküünlad</i>: objektid, mille
+  <p class="intro">Kaugusi kosmoses ei saa mõõta ühe meetodiga. Lähedaste tähtede kauguse annab otse <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaks</a> — tähe näiv nihe taevas,
+    mis tekib Maa liikumisest ümber Päikese. Kaugemal on parallaks liiga väike ja appi tulevad <i><a class="en" href="https://en.wikipedia.org/wiki/Cosmic_distance_ladder#Standard_candles" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">standardküünlad</a></i>: objektid, mille
     tegelikku heledust me teame, nii et nende näiv heledus annab kauguse. Iga uus meetod kalibreeritakse eelmise abil, nii et meetodid
-    moodustavad redeli, mille iga pulk ulatub kaugemale. Sellel lehel ronid redelil neli pulka: hajusparvede kaugustest Gaia parallaksidega
-    (1. osa) tsefeiidide periood-heledus sõltuvuseni (2. osa), sealt tsefeiididega galaktikate kaugusteni ja Hubble'i seaduseni (3. osa)
-    ning lõpuks Ia tüüpi supernoovadeni, mis näitavad Universumi paisumist sadade megaparsekite kaugusel (4. osa).</p>
+    moodustavad <a class="en" href="https://en.wikipedia.org/wiki/Cosmic_distance_ladder" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">redeli</a>, mille iga pulk ulatub kaugemale. Sellel lehel ronid redelil neli pulka: <a href="https://et.wikipedia.org/wiki/Hajusparv" target="_blank" rel="noopener">hajusparvede</a> kaugustest <a href="https://et.wikipedia.org/wiki/Gaia_(kosmoseteleskoop)" target="_blank" rel="noopener">Gaia</a> parallaksidega
+    (1. osa) <a class="en" href="https://en.wikipedia.org/wiki/Cepheid_variable" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">tsefeiidide</a> <a class="en" href="https://en.wikipedia.org/wiki/Period-luminosity_relation" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">periood-heledus sõltuvuseni</a> (2. osa), sealt tsefeiididega <a href="https://et.wikipedia.org/wiki/Galaktika" target="_blank" rel="noopener">galaktikate</a> kaugusteni ja <a href="https://et.wikipedia.org/wiki/Hubble'i_seadus" target="_blank" rel="noopener">Hubble'i seaduseni</a> (3. osa)
+    ning lõpuks Ia tüüpi <a href="https://et.wikipedia.org/wiki/Supernoova" target="_blank" rel="noopener">supernoovadeni</a>, mis näitavad <a href="https://et.wikipedia.org/wiki/Universumi_paisumine" target="_blank" rel="noopener">Universumi paisumist</a> sadade <a href="https://et.wikipedia.org/wiki/Parsek" target="_blank" rel="noopener">megaparsekite</a> kaugusel (4. osa).</p>
   <h2 class="rung">1. osa: Hajusparvede kaugused Gaia parallaksidest</h2>
-  <p class="lede">Päri Gaia DR3 tähed parve ümbrusest, vali välja koos üle taeva liikuvad tähed ja keskmista nende parallaksid, et leida parve kaugus.</p>
+  <p class="lede">Päri <a href="https://et.wikipedia.org/wiki/Gaia_(kosmoseteleskoop)" target="_blank" rel="noopener">Gaia</a> DR3 tähed <a href="https://et.wikipedia.org/wiki/Hajusparv" target="_blank" rel="noopener">parve</a> ümbrusest, vali välja koos <a class="en" href="https://en.wikipedia.org/wiki/Proper_motion" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">üle taeva liikuvad</a> tähed ja keskmista nende <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaksid</a>, et leida parve kaugus.</p>
 
   <ol class="steps">
     <li>Päri tähed parve ümbrusest.</li>
@@ -374,8 +376,8 @@ footer a { color: inherit; }
 
   <div class="part" id="part2">
     <h2 class="rung">2. osa: Tsefeiidide periood-heledus sõltuvus</h2>
-    <p class="lede">Need hajusparved sisaldavad klassikalisi tsefeiide. Mõõda iga parve kaugus ülal (nupp „Mõõda“ täidab päringu vormi) ja salvesta see.
-      Parve kaugusest saab tsefeiidi absoluutse heleduse ning mitme parve põhjal tekib periood-heledus sõltuvus.</p>
+    <p class="lede">Need <a href="https://et.wikipedia.org/wiki/Hajusparv" target="_blank" rel="noopener">hajusparved</a> sisaldavad <a class="en" href="https://en.wikipedia.org/wiki/Classical_Cepheid_variable" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">klassikalisi tsefeiide</a>. Mõõda iga parve kaugus ülal (nupp „Mõõda“ täidab päringu vormi) ja salvesta see.
+      Parve kaugusest saab tsefeiidi <a href="https://et.wikipedia.org/wiki/Absoluutne_t%C3%A4hesuurus" target="_blank" rel="noopener">absoluutse heleduse</a> ning mitme parve põhjal tekib <a class="en" href="https://en.wikipedia.org/wiki/Period-luminosity_relation" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">periood-heledus sõltuvus</a>.</p>
 
     <section class="card">
       <div class="card-head">
@@ -412,8 +414,8 @@ footer a { color: inherit; }
 
   <div class="part" id="part3">
     <h2 class="rung">3. osa: Hubble'i seadus</h2>
-    <p class="lede">Nende galaktikate tsefeiide on mõõtnud Hubble'i kosmoseteleskoop. Tsefeiidi periood annab periood-heledus seosest tema absoluutse
-      tähesuuruse ning võrdlus näiva tähesuurusega galaktika kauguse. Koos galaktika eemaldumiskiirusega annab see Hubble'i konstandi.</p>
+    <p class="lede">Nende <a href="https://et.wikipedia.org/wiki/Galaktika" target="_blank" rel="noopener">galaktikate</a> tsefeiide on mõõtnud <a href="https://et.wikipedia.org/wiki/Hubble'i_kosmoseteleskoop" target="_blank" rel="noopener">Hubble'i kosmoseteleskoop</a>. <a class="en" href="https://en.wikipedia.org/wiki/Cepheid_variable" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">Tsefeiidi</a> periood annab <a class="en" href="https://en.wikipedia.org/wiki/Period-luminosity_relation" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">periood-heledus seosest</a> tema <a href="https://et.wikipedia.org/wiki/Absoluutne_t%C3%A4hesuurus" target="_blank" rel="noopener">absoluutse
+      tähesuuruse</a> ning võrdlus <a href="https://et.wikipedia.org/wiki/T%C3%A4hesuurus" target="_blank" rel="noopener">näiva tähesuurusega</a> galaktika kauguse. Koos galaktika eemaldumiskiirusega (<a href="https://et.wikipedia.org/wiki/Punanihe" target="_blank" rel="noopener">punanihkest</a>) annab see <a href="https://et.wikipedia.org/wiki/Hubble'i_konstant" target="_blank" rel="noopener">Hubble'i konstandi</a>.</p>
 
     <section class="card">
       <div class="card-head">
@@ -458,9 +460,9 @@ footer a { color: inherit; }
 
   <div class="part" id="part4">
     <h2 class="rung">4. osa: Ia tüüpi supernoovad</h2>
-    <p class="lede">Ia tüüpi supernoova on plahvatav valge kääbus. Kõik need plahvatused on maksimumis peaaegu ühesuguse heledusega, nii et supernoova sobib
+    <p class="lede">Ia tüüpi <a href="https://et.wikipedia.org/wiki/Supernoova" target="_blank" rel="noopener">supernoova</a> on plahvatav <a href="https://et.wikipedia.org/wiki/Valge_k%C3%A4%C3%A4bus" target="_blank" rel="noopener">valge kääbus</a>. Kõik need plahvatused on maksimumis peaaegu ühesuguse heledusega, nii et supernoova sobib
       kauguse mõõtmiseks ja on nähtav ka väga kaugelt. Kõigepealt leia 3. osa galaktikate abil, kui hele on supernoova tegelikult, ja seejärel mõõda
-      kaugete supernoovade abil Hubble'i konstant. Nii kaugel ei sega galaktikate omaliikumine enam palju.</p>
+      kaugete supernoovade abil <a href="https://et.wikipedia.org/wiki/Hubble'i_konstant" target="_blank" rel="noopener">Hubble'i konstant</a>. Nii kaugel ei sega galaktikate <a class="en" href="https://en.wikipedia.org/wiki/Peculiar_velocity" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">omaliikumine</a> enam palju.</p>
     <p class="fit" id="snInfo"></p>
 
     <section class="card" id="snCalCard">
