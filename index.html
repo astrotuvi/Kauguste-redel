@@ -98,6 +98,27 @@ h2.rung { font-size: 1.15rem; margin: 0 0 4px; color: var(--text-2); }
 h2 { font-size: 0.95rem; margin: 0; font-weight: 600; }
 .hint { color: var(--text-3); font-size: 0.82rem; margin: 2px 0 0; }
 
+/* Distance ladder schematic */
+.ladder { margin: 0 0 8px; }
+.ladder-wrap { overflow-x: auto; }
+.ladder svg { display: block; width: 100%; min-width: 720px; height: auto; font-family: inherit; }
+.ladder figcaption { margin-top: 8px; }
+.ladder .grid { stroke: var(--grid); }
+.ladder .ax { stroke: var(--axis); }
+.ladder .tick { fill: var(--text-2); font-size: 13px; text-anchor: middle; }
+.ladder .bar { stroke-width: 1.5; }
+.ladder .bar.far { fill: none; stroke-dasharray: 4 3; }
+.ladder .r1 { fill: color-mix(in srgb, var(--sel) 22%, transparent); stroke: var(--sel); }
+.ladder .r2 { fill: color-mix(in srgb, var(--cep) 20%, transparent); stroke: var(--cep); }
+.ladder .r3 { fill: color-mix(in srgb, var(--accent) 22%, transparent); stroke: var(--accent); }
+.ladder .lbl { fill: var(--text-1); font-size: 14px; font-weight: 600; }
+.ladder .note { fill: var(--text-2); font-size: 12.5px; }
+.ladder .arr, .ladder .brk { stroke: var(--text-2); stroke-width: 1.5; fill: none; }
+.ladder .arrhead { fill: var(--text-2); }
+.ladder .lm { fill: var(--text-2); }
+.ladder .lead { stroke: var(--axis); stroke-dasharray: 2 2; }
+.ladder .lmt { fill: var(--text-3); font-size: 12.5px; text-anchor: middle; }
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -250,6 +271,43 @@ footer a { color: inherit; }
     moodustavad <a class="en" href="https://en.wikipedia.org/wiki/Cosmic_distance_ladder" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">redeli</a>, mille iga pulk ulatub kaugemale. Sellel lehel ronid redelil neli pulka: <a href="https://et.wikipedia.org/wiki/Hajusparv" target="_blank" rel="noopener">hajusparvede</a> kaugustest <a href="https://et.wikipedia.org/wiki/Gaia_(kosmoseteleskoop)" target="_blank" rel="noopener">Gaia</a> parallaksidega
     (1. osa) <a class="en" href="https://en.wikipedia.org/wiki/Cepheid_variable" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">tsefeiidide</a> <a class="en" href="https://en.wikipedia.org/wiki/Period-luminosity_relation" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">periood-heledus sõltuvuseni</a> (2. osa), sealt tsefeiididega <a href="https://et.wikipedia.org/wiki/Galaktika" target="_blank" rel="noopener">galaktikate</a> kaugusteni ja <a href="https://et.wikipedia.org/wiki/Hubble'i_seadus" target="_blank" rel="noopener">Hubble'i seaduseni</a> (3. osa)
     ning lõpuks Ia tüüpi <a href="https://et.wikipedia.org/wiki/Supernoova" target="_blank" rel="noopener">supernoovadeni</a>, mis näitavad <a href="https://et.wikipedia.org/wiki/Universumi_paisumine" target="_blank" rel="noopener">Universumi paisumist</a> sadade <a href="https://et.wikipedia.org/wiki/Parsek" target="_blank" rel="noopener">megaparsekite</a> kaugusel (4. osa).</p>
+  <figure class="card ladder">
+    <div class="ladder-wrap">
+      <svg viewBox="0 52 1000 310" role="img" aria-labelledby="ladderTitle ladderDesc">
+      <title id="ladderTitle">Kosmiliste kauguste redel</title>
+      <desc id="ladderDesc">Logaritmiline kauguste skaala 10 parsekist 1 gigaparsekini. Gaia parallaksid ulatuvad umbes 50 pc kuni 5 kpc, tsefeiidid 300 pc kuni 40 Mpc ja Ia tüüpi supernoovad 7 Mpc kuni üle 1 Gpc. Iga meetod kalibreeritakse eelmise abil seal, kus nende ulatused kattuvad.</desc>
+      <defs><marker id="ladderArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="arrhead"/></marker></defs>
+      <line class="ax" x1="60" y1="290" x2="940.0" y2="290"/>
+      <line class="grid" x1="60.0" y1="62" x2="60.0" y2="290"/><line class="ax" x1="60.0" y1="290" x2="60.0" y2="295"/><text class="tick" x="60.0" y="310">10 pc</text>
+      <line class="grid" x1="170.0" y1="62" x2="170.0" y2="290"/><line class="ax" x1="170.0" y1="290" x2="170.0" y2="295"/><text class="tick" x="170.0" y="310">100 pc</text>
+      <line class="grid" x1="280.0" y1="62" x2="280.0" y2="290"/><line class="ax" x1="280.0" y1="290" x2="280.0" y2="295"/><text class="tick" x="280.0" y="310">1 kpc</text>
+      <line class="grid" x1="390.0" y1="62" x2="390.0" y2="290"/><line class="ax" x1="390.0" y1="290" x2="390.0" y2="295"/><text class="tick" x="390.0" y="310">10 kpc</text>
+      <line class="grid" x1="500.0" y1="62" x2="500.0" y2="290"/><line class="ax" x1="500.0" y1="290" x2="500.0" y2="295"/><text class="tick" x="500.0" y="310">100 kpc</text>
+      <line class="grid" x1="610.0" y1="62" x2="610.0" y2="290"/><line class="ax" x1="610.0" y1="290" x2="610.0" y2="295"/><text class="tick" x="610.0" y="310">1 Mpc</text>
+      <line class="grid" x1="720.0" y1="62" x2="720.0" y2="290"/><line class="ax" x1="720.0" y1="290" x2="720.0" y2="295"/><text class="tick" x="720.0" y="310">10 Mpc</text>
+      <line class="grid" x1="830.0" y1="62" x2="830.0" y2="290"/><line class="ax" x1="830.0" y1="290" x2="830.0" y2="295"/><text class="tick" x="830.0" y="310">100 Mpc</text>
+      <line class="grid" x1="940.0" y1="62" x2="940.0" y2="290"/><line class="ax" x1="940.0" y1="290" x2="940.0" y2="295"/><text class="tick" x="940.0" y="310">1 Gpc</text>
+      <rect class="bar r1" x="136.9" y="226" width="220.0" height="34" rx="5"/>
+      <text class="lbl" x="146.9" y="248">1. osa · Gaia parallaksid</text>
+      <rect class="bar r2" x="222.5" y="162" width="563.7" height="34" rx="5"/>
+      <text class="lbl" x="232.5" y="184">2.–3. osa · Tsefeiidid: periood-heledus seos</text>
+      <rect class="bar r3 far" x="703.0" y="98" width="237.0" height="34" rx="5"/>
+      <rect class="bar r3" x="703.0" y="98" width="170.8" height="34" rx="5"/>
+      <text class="lbl" x="713.0" y="120">4. osa · Ia supernoovad</text>
+      <line class="arr" x1="289.7" y1="224" x2="289.7" y2="200" marker-end="url(#ladderArrow)"/><text class="note" x="297.7" y="215.0">kalibreerib</text>
+      <line class="arr" x1="744.6" y1="160" x2="744.6" y2="136" marker-end="url(#ladderArrow)"/><text class="note" x="752.6" y="151.0">kalibreerib</text>
+      <path class="brk" d="M703.0 88 V80 H940.0 V88"/><text class="note" x="821.5" y="72" text-anchor="middle">Hubble'i seadus v = H₀d</text>
+      <circle class="lm" cx="184.7" cy="290" r="3.5"/><line class="lead" x1="184.7" y1="316" x2="184.7" y2="322"/><text class="lmt" x="184.7" y="334">Plejaadid</text>
+      <circle class="lm" cx="380.5" cy="290" r="3.5"/><line class="lead" x1="380.5" y1="316" x2="380.5" y2="340"/><text class="lmt" x="380.5" y="352">Galaktika kese</text>
+      <circle class="lm" cx="466.9" cy="290" r="3.5"/><line class="lead" x1="466.9" y1="316" x2="466.9" y2="322"/><text class="lmt" x="466.9" y="334">Suur Magalhãesi pilv</text>
+      <circle class="lm" cx="597.5" cy="290" r="3.5"/><line class="lead" x1="597.5" y1="316" x2="597.5" y2="340"/><text class="lmt" x="597.5" y="352">Andromeeda galaktika</text>
+      <circle class="lm" cx="743.9" cy="290" r="3.5"/><line class="lead" x1="743.9" y1="316" x2="743.9" y2="322"/><text class="lmt" x="743.9" y="334">Neitsi parv</text>
+      <circle class="lm" cx="830.0" cy="290" r="3.5"/><line class="lead" x1="830.0" y1="316" x2="830.0" y2="340"/><text class="lmt" x="830.0" y="352">Coma parv</text>
+      </svg>
+    </div>
+    <figcaption class="hint">Iga meetod ulatub kaugemale kui eelmine ja kalibreeritakse eelmise abil seal, kus nende ulatused kattuvad. Kauguste skaala on logaritmiline:
+      iga jaotis on eelmisest kümme korda kaugemal. Supernoovade riba kriipsjoonega osa jääb väljapoole selle lehe andmeid (kuni ~250 Mpc).</figcaption>
+  </figure>
   <h2 class="rung">1. osa: Hajusparvede kaugused Gaia parallaksidest</h2>
   <p class="lede">Päri <a href="https://et.wikipedia.org/wiki/Gaia_(kosmoseteleskoop)" target="_blank" rel="noopener">Gaia</a> DR3 tähed <a href="https://et.wikipedia.org/wiki/Hajusparv" target="_blank" rel="noopener">parve</a> ümbrusest, vali välja koos <a class="en" href="https://en.wikipedia.org/wiki/Proper_motion" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">üle taeva liikuvad</a> tähed ja keskmista nende <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaksid</a>, et leida parve kaugus.</p>
 
