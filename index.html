@@ -21,6 +21,7 @@
   --field-dim: #c9c8c2;
   --sel: #2a78d6;
   --accent: #eb6834;
+  --cep: #d32f2f;
   --btn: #2a78d6;
   --btn-text: #ffffff;
   --chip: #eeede9;
@@ -44,6 +45,7 @@
     --field-dim: #46463f;
     --sel: #3987e5;
     --accent: #d95926;
+    --cep: #f05454;
     --btn: #3987e5;
     --btn-text: #ffffff;
     --chip: #262624;
@@ -67,6 +69,7 @@
   --field-dim: #46463f;
   --sel: #3987e5;
   --accent: #d95926;
+  --cep: #f05454;
   --btn: #3987e5;
   --btn-text: #ffffff;
   --chip: #262624;
@@ -201,6 +204,14 @@ table.data-table tr.group td { text-align: left; font-weight: 600; color: var(--
 }
 table.data-table tr.cur td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .tiles.two { margin-top: 14px; }
+.table-note { margin-top: 12px; }
+.calib-prompt { margin-top: 12px; }
+.calib-prompt + .calib-row { margin-top: 6px; }
+.calib-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; justify-content: flex-start; margin-top: 12px; }
+.calib-row select {
+  font: inherit; color: var(--text-1); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 7px; padding: 7px 8px;
+}
 .query-info .value { overflow-wrap: anywhere; }
 table.data-table tr[data-gal] { cursor: pointer; }
 table.data-table tr.gal-detail > td { text-align: left; padding: 8px 4px 12px; background: var(--bg); }
@@ -405,18 +416,20 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Tsefeiididega galaktikad</h2>
-          <p class="hint">Kauguse moodul μ on galaktika tsefeiidide W<sub>H</sub> − M<sub>H</sub><sup>W</sup>(P) kaalutud keskmine. Kiirus v = cz,
-            kus z on galaktikas plahvatanud supernoova punanihe, mis on parandatud galaktika omaliikumise jaoks. Klõpsa galaktika real, et näha selle tsefeiide; uus klõps peidab need.</p>
-        </div>
-        <div class="field" id="calibField">
-          <label for="calib">Periood-heledus seos</label>
-          <select id="calib">
-            <option value="own">Minu seos (2. osa)</option>
-            <option value="pub">Avaldatud seos</option>
-          </select>
+          <p class="hint">Nendes galaktikates on Hubble'i kosmoseteleskoop mõõtnud kokku ligi tuhat tsefeiidi. Rakenda neile oma periood-heledus seos, et leida galaktikate kaugused.</p>
         </div>
       </div>
+      <p class="hint calib-prompt" id="calibPrompt">Vali periood-heledus seos ja vajuta „Kasuta seost“, et leida galaktikate kaugused.</p>
+      <div class="calib-row" id="calibRow">
+        <select id="calib" aria-label="Periood-heledus seos">
+          <option value="own">Minu seos (2. osa)</option>
+          <option value="pub">Avaldatud seos</option>
+        </select>
+        <button type="button" class="primary" id="calibApply">Kasuta seost</button>
+      </div>
       <p class="fit" id="calibInfo"></p>
+      <p class="hint table-note" id="galNote">Kauguse moodul μ on galaktika tsefeiidide W<sub>H</sub> − M<sub>H</sub><sup>W</sup>(P) kaalutud keskmine. Kiirus v = cz,
+        kus z on galaktikas plahvatanud supernoova punanihe, mis on parandatud galaktika omaliikumise jaoks. Klõpsa galaktika real, et näha selle tsefeiide; uus klõps peidab need.</p>
       <div class="table-wrap" id="galWrap">
         <table class="data-table">
           <thead><tr>
@@ -451,11 +464,16 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Supernoovade heledus</h2>
-          <p class="hint">m<sub>B</sub> on supernoova näiv tähesuurus maksimumis, μ galaktika kauguse moodul 3. osast ja M<sub>B</sub> = m<sub>B</sub> − μ supernoova absoluutne tähesuurus.
-            Kasutatakse samu galaktikaid, mis on valitud 3. osa sobitusse.</p>
+          <p class="hint">Igas 3. osa galaktikas on plahvatanud Ia tüüpi supernoova. Kui galaktika kaugus on teada, saab supernoova näivast heledusest tema tegeliku heleduse.</p>
         </div>
+      </div>
+      <p class="hint calib-prompt" id="snPrompt">Vajuta „Kasuta 3. osa tulemusi“, et võtta galaktikate kaugused 3. osast ja leida supernoovade heledus.</p>
+      <div class="calib-row" id="snRow">
         <button type="button" class="primary" id="snApply">Kasuta 3. osa tulemusi</button>
       </div>
+      <div id="mb"></div>
+      <p class="hint table-note">m<sub>B</sub> on supernoova näiv tähesuurus maksimumis, μ galaktika kauguse moodul 3. osast ja M<sub>B</sub> = m<sub>B</sub> − μ supernoova absoluutne tähesuurus.
+        Kasutatakse samu galaktikaid, mis on valitud 3. osa sobitusse.</p>
       <div class="table-wrap">
         <table class="data-table">
           <thead><tr><th>Galaktika</th><th>Supernoova</th><th>m<sub>B</sub> (mag)</th><th>μ (mag)</th><th>M<sub>B</sub> (mag)</th></tr></thead>
@@ -700,7 +718,8 @@ const S = {
   cmdShift: 0,        // magnitude shift of the HR diagram (absolute magnitudes), for its crosshair
   stored: {},         // stored cluster parallaxes for part 2, by cluster name
   fieldOn: new Set(), // field Cepheids added to the period-luminosity relation, by name
-  calib: "own",       // period-luminosity relation used for the galaxies
+  calib: "own",       // period-luminosity relation chosen in the menu
+  calibUsed: null,    // relation applied with "Kasuta seost" ("own" or "pub"), or null before that
   gal: null,          // galaxy whose Cepheids are shown below its table row, or null
   galOff: new Set(),  // galaxies left out of the Hubble fit and the supernova calibration
   h0Local: null,      // H0 from part 3, for comparison in part 4
@@ -1047,7 +1066,7 @@ function emptyPlot(id, msg) {
 // Only the sky view shows per-star hover labels.
 // Listed Cepheids are drawn on top as stars (trace 2); clicks and lassos ignore that trace.
 function cepheidTrace(x, y, hover) {
-  const star = { symbol: "star", size: 15, color: css("--accent"), line: { width: 1, color: css("--surface") } };
+  const star = { symbol: "hexagram", size: 12, color: css("--cep"), line: { width: 1, color: css("--surface") } };
   return {
     type: "scattergl", mode: "markers", x, y,
     ...(hover ? { text: S.ceph.map((c) => `Tsefeiid ${c.cep}<br>P = ${fmtN(c.P, 3)} ööp`), hovertemplate: "%{text}<extra></extra>" } : { hoverinfo: "none" }),
@@ -1462,7 +1481,7 @@ function drawPL() {
 // the W_H period-luminosity relation chosen for the galaxies, or null when it cannot be formed
 function calibration() {
   const pub = PL_PUB;
-  if (S.calib === "pub") return { a: pub.a, b: pub.b, ea: 0, eb: 0 };
+  if (S.calibUsed === "pub") return { a: pub.a, b: pub.b, ea: 0, eb: 0 };
   const pts = cepheidPoints();
   return pts.length >= 2 ? fitPL(pts) : null;
 }
@@ -1501,19 +1520,32 @@ function fitHubble(gals, cal) {
 // W_H period-luminosity relation in part 2 (at least two Cepheids).
 function drawHubble() {
   const ready = cepheidPoints(true).length >= 2;   // field Cepheids alone do not unlock it
-  for (const id of ["calibField", "galWrap", "hubCard", "snCalCard", "snHubCard"]) $(id).hidden = !ready;
-  if (!ready) S.snApplied = false;
+  // derived quantities appear only after a relation has been applied with "Kasuta seost"
+  const used = ready && S.calibUsed;
+  $("calibPrompt").hidden = $("calibRow").hidden = $("galWrap").hidden = $("galNote").hidden = !ready;
+  for (const id of ["hubCard", "snCalCard", "snHubCard"]) $(id).hidden = !used;
+  if (!used) {
+    S.snApplied = false;
+    $("snInfo").textContent = "See osa avaneb, kui 3. osas on galaktikate kaugused leitud.";
+  }
+  if (ready && !used) {
+    $("calibInfo").textContent = "";
+    $("galBody").innerHTML = GALAXIES.map((g) => `<tr><td>${esc(g.name)}</td><td>SN ${esc(g.sn)}</td><td>${fmt(g.c.length / 4)}</td>` +
+      `<td class="muted">—</td><td class="muted">—</td><td>${fmtN(C_KMS * g.z, 0)}</td><td class="muted">—</td>` +
+      `<td><input type="checkbox" data-use="${esc(g.name)}"${S.galOff.has(g.name) ? "" : " checked"} aria-label="${esc(g.name)} sobitusse"></td></tr>`).join("");
+    return;
+  }
   if (!ready) {
-    $("snInfo").textContent = "See osa avaneb, kui 3. osas on galaktikate kaugused olemas.";
+    S.calibUsed = null;
     S.calib = $("calib").value = "own";
     $("calibInfo").innerHTML = `Hubble'i seaduse jaoks on vaja sinu enda periood-heledus seost. Salvesta 2. osas vähemalt kahe parve kaugus. Väljatsefeiidid ainult täiendavad seost.`;
     return;
   }
   const cal = calibration();
   const nH = cepheidPoints().length;
-  const what = S.calib === "pub" ? `avaldatud seos (${PL_PUB.ref})`
+  const what = S.calibUsed === "pub" ? `avaldatud seos (${PL_PUB.ref})`
     : `sinu seos ${nH} tsefeiidist`;
-  $("calibInfo").innerHTML = `Kasutusel: <b>${plFormula(cal, "H", S.calib !== "pub")}</b> — ${what}.`;
+  $("calibInfo").innerHTML = `Kasutusel: <b>${plFormula(cal, "H", S.calibUsed !== "pub")}</b> — ${what}.`;
 
   const gals = GALAXIES.map((g) => galaxyFit(g, cal));
   // a clicked galaxy opens a row with its Cepheid plot right below it; clicking again closes it
@@ -1530,15 +1562,15 @@ function drawHubble() {
   const cur = gals.find((g) => g.name === S.gal);
   if (cur) drawGalaxyPL(cur, cal);
 
-  const used = gals.filter((g) => !S.galOff.has(g.name));
-  const fit = used.length ? fitHubble(used, cal) : null;
+  const inFit = gals.filter((g) => !S.galOff.has(g.name));
+  const fit = inFit.length ? fitHubble(inFit, cal) : null;
   const dMax = Math.max(...gals.map((g) => g.d + g.eD)) * 1.08;
   const traces = [];
   if (fit) traces.push({
     type: "scatter", mode: "lines", x: [0, dMax], y: [0, fit.H * dMax], hoverinfo: "skip",
     line: { color: css("--accent"), width: 2, dash: "dash" },
   });
-  for (const [list, color] of [[used, css("--sel")], [gals.filter((g) => S.galOff.has(g.name)), css("--field-dim")]]) {
+  for (const [list, color] of [[inFit, css("--sel")], [gals.filter((g) => S.galOff.has(g.name)), css("--field-dim")]]) {
     if (!list.length) continue;
     traces.push({
       type: "scatter", mode: "markers", x: list.map((g) => g.d), y: list.map((g) => g.v),
@@ -1582,10 +1614,10 @@ function drawSupernovae(gals) {
   $("snBody").innerHTML = gals.map((g) =>
     `<tr${S.snApplied && !S.galOff.has(g.name) ? ' class="sel"' : ""}><td>${esc(g.name)}</td><td>SN ${esc(g.sn)}</td><td>${fmtN(g.mb, 2)}</td>` +
     (S.snApplied ? `<td>${fmtN(g.mu, 2)}</td><td>${fmtN(g.mb - g.mu, 2)}</td>` : dash + dash) + `</tr>`).join("");
-  $("snApply").hidden = S.snApplied;
+  $("snPrompt").hidden = $("snRow").hidden = S.snApplied;   // after applying, part 4 follows part 3
   $("snHubCard").hidden = !S.snApplied;
   if (!S.snApplied) {
-    $("mb").innerHTML = `<p class="empty">Vajuta „Kasuta 3. osa tulemusi“, et võtta galaktikate kaugused 3. osast ja leida supernoovade heledus.</p>`;
+    $("mb").innerHTML = "";
     return;
   }
   if (used.length < 2) {
@@ -1988,7 +2020,9 @@ try {
 $("source").addEventListener("change", () => {
   try { localStorage.setItem(SOURCE_KEY, $("source").value); } catch { /* kept for this visit */ }
 });
-$("calib").addEventListener("change", () => { S.calib = $("calib").value; drawHubble(); });
+// the menu only chooses; "Kasuta seost" applies the chosen relation
+$("calib").addEventListener("change", () => { S.calib = $("calib").value; });
+$("calibApply").addEventListener("click", () => { S.calibUsed = S.calib; drawHubble(); });
 $("galBody").addEventListener("change", (e) => {
   const name = e.target.dataset.use;
   if (!name) return;
@@ -1997,7 +2031,7 @@ $("galBody").addEventListener("change", (e) => {
 });
 $("galBody").addEventListener("click", (e) => {
   const tr = e.target.closest("tr[data-gal]");
-  if (!tr || e.target.matches("input")) return;
+  if (!tr || e.target.matches("input") || !S.calibUsed) return;
   S.gal = S.gal === tr.dataset.gal ? null : tr.dataset.gal;
   drawHubble();
 });

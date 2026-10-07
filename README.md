@@ -74,10 +74,14 @@ for comparison.
 The third part uses 19 type Ia supernova host galaxies with Cepheids
 observed by *HST*. It stays hidden until you have fitted your own W_H
 period-luminosity relation in the second part, which takes at least two
-stored cluster Cepheids. Each galaxy distance is then found from its
-Cepheids with the relation chosen in the menu:
+stored cluster Cepheids. Choose a relation in the menu next to **Kasuta
+seost** and press the button:
 - the relation fitted in the second part;
 - or the published relation, for comparison.
+
+Only then are the galaxy distances, the Hubble diagram and H₀ derived, from
+each galaxy's Cepheids with the applied relation. Changing the menu takes
+effect when the button is pressed again.
 
 Clicking a galaxy shows its Cepheids with the shifted relation. The
 velocity–distance plot shows a straight line through the origin fitted by
