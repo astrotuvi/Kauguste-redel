@@ -132,13 +132,18 @@ parameter q₀ = −0.55 as in SH0ES. Without it, H₀ comes out about 3 % low.
 
 ## Data services
 
+The **Andmeallikas** menu above the query form picks the *Gaia*
+service. **Automaatne**, the default, tries GAVO first and falls back to
+VizieR and ARI Heidelberg. Choosing one service uses only that one. The
+choice is remembered in the browser.
+
 - *Gaia* DR3 data come from the
   [GAVO Data Center](https://dc.g-vo.org/tableinfo/gaia.dr3lite) TAP service,
   with VizieR [I/355/gaiadr3](https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/355/gaiadr3)
   and the [ARI Heidelberg](https://gaia.ari.uni-heidelberg.de/) Gaia archive
   as fallbacks, in that order. GAVO is queried directly; the fallbacks are
   reached through the [TAP proxy](#tap-proxy). Fields larger than 1.5° are
-  queried as asynchronous jobs, and results are capped at 60 000 rows.
+  queried as asynchronous jobs, and results are capped at 150 000 rows.
 - Cluster names are resolved with SIMBAD and Sesame (CDS, Strasbourg).
 - The cluster–Cepheid pairs come from Cruz Reyes & Anderson (2023, A&A 672,
   A85; VizieR J/A+A/672/A85). Only Cepheids with a membership probability of

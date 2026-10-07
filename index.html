@@ -108,6 +108,7 @@ form.controls { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: fle
 }
 .field input:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
 .field.target { flex: 1 1 260px; }
+.field.source { align-items: flex-start; margin-bottom: 12px; }
 .field.coords { flex: 0 1 220px; }
 .field.coords input { width: 100%; }
 .field.num input { width: 92px; }
@@ -212,10 +213,16 @@ footer a { color: inherit; }
   <p class="lede">Päri Gaia DR3 tähed parve ümbrusest, vali välja koos üle taeva liikuvad tähed ja keskmista nende parallaksid, et leida parve kaugus.</p>
 
   <section class="card">
+    <div class="field source">
+      <label for="source">Andmeallikas</label>
+      <select id="source">
+        <option value="auto">Automaatne</option>
+      </select>
+    </div>
     <form class="controls" id="form" novalidate>
       <div class="field target">
         <label for="target">Parve nimi või koordinaadid</label>
-        <input id="target" name="target" value="M67" autocomplete="off" spellcheck="false"
+        <input id="target" name="target" value="Pleiades" autocomplete="off" spellcheck="false"
                placeholder="nt NGC 2516, Pleiades, 08:51:23 +11:48:50">
       </div>
       <div class="field coords">
@@ -224,13 +231,14 @@ footer a { color: inherit; }
       </div>
       <div class="field num">
         <label for="radius">Raadius (°)</label>
-        <input id="radius" type="number" value="0.3" min="0.1" max="3" step="0.1">
+        <input id="radius" type="number" value="2" min="0.1" max="3" step="0.1">
       </div>
       <div class="field num">
         <label for="gmax">G piir (mag)</label>
-        <input id="gmax" type="number" value="18" min="6" max="21" step="0.5">
+        <input id="gmax" type="number" value="17" min="6" max="21" step="0.5">
       </div>
       <button type="submit" class="primary" id="go">Päri Gaiast</button>
+      <button type="button" id="stop" hidden>Katkesta</button>
     </form>
     <div class="examples" id="examples">Proovi:</div>
     <p class="status" id="status" role="status" aria-live="polite"></p>
@@ -511,7 +519,7 @@ const SESAME_MIRRORS = [
   "https://cds.unistra.fr/cgi-bin/nph-sesame/-oxp/SNV?",
   "https://vizier.cfa.harvard.edu/viz-bin/nph-sesame/-oxp/SNV?",
 ];
-const MAXREC = 60000;
+const MAXREC = 150000;
 const ASYNC_RADIUS = 1.5;  // deg; larger fields are queried as async jobs
 const ASYNC_LIMIT = 300;   // s; give up on an async job after this long
 const ZP = -0.017;   // mas, Gaia DR3 global parallax zero-point
@@ -640,6 +648,7 @@ const S = {
   stats: null,
   rev: 0,             // uirevision, bumped per dataset
   token: 0,
+  qctrl: null,        // AbortController of the running query
   coordsFor: null,    // name-box text that the coordinate box belongs to
   coordsLabel: null,  // status label for those coordinates, when they came from a name lookup
   page: 0,            // data table page
@@ -678,13 +687,27 @@ function parseCoords(text) {
 }
 
 // Fetch a URL and read the whole body, with the timeout covering both.
-async function fetchText(url, ms) {
+// The running query can be stopped with the "Katkesta" button: requests started while it runs
+// follow S.qctrl, and a stopped request throws Error("cancelled").
+function followStop(ctrl) {
+  const q = S.qctrl;
+  if (!q) return false;
+  if (q.signal.aborted) ctrl.abort();
+  else q.signal.addEventListener("abort", () => ctrl.abort(), { once: true });
+  return true;
+}
+const stopped = () => !!(S.qctrl && S.qctrl.signal.aborted);
+function checkStopped() { if (stopped()) throw new Error("cancelled"); }
+
+async function fetchText(url, ms, opts = {}) {
   const ctrl = new AbortController();
+  followStop(ctrl);
   const timer = setTimeout(() => ctrl.abort(), ms);
   try {
-    const r = await fetch(url, { signal: ctrl.signal });
-    return { ok: r.ok, status: r.status, text: await r.text() };
+    const r = await fetch(url, { ...opts, signal: ctrl.signal });
+    return { ok: r.ok, status: r.status, url: r.url, text: await r.text() };
   } catch (e) {
+    if (stopped()) throw new Error("cancelled");
     if (e.name === "AbortError") throw new Error("päring aegus");
     throw new Error("võrguviga või blokeeritud päring");
   } finally {
@@ -696,6 +719,7 @@ async function fetchText(url, ms) {
 // so read the stream and stop as soon as the answer (or "nothing found") is complete.
 async function sesameMirror(base, name) {
   const ctrl = new AbortController();
+  followStop(ctrl);
   const timer = setTimeout(() => ctrl.abort(), 15000);
   let xml = "";
   try {
@@ -793,11 +817,11 @@ async function querySync(s, params) {
 
 // IVOA UWS job: create, start, poll the phase, fetch the result, delete the job.
 async function queryAsync(s, params, onWait) {
-  const created = await fetch(s.async, { method: "POST", body: new URLSearchParams(params) });
+  const created = await fetchText(s.async, 30000, { method: "POST", body: new URLSearchParams(params) });
   const job = created.url;                            // fetch follows the 303 to the job URL
   if (!created.ok || job.replace(/\/$/, "") === s.async) throw new Error("taustapäringu loomine ebaõnnestus");
   try {
-    await fetch(job + "/phase", { method: "POST", body: new URLSearchParams({ PHASE: "RUN" }) });
+    await fetchText(job + "/phase", 30000, { method: "POST", body: new URLSearchParams({ PHASE: "RUN" }) });
     const t0 = performance.now();
     for (;;) {
       const elapsed = (performance.now() - t0) / 1000;
@@ -810,18 +834,23 @@ async function queryAsync(s, params, onWait) {
         throw tapError(err.text, phase);
       }
       await new Promise((res) => setTimeout(res, 2000));
+      checkStopped();
     }
     const r = await fetchText(job + "/results/result", 120000);
     if (!r.ok || r.text.trimStart().startsWith("<")) throw tapError(r.text, r.status);
     return parseCSV(r.text);
   } finally {
+    // deleting the job also stops it on the server when the query was cancelled
     fetch(job, { method: "POST", body: new URLSearchParams({ ACTION: "DELETE" }) }).catch(() => {});
   }
 }
 
+// "auto" tries the services in order; a chosen service is used alone, without fallback
 async function queryGaia(c, radius, gmax, onWait) {
   const failures = [];
-  for (const s of GAIA_SOURCES) {
+  const choice = $("source").value;
+  const sources = choice === "auto" ? GAIA_SOURCES : GAIA_SOURCES.filter((s) => s.name === choice);
+  for (const s of sources) {
     try {
       return { d: await querySource(s, c, radius, gmax, onWait), source: s.name };
     } catch (e) {
@@ -1641,7 +1670,9 @@ async function run() {
   if (!(gmax > 0 && gmax <= 21)) { setStatus("G piir peab olema vahemikus 0 kuni 21 mag.", "error"); return; }
 
   const token = ++S.token;
+  S.qctrl = new AbortController();
   $("go").disabled = true;
+  $("stop").hidden = false;
   try {
     let c;
     // use the coordinate box when it belongs to the current name (or was typed in directly)
@@ -1657,15 +1688,16 @@ async function run() {
       S.coordsFor = target;
       S.coordsLabel = c.label;
     }
-    setStatus(`${c.label}. Pärin Gaia DR3 tähti ${fmt(radius)}° raadiuses…`);
+    setStatus("Pärin Gaia DR3 andmeid…");
     const t0 = performance.now();
     const { d, source } = await queryGaia(c, radius, gmax, (sec) => {
       if (token !== S.token) return false;
-      setStatus(`${c.label}. Suur väli — Gaia päring töötab taustal (${Math.round(sec)} s; tavaliselt alla minuti)…`);
+      setStatus(`Suur väli — Gaia päring töötab taustal (${Math.round(sec)} s; tavaliselt alla minuti)…`);
     });
     if (token !== S.token) return;
     const n = d.src.length;
-    if (!n) { setStatus(`${c.label}. Ühtegi sobivat Gaia tähte ei leitud — suurenda raadiust või G piiri.`, "warn"); return; }
+    const done = `Päring lõpetatud (${source}), ${fmtN((performance.now() - t0) / 1000, 1)} s.`;
+    if (!n) { setStatus(`${done} Sobivaid tähti ei leitud — suurenda raadiust või G piiri. Ridu: 0.`, "warn"); return; }
 
     S.d = d; S.n = n; S.center = c; S.radius = radius; S.rev++;
     S.picked = new Set(); S.removed = new Set(); S.idx = null; S.stats = null; S.page = 0;
@@ -1677,10 +1709,8 @@ async function run() {
     S.sky = { ra0: c.ra, dec0: c.dec, raPlot: d.ra.map((ra) => unwrapRA(ra, c.ra)) };
     S.ceph = CEPHEIDS.filter((x) => sepDeg(c.ra, c.dec, x.at[0], x.at[1]) <= radius);
 
-    const secs = fmtN((performance.now() - t0) / 1000, 1);
     const trunc = n >= MAXREC;
-    setStatus(`${c.label}. ${fmt(n)} tähte (G < ${fmt(gmax)}) allikast ${source}, ${secs} s.` +
-      (trunc ? ` Tulemus on kärbitud ${fmt(MAXREC)} reani — vähenda raadiust või G piiri.` : ""), trunc ? "warn" : "");
+    setStatus(`${done}` + (trunc ? ` Tulemus on kärbitud — vähenda raadiust või G piiri.` : "") + ` Ridu: ${fmt(n)}.`, trunc ? "warn" : "");
 
     drawSky();
     drawPM();
@@ -1689,8 +1719,18 @@ async function run() {
   } catch (e) {
     if (token === S.token) setStatus(e.message, "error");
   } finally {
-    if (token === S.token) $("go").disabled = false;
+    if (token === S.token) { $("go").disabled = false; $("stop").hidden = true; }
   }
+}
+
+// stop the running query; the previous data and plots stay as they were
+function stopQuery() {
+  if (!S.qctrl) return;
+  S.qctrl.abort();
+  S.token++;                  // results that still arrive are ignored
+  $("go").disabled = false;
+  $("stop").hidden = true;
+  setStatus("Päring katkestati.", "warn");
 }
 
 function clearSelection() {
@@ -1740,6 +1780,19 @@ $("cmdAbs").addEventListener("change", refresh);
 $("restore").addEventListener("click", restoreSelection);
 $("results").addEventListener("click", (e) => { if (e.target.id === "saveDist") storeDistance(); });
 $("resetAll").addEventListener("click", resetAll);
+$("stop").addEventListener("click", stopQuery);
+
+// data source menu: "auto" plus every Gaia service; the choice is remembered in this browser
+const SOURCE_KEY = "kauguste-redel:andmeallikas";
+$("source").options[0].textContent = `Automaatne (${GAIA_SOURCES.map((s) => s.name).join(" → ")})`;
+for (const src of GAIA_SOURCES) $("source").add(new Option(src.name, src.name));
+try {
+  const saved = localStorage.getItem(SOURCE_KEY);
+  if (saved && [...$("source").options].some((o) => o.value === saved)) $("source").value = saved;
+} catch { /* default */ }
+$("source").addEventListener("change", () => {
+  try { localStorage.setItem(SOURCE_KEY, $("source").value); } catch { /* kept for this visit */ }
+});
 $("calib").addEventListener("change", () => { S.calib = $("calib").value; drawHubble(); });
 $("galBody").addEventListener("change", (e) => {
   const name = e.target.dataset.use;
