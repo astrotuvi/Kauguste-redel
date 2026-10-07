@@ -395,8 +395,8 @@ footer a { color: inherit; }
       <div class="table-wrap">
         <table class="data-table">
           <thead><tr>
-            <th>Parv</th><th>Tsefeiid</th><th>P (ööp)</th><th>log P</th><th>W<sub>H</sub> (mag)</th>
-            <th>ϖ (mas)</th><th>Kaugus (pc)</th><th>M<sub>H</sub><sup>W</sup> (mag)</th><th></th>
+            <th title="Hajusparv, mille liige tsefeiid on">Parv</th><th title="Tsefeiidi nimi">Tsefeiid</th><th title="Heleduse muutumise periood ööpäevades (Gaia DR3)">P (ööp)</th><th title="Perioodi kümnendlogaritm">log P</th><th title="Wesenheiti näiv tähesuurus Hubble'i kosmoseteleskoobi mõõtmistest; ei sõltu tähtedevahelisest tolmust">W<sub>H</sub> (mag)</th>
+            <th title="Parallaks: parvel salvestatud parve keskmine, väljatsefeiidil tema enda Gaia parallaks">ϖ (mas)</th><th title="Kaugus d = 1000 / ϖ parsekites">Kaugus (pc)</th><th title="Absoluutne Wesenheiti tähesuurus: M = W_H + 5 log ϖ − 10">M<sub>H</sub><sup>W</sup> (mag)</th><th title="Toimingud: parve mõõtmine või tsefeiidi lisamine seosesse"></th>
           </tr></thead>
           <tbody id="cepBody"></tbody>
         </table>
@@ -441,7 +441,7 @@ footer a { color: inherit; }
       <div class="table-wrap" id="galWrap">
         <table class="data-table">
           <thead><tr>
-            <th>Galaktika</th><th>Supernoova</th><th>Tsefeiide</th><th>μ (mag)</th><th>Kaugus (Mpc)</th><th>Kiirus (km/s)</th><th>v / d (km/s/Mpc)</th><th>Sobitusse</th>
+            <th title="Galaktika nimi">Galaktika</th><th title="Galaktikas plahvatanud Ia tüüpi supernoova">Supernoova</th><th title="Galaktikas mõõdetud tsefeiidide arv">Tsefeiide</th><th title="Kauguse moodul μ = m − M: tsefeiidide W_H − M_H^W(P) kaalutud keskmine">μ (mag)</th><th title="Kaugus d = 10^(μ/5 − 5) megaparsekites">Kaugus (Mpc)</th><th title="Eemaldumiskiirus v = cz supernoova punanihkest">Kiirus (km/s)</th><th title="Selle galaktika kiiruse ja kauguse suhe — üksiku galaktika hinnang Hubble'i konstandile">v / d (km/s/Mpc)</th><th title="Kas galaktikat kasutatakse Hubble'i seaduse sobituses">Sobitusse</th>
           </tr></thead>
           <tbody id="galBody"></tbody>
         </table>
@@ -488,7 +488,7 @@ footer a { color: inherit; }
         Kasutatakse samu galaktikaid, mis on valitud 3. osa sobitusse.</p>
       <div class="table-wrap">
         <table class="data-table">
-          <thead><tr><th>Galaktika</th><th>Supernoova</th><th>m<sub>B</sub> (mag)</th><th>μ (mag)</th><th>M<sub>B</sub> (mag)</th></tr></thead>
+          <thead><tr><th title="Galaktika nimi">Galaktika</th><th title="Galaktikas plahvatanud Ia tüüpi supernoova">Supernoova</th><th title="Supernoova näiv tähesuurus B-ribas heleduse maksimumis">m<sub>B</sub> (mag)</th><th title="Galaktika kauguse moodul 3. osast">μ (mag)</th><th title="Supernoova absoluutne tähesuurus M_B = m_B − μ">M<sub>B</sub> (mag)</th></tr></thead>
           <tbody id="snBody"></tbody>
         </table>
       </div>
@@ -1052,7 +1052,8 @@ const CONFIG = {
 
 function axis(title, extra = {}) {
   return {
-    title: { text: title, font: { size: 12, color: css("--text-2") } },
+    title: { text: title, font: { size: 14, color: css("--text-2") } },
+    tickfont: { size: 13 },
     gridcolor: css("--grid"),
     zeroline: false,
     linecolor: css("--axis"),
@@ -1147,8 +1148,8 @@ function drawSky() {
   traces.push(crosshairTrace("sky"));
   return Plotly.react("sky", traces, baseLayout({
     dragmode: "zoom",
-    xaxis: axis("otsetõus α (°)", { autorange: "reversed", scaleanchor: "y", scaleratio: cosd }),
-    yaxis: axis("kääne δ (°)"),
+    xaxis: axis("Otsetõus α (°)", { autorange: "reversed", scaleanchor: "y", scaleratio: cosd }),
+    yaxis: axis("Kääne δ (°)"),
     shapes: [{
       type: "circle", xref: "x", yref: "y", layer: "below",
       x0: ra0 - r / cosd, x1: ra0 + r / cosd, y0: dec0 - r, y1: dec0 + r,
@@ -1246,8 +1247,8 @@ function drawHist() {
     uirevision: S.rev,
     dragmode: "zoom",
     bargap: 0,
-    xaxis: axis("parallaks (mas)"),
-    yaxis: axis("tähti"),
+    xaxis: axis("Parallaks (mas)"),
+    yaxis: axis("Tähti"),
     shapes: [{
       type: "line", xref: "x", yref: "paper", x0: st.wmean, x1: st.wmean, y0: 0, y1: 1,
       line: { color: css("--accent"), width: 2, dash: "dash" },
@@ -1608,8 +1609,8 @@ function drawHubble() {
   }
   Plotly.react("hub", traces, baseLayout({
     dragmode: "zoom",
-    xaxis: axis("kaugus d (Mpc)", { range: [0, dMax] }),
-    yaxis: axis("kiirus v (km/s)", { rangemode: "tozero" }),
+    xaxis: axis("Kaugus d (Mpc)", { range: [0, dMax] }),
+    yaxis: axis("Kiirus v (km/s)", { rangemode: "tozero" }),
   }), CONFIG);
 
   S.h0Local = fit ? fit.H : null;
@@ -1693,8 +1694,8 @@ function drawSupernovae(gals) {
     },
   ], baseLayout({
     dragmode: "zoom",
-    xaxis: axis("kaugus d (Mpc)", { range: [0, dMax] }),
-    yaxis: axis("kiirus v (km/s)", { rangemode: "tozero" }),
+    xaxis: axis("Kaugus d (Mpc)", { range: [0, dMax] }),
+    yaxis: axis("Kiirus v (km/s)", { rangemode: "tozero" }),
   }), CONFIG);
 
   const [hV, hE] = valErr(H, eH);
