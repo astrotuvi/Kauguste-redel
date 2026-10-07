@@ -135,17 +135,29 @@ parameter q₀ = −0.55 as in SH0ES. Without it, H₀ comes out about 3 % low.
 ## Data services
 
 The **Andmeallikas** menu above the query form picks the *Gaia*
-service. **Automaatne**, the default, tries GAVO first and falls back to
-VizieR and ARI Heidelberg. Choosing one service uses only that one. The
-choice is remembered in the browser.
+service. **Automaatne**, the default, starts with GAVO for fields up to 1.5°
+(fast synchronous queries) and with VizieR for larger fields (asynchronous
+jobs). It then falls back to the others: GAVO or VizieR, ARI Heidelberg, the
+ESA Gaia archive and AIP Potsdam. Choosing one
+service uses only that one. The choice is remembered in the browser.
 
 - *Gaia* DR3 data come from the
-  [GAVO Data Center](https://dc.g-vo.org/tableinfo/gaia.dr3lite) TAP service,
-  with VizieR [I/355/gaiadr3](https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/355/gaiadr3)
-  and the [ARI Heidelberg](https://gaia.ari.uni-heidelberg.de/) Gaia archive
-  as fallbacks, in that order. GAVO is queried directly; the fallbacks are
-  reached through the [TAP proxy](#tap-proxy). Fields larger than 1.5° are
-  queried as asynchronous jobs, and results are capped at 150 000 rows.
+  [GAVO Data Center](https://dc.g-vo.org/tableinfo/gaia.dr3lite) for small
+  fields and from VizieR
+  [I/355/gaiadr3](https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/355/gaiadr3)
+  for large ones. The other fallbacks, in this order, are the
+  [ARI Heidelberg](https://gaia.ari.uni-heidelberg.de/) Gaia archive, the
+  [ESA Gaia archive](https://gea.esac.esa.int/archive/) and
+  [AIP Potsdam](https://gaia.aip.de/). GAVO is queried directly; the others
+  are reached through the [TAP proxy](#tap-proxy). Fields larger than 1.5°
+  are queried as asynchronous jobs, with two exceptions:
+  - ESA is always queried synchronously, because its queue for anonymous
+    async jobs is too slow.
+  - AIP is always queried through async jobs. Its sync endpoint answers
+    only in VOTable, while its async jobs return CSV with
+    `RESPONSEFORMAT=csv`.
+
+  Results are capped at 150 000 rows.
 - Cluster names are resolved with SIMBAD and Sesame (CDS, Strasbourg).
 - The cluster–Cepheid pairs come from Cruz Reyes & Anderson (2023, A&A 672,
   A85; VizieR J/A+A/672/A85). Only Cepheids with a membership probability of
@@ -182,15 +194,17 @@ from cdnjs. The TAP proxy in `proxy/` runs separately on Cloudflare.
 
 ### TAP proxy
 
-Browsers reject the answers of the VizieR and ARI Heidelberg TAP services,
-because VizieR sends its `Access-Control-Allow-Origin` header twice and ARI
-sends none. `proxy/worker.js` is a Cloudflare Worker that forwards the
+Browsers reject the answers of the VizieR, ARI Heidelberg, ESA Gaia archive
+and AIP TAP services, because VizieR sends its `Access-Control-Allow-Origin`
+header twice and the others send none. `proxy/worker.js` is a Cloudflare Worker that forwards the
 queries to them and returns the answers with one valid CORS header. It only
 forwards the TAP `sync` and `async` endpoints and the async job resources,
 and rewrites the async job redirects so that they point back to the proxy:
 
 - `https://<worker>/vizier/sync` → `https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync`
 - `https://<worker>/ari/sync` → `https://gaia.ari.uni-heidelberg.de/tap/sync`
+- `https://<worker>/esa/sync` → `https://gea.esac.esa.int/tap-server/tap/sync`
+- `https://<worker>/aip/async` → `https://gaia.aip.de/tap/async`
 
 The app uses the deployed Worker at
 `https://kauguste-redel-tap.taavi-tuvikene.workers.dev` (`TAP_PROXY` in

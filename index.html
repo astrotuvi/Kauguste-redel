@@ -486,9 +486,12 @@ footer a { color: inherit; }
 
   <footer>
     Andmed: ESA <i>Gaia</i> DR3 (Gaia Collaboration 2023), päritud
-    <a href="https://dc.g-vo.org/tableinfo/gaia.dr3lite" target="_blank" rel="noopener">GAVO Data Centeri</a> TAP-teenusest
-    (varuvariandid: VizieR <a href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/355/gaiadr3" target="_blank" rel="noopener">I/355/gaiadr3</a>
-    ja <a href="https://gaia.ari.uni-heidelberg.de/" target="_blank" rel="noopener">ARI Heidelbergi Gaia-andmekeskus</a>).
+    <a href="https://dc.g-vo.org/tableinfo/gaia.dr3lite" target="_blank" rel="noopener">GAVO Data Centeri</a> (väikesed väljad) ja
+    VizieR'i <a href="https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/355/gaiadr3" target="_blank" rel="noopener">I/355/gaiadr3</a> (suured väljad) TAP-teenustest
+    (varuvariandid:
+    <a href="https://gaia.ari.uni-heidelberg.de/" target="_blank" rel="noopener">ARI Heidelbergi Gaia-andmekeskus</a>,
+    <a href="https://gea.esac.esa.int/archive/" target="_blank" rel="noopener">ESA Gaia arhiiv</a>
+    ja <a href="https://gaia.aip.de/" target="_blank" rel="noopener">AIP Potsdam</a>).
     Nimed lahendatakse SIMBADi ja Sesame abil (CDS, Strasbourg). Parallaksi nullpunkt −0,017 mas pärineb tööst Lindegren jt (2021);
     lisatud on ~0,010 mas süstemaatiline viga, sest nurga järgi korreleeruvad parallaksivead keskmistamisel ei vähene
     (Lindegren jt 2021; Maíz Apellániz jt 2021). Absoluutse tähesuurusega HR-diagrammil on ekstinktsioon arvestamata.
@@ -505,10 +508,14 @@ footer a { color: inherit; }
 <script>
 "use strict";
 
-// Gaia DR3 services queried from the browser, tried in order. GAVO is queried directly.
-// VizieR (duplicated Access-Control-Allow-Origin header) and ARI Heidelberg (no CORS
-// headers) are reached through our Cloudflare Worker (proxy/worker.js), which fixes the
-// headers. The ESA Gaia archive sends no CORS headers and is not used.
+// Gaia DR3 services queried from the browser. "Automaatne" tries them in this order, except that
+// large fields (async jobs) start with VizieR (see queryGaia). GAVO is queried directly.
+// VizieR (duplicated Access-Control-Allow-Origin header), ARI Heidelberg and the ESA Gaia
+// archive (no CORS headers) are reached through our Cloudflare Worker (proxy/worker.js),
+// which fixes the headers. The ESA archive is used only with synchronous queries: its
+// queue for anonymous async jobs is too slow, while sync queries return in seconds.
+// AIP is the opposite: its sync endpoint always answers in VOTable, but async jobs
+// honour RESPONSEFORMAT=csv, so it is queried only through async jobs.
 const TAP_PROXY = "https://kauguste-redel-tap.taavi-tuvikene.workers.dev";
 const GAIA_SOURCES = [
   {
@@ -529,6 +536,20 @@ const GAIA_SOURCES = [
     name: "ARI Heidelberg",
     url: TAP_PROXY + "/ari/sync",
     async: TAP_PROXY + "/ari/async",
+    table: "gaiadr3.gaia_source",
+    cols: { src: "source_id", ra: "ra", dec: "dec", plx: "parallax", eplx: "parallax_error", pmra: "pmra", pmdec: "pmdec", g: "phot_g_mean_mag", bprp: "phot_bp_mean_mag - phot_rp_mean_mag", ruwe: "ruwe" },
+  },
+  {
+    name: "ESA Gaia arhiiv",
+    url: TAP_PROXY + "/esa/sync",          // no async: see above
+    table: "gaiadr3.gaia_source",
+    cols: { src: "source_id", ra: "ra", dec: "dec", plx: "parallax", eplx: "parallax_error", pmra: "pmra", pmdec: "pmdec", g: "phot_g_mean_mag", bprp: "phot_bp_mean_mag - phot_rp_mean_mag", ruwe: "ruwe" },
+  },
+  {
+    name: "AIP Potsdam",
+    async: TAP_PROXY + "/aip/async",
+    asyncOnly: true,                       // see above
+    params: { RESPONSEFORMAT: "csv" },
     table: "gaiadr3.gaia_source",
     cols: { src: "source_id", ra: "ra", dec: "dec", plx: "parallax", eplx: "parallax_error", pmra: "pmra", pmdec: "pmdec", g: "phot_g_mean_mag", bprp: "phot_bp_mean_mag - phot_rp_mean_mag", ruwe: "ruwe" },
   },
@@ -818,9 +839,10 @@ async function querySource(s, c, radius, gmax, onWait) {
 FROM ${s.table}
 WHERE 1 = CONTAINS(POINT('ICRS', ${k.ra}, ${k.dec}), CIRCLE('ICRS', ${c.ra.toFixed(6)}, ${c.dec.toFixed(6)}, ${radius}))
   AND ${k.plx} IS NOT NULL AND ${k.pmra} IS NOT NULL AND ${k.g} < ${gmax} AND ${k.ruwe} < ${RUWE_MAX}`;
-  const params = { REQUEST: "doQuery", LANG: "ADQL", FORMAT: "csv", MAXREC: String(MAXREC), QUERY: adql };
-  // Synchronous queries are cut off after ~20 s on GAVO; large fields go through an async job.
-  if (s.async && radius > ASYNC_RADIUS) return queryAsync(s, params, onWait);
+  const params = { REQUEST: "doQuery", LANG: "ADQL", FORMAT: "csv", MAXREC: String(MAXREC), QUERY: adql, ...s.params };
+  // Synchronous queries are cut off after ~20 s on GAVO; large fields go through an async job,
+  // and so does every query to a service that only gives CSV that way.
+  if (s.asyncOnly || (s.async && radius > ASYNC_RADIUS)) return queryAsync(s, params, onWait);
   try {
     return await querySync(s, params);
   } catch (e) {
@@ -870,11 +892,17 @@ async function queryAsync(s, params, onWait) {
   }
 }
 
-// "auto" tries the services in order; a chosen service is used alone, without fallback
+// "auto" uses GAVO first for small fields (fast synchronous queries) and VizieR first for large
+// fields (asynchronous jobs), then the others in order; a chosen service is used alone
+const ASYNC_FIRST = "VizieR (CDS)";
 async function queryGaia(c, radius, gmax, onWait) {
   const failures = [];
   const choice = $("source").value;
-  const sources = choice === "auto" ? GAIA_SOURCES : GAIA_SOURCES.filter((s) => s.name === choice);
+  let sources = GAIA_SOURCES;
+  if (choice !== "auto") sources = GAIA_SOURCES.filter((s) => s.name === choice);
+  else if (radius > ASYNC_RADIUS) {
+    sources = [...GAIA_SOURCES.filter((s) => s.name === ASYNC_FIRST), ...GAIA_SOURCES.filter((s) => s.name !== ASYNC_FIRST)];
+  }
   for (const s of sources) {
     try {
       return { d: await querySource(s, c, radius, gmax, onWait), source: s.name };
@@ -1840,7 +1868,7 @@ async function run() {
     const t0 = performance.now();
     const { d, source } = await queryGaia(c, radius, gmax, (sec) => {
       if (token !== S.token) return false;
-      setStatus(`Suur väli — Gaia päring töötab taustal (${Math.round(sec)} s; tavaliselt alla minuti)…`);
+      setStatus(`Gaia päring töötab serveris taustal (${Math.round(sec)} s; tavaliselt alla minuti)…`);
     });
     if (token !== S.token) return;
     const n = d.src.length;
@@ -1952,7 +1980,6 @@ $("stop").addEventListener("click", stopQuery);
 
 // data source menu: "auto" plus every Gaia service; the choice is remembered in this browser
 const SOURCE_KEY = "kauguste-redel:andmeallikas";
-$("source").options[0].textContent = `Automaatne (${GAIA_SOURCES.map((s) => s.name).join(" → ")})`;
 for (const src of GAIA_SOURCES) $("source").add(new Option(src.name, src.name));
 try {
   const saved = localStorage.getItem(SOURCE_KEY);

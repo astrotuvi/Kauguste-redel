@@ -1,13 +1,18 @@
 // Cloudflare Worker that forwards TAP queries to Gaia DR3 services whose CORS
-// headers browsers reject (VizieR sends Access-Control-Allow-Origin twice, ARI
-// sends none) and returns their answers with a single valid CORS header.
+// headers browsers reject (VizieR sends Access-Control-Allow-Origin twice; ARI,
+// the ESA Gaia archive and AIP send none) and returns their answers with a
+// single valid CORS header.
 //
 //   /vizier/sync, /vizier/async[/<job>[/phase|/error|/results/result]]
 //   /ari/sync,    /ari/async[/<job>[/phase|/error|/results/result]]
+//   /esa/sync,    /esa/async[/<job>[/phase|/error|/results/result]]
+//   /aip/sync,    /aip/async[/<job>[/phase|/error|/results/result]]
 
 const UPSTREAMS = {
   vizier: "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
   ari: "https://gaia.ari.uni-heidelberg.de/tap",
+  esa: "https://gea.esac.esa.int/tap-server/tap",
+  aip: "https://gaia.aip.de/tap",
 };
 // Only the TAP query endpoints and the async (UWS) job resources are forwarded.
 const TAP_PATH = /^\/(sync|async(\/[\w-]+(\/(phase|error|results\/result))?)?)$/;
