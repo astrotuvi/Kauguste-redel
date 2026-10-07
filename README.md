@@ -51,11 +51,14 @@ yourself. After selecting the cluster members, press **Salvesta parve … kaugus
 below the distance tiles to store the mean cluster parallax. Each stored
 cluster adds its Cepheids to the period-luminosity plot. With two or more
 Cepheids, the app fits a weighted straight line. Stored distances are kept in
-the browser (`localStorage`) and can be removed with **Kustuta**.
+the browser (`localStorage`) and can be removed with **Kustuta**. The
+**Kustuta kõik salvestatud andmed** button at the bottom of the page clears
+everything the app has stored, after a confirmation.
 
-Few Cepheids with periods above 10 days sit in nearby clusters. To cover long
-periods, the table also lists 8 long-period field Cepheids (P = 14–39 d)
-that are not in clusters. Their distances come from their own *Gaia*
+Few Cepheids with periods above 10 days sit in nearby clusters. The table
+therefore also lists 12 field Cepheids that are not in clusters: 8 with long
+periods (P = 14–39 d) and 4 with shorter periods (P = 3.4–11 d), spread
+evenly in log P. Their distances come from their own *Gaia*
 parallaxes. Each has its own **Lisa seosesse** button, which adds it to the
 fit, shown as a diamond in the plot. They only supplement the relation: the
 third part still needs at least two cluster Cepheids.
@@ -148,10 +151,15 @@ parameter q₀ = −0.55 as in SH0ES. Without it, H₀ comes out about 3 % low.
 - TW Nor (Lynga 6) and CD Cyg (Berkeley 84) were added
   from a match of *Gaia* DR3 Cepheids with the Hunt & Reffert (2023, A&A 673,
   A114) clusters by position, proper motion and parallax.
-- The field Cepheids have P > 14 d, a *Gaia* DR3 parallax error below 5 %,
-  BP − RP < 2.5, RUWE < 1.4 and a W_H magnitude from Riess et al. (2021,
-  ApJL 908, L6). Y Oph and XZ Car are left out as clear outliers. The CD Cyg
-  W_H also comes from Riess et al. (2021).
+- The field Cepheids pulsate in the fundamental mode and have BP − RP < 2.5,
+  RUWE < 1.4 and a W_H magnitude from Riess et al. (2021, ApJL 908, L6). The
+  long-period ones (P > 14 d) have *Gaia* DR3 parallax errors below 5 %. The
+  four shorter ones were chosen evenly in log P, each with the smallest
+  parallax error (below 3 %) near its period. Y Oph and XZ Car are left out
+  as clear outliers. The CD Cyg W_H also comes from Riess et al. (2021).
+  All W_H values from Riess et al. (2021) are shifted by −0.046 mag onto the
+  Cruz Reyes & Anderson (2023) scale used for the cluster Cepheids. For the
+  six Cepheids in both catalogues, the difference is 0.046 ± 0.003 mag.
 - The galaxy Cepheids (period, F160W, V − I and the total error) come from
   Riess et al. (2016, ApJ 826, 56; VizieR J/ApJ/826/56). The supernova
   redshifts come from Pantheon+ (Scolnic et al. 2022; Brout et al. 2022).
