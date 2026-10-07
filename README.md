@@ -45,7 +45,7 @@ queries the data services directly from the browser.
 
 ### Cepheids
 
-The second part of the page lists 15 classical Cepheids in 13 open clusters.
+The second part of the page lists 11 classical Cepheids in 11 open clusters, all with *HST* Wesenheit magnitudes W_H.
 **Mõõda** fills in the query form for a cluster, but you still start the query
 yourself. After selecting the cluster members, press **Salvesta parve … kaugus**
 below the distance tiles to store the mean cluster parallax. Each stored
@@ -53,18 +53,25 @@ cluster adds its Cepheids to the period-luminosity plot. With two or more
 Cepheids, the app fits a weighted straight line. Stored distances are kept in
 the browser (`localStorage`) and can be removed with **Kustuta**.
 
+Few Cepheids with periods above 10 days sit in nearby clusters. To cover long
+periods, the table also lists 8 long-period field Cepheids (P = 14–39 d)
+that are not in clusters. Their distances come from their own *Gaia*
+parallaxes. Each has its own **Lisa seosesse** button, which adds it to the
+fit, shown as a diamond in the plot. They only supplement the relation: the
+third part still needs at least two cluster Cepheids.
+
 When a queried field contains a listed Cepheid, the Cepheid is marked with a
 star in the sky view, the proper-motion plot and the colour–magnitude
-diagram. The period-luminosity plot can show either the *Gaia* Wesenheit
-magnitude W_G or the *HST* Wesenheit magnitude W_H, together with a published
-relation for comparison.
+diagram. The period-luminosity plot uses only the *HST* Wesenheit magnitude
+W_H, the same system as the galaxy Cepheids. A published relation is shown
+for comparison.
 
 ### Hubble law
 
 The third part uses 19 type Ia supernova host galaxies with Cepheids
 observed by *HST*. It stays hidden until you have fitted your own W_H
 period-luminosity relation in the second part, which takes at least two
-stored Cepheids with W_H. Each galaxy distance is then found from its
+stored cluster Cepheids. Each galaxy distance is then found from its
 Cepheids with the relation chosen in the menu:
 - the relation fitted in the second part;
 - its zero point with the published slope;
@@ -106,16 +113,13 @@ parameter q₀ = −0.55 as in SH0ES. Without it, H₀ comes out about 3 % low.
 - The colour–magnitude diagram can show absolute magnitudes. Extinction is
   not corrected.
 
-- Cepheid luminosities use reddening-free Wesenheit magnitudes:
-  `W_G = G − 1.90 (BP − RP)` (Ripepi et al. 2019) from *Gaia*, and
-  `W_H = F160W − 0.386 (F555W − F814W)` from *HST*. The galaxy Cepheids are
-  only observed with *HST*, so the third part uses W_H. The absolute
-  magnitude is `M_W = W + 5 log10(ϖ / mas) − 10`, with ϖ the stored cluster
-  parallax. The fit is `M_W = a (log P − 1) + b`, weighted by the parallax
-  errors.
-- The published relations are
-  `M_G^W = −5.988 − 3.176 (log P − 1)` (Ripepi et al. 2022, solar
-  metallicity) and `M_H^W = −5.914 − 3.29 (log P − 1)` (Cruz Reyes &
+- Cepheid luminosities use the reddening-free *HST* Wesenheit magnitude
+  `W_H = F160W − 0.386 (F555W − F814W)`, the same system as the galaxy
+  Cepheids. The absolute magnitude is `M_H^W = W_H + 5 log10(ϖ / mas) − 10`.
+  Here ϖ is the stored cluster parallax, or for a field Cepheid its own
+  *Gaia* parallax with the same zero-point correction. The fit is
+  `M_H^W = a (log P − 1) + b`, weighted by the parallax errors.
+- The published relation is `M_H^W = −5.914 − 3.29 (log P − 1)` (Cruz Reyes &
   Anderson 2023).
 - A galaxy distance modulus is the weighted mean of `W_H − M_H^W(P)` over its
   Cepheids. The galaxy velocity is `v = c z_HD`, from the Pantheon+ redshift
@@ -135,12 +139,19 @@ parameter q₀ = −0.55 as in SH0ES. Without it, H₀ comes out about 3 % low.
 - Cluster names are resolved with SIMBAD and Sesame (CDS, Strasbourg).
 - The cluster–Cepheid pairs come from Cruz Reyes & Anderson (2023, A&A 672,
   A85; VizieR J/A+A/672/A85). Only Cepheids with a membership probability of
-  at least 0.5 that pulsate in the fundamental mode are used. Their periods
-  and intensity-averaged G, BP and RP magnitudes are from the *Gaia* DR3
-  `vari_cepheid` table (VizieR I/358/vcep). These values are built into the
-  page, because no CORS-enabled service offers that table. The *HST* W_H
+  at least 0.5 that pulsate in the fundamental mode and have W_H are used.
+  Their periods are from the *Gaia* DR3 `vari_cepheid` table (VizieR
+  I/358/vcep). These values are built into the page, because no CORS-enabled
+  service offers that table. The *HST* W_H
   magnitudes of the cluster Cepheids are also from Cruz Reyes & Anderson
   (2023).
+- TW Nor (Lynga 6) and CD Cyg (Berkeley 84) were added
+  from a match of *Gaia* DR3 Cepheids with the Hunt & Reffert (2023, A&A 673,
+  A114) clusters by position, proper motion and parallax.
+- The field Cepheids have P > 14 d, a *Gaia* DR3 parallax error below 5 %,
+  BP − RP < 2.5, RUWE < 1.4 and a W_H magnitude from Riess et al. (2021,
+  ApJL 908, L6). Y Oph and XZ Car are left out as clear outliers. The CD Cyg
+  W_H also comes from Riess et al. (2021).
 - The galaxy Cepheids (period, F160W, V − I and the total error) come from
   Riess et al. (2016, ApJ 826, 56; VizieR J/ApJ/826/56). The supernova
   redshifts come from Pantheon+ (Scolnic et al. 2022; Brout et al. 2022).

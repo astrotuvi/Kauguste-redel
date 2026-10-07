@@ -179,6 +179,7 @@ table.data-table tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--sel); }
 table.data-table td.act { white-space: nowrap; }
 table.data-table td.act button { padding: 3px 10px; font-size: 0.8rem; margin-left: 4px; }
 table.data-table td.muted { color: var(--text-3); }
+table.data-table tr.group td { text-align: left; font-weight: 600; color: var(--text-2); padding-top: 12px; border-top: 1px solid var(--axis); }
 .save { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 14px; font-size: 0.88rem; color: var(--text-2); }
 .fit { margin: 10px 0 0; font-size: 0.9rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .fit b { color: var(--text-1); }
@@ -327,17 +328,18 @@ footer a { color: inherit; }
     <section class="card">
       <div class="card-head">
         <div>
-          <h2>Tsefeiididega parved</h2>
-          <p class="hint">Tsefeiidi periood ja keskmised tähesuurused: Gaia DR3. Wesenheiti tähesuurused ei sõltu ekstinktsioonist: W<sub>G</sub> = G − 1,90 (BP − RP) Gaia ja
-            W<sub>H</sub> = F160W − 0,386 (F555W − F814W) Hubble'i kosmoseteleskoobi mõõtmistest (olemas üheksal tsefeiidil). M on absoluutne Wesenheiti tähesuurus.</p>
+          <h2>Tsefeiidid</h2>
+          <p class="hint">Periood: Gaia DR3. W<sub>H</sub> = F160W − 0,386 (F555W − F814W) on Hubble'i kosmoseteleskoobi mõõtmistest leitud Wesenheiti tähesuurus,
+            mis ei sõltu tähtedevahelisest tolmust. M<sub>H</sub><sup>W</sup> on sama suurus absoluutsena.
+            Parvedes on pikaperioodilisi tsefeiide vähe; parvedest väljaspool olevate tsefeiidide kauguse annab nende enda Gaia parallaks — neid saab seosesse lisada ükshaaval.</p>
         </div>
         <span class="count" id="cepCount"></span>
       </div>
       <div class="table-wrap">
         <table class="data-table">
           <thead><tr>
-            <th>Parv</th><th>Tsefeiid</th><th>P (ööp)</th><th>log P</th><th>G (mag)</th><th>BP−RP (mag)</th><th>W<sub>G</sub> (mag)</th><th>W<sub>H</sub> (mag)</th>
-            <th>Parve ϖ (mas)</th><th>Kaugus (pc)</th><th>M<sub>G</sub><sup>W</sup> (mag)</th><th>M<sub>H</sub><sup>W</sup> (mag)</th><th></th>
+            <th>Parv</th><th>Tsefeiid</th><th>P (ööp)</th><th>log P</th><th>W<sub>H</sub> (mag)</th>
+            <th>ϖ (mas)</th><th>Kaugus (pc)</th><th>M<sub>H</sub><sup>W</sup> (mag)</th><th></th>
           </tr></thead>
           <tbody id="cepBody"></tbody>
         </table>
@@ -348,11 +350,7 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Periood-heledus sõltuvus</h2>
-          <p class="hint">Iga punkt on üks tsefeiid, mille parve kaugus on salvestatud. Katkendjoon: sinu kaalutud vähimruutude sirge; punktiir: avaldatud seos.</p>
-        </div>
-        <div class="opts" role="radiogroup" aria-label="Wesenheiti süsteem">
-          <label class="toggle"><input type="radio" name="plSys" value="G" checked> Gaia W<sub>G</sub></label>
-          <label class="toggle"><input type="radio" name="plSys" value="H"> HST W<sub>H</sub></label>
+          <p class="hint">Iga punkt on üks tsefeiid, mille parve kaugus on salvestatud; rombid on seosesse lisatud väljatsefeiidid. Katkendjoon: sinu kaalutud vähimruutude sirge; punktiir: avaldatud seos.</p>
         </div>
       </div>
       <div class="plot" id="pl"></div>
@@ -461,9 +459,9 @@ footer a { color: inherit; }
     lisatud on ~0,010 mas süstemaatiline viga, sest nurga järgi korreleeruvad parallaksivead keskmistamisel ei vähene
     (Lindegren jt 2021; Maíz Apellániz jt 2021). Absoluutse tähesuurusega HR-diagrammil on ekstinktsioon arvestamata.
     Tsefeiidide ja parvede seosed pärinevad tööst Cruz Reyes &amp; Anderson (2023; liikmesuse tõenäosus ≥ 0,5, ainult põhitoonis pulseerivad tsefeiidid);
-    tsefeiidide perioodid ja intensiivsusega kaalutud keskmised tähesuurused Gaia DR3 tabelist vari_cepheid (Ripepi jt 2023).
-    Wesenheiti tähesuurus W = G − 1,90 (BP − RP) pärineb tööst Ripepi jt (2019); avaldatud seosed: Ripepi jt (2022, W<sub>G</sub>, Päikese metallilisus)
-    ja Cruz Reyes &amp; Anderson (2023, W<sub>H</sub>). Salvestatud kaugused hoitakse ainult selles brauseris.
+    TW Nor ja CD Cyg on lisatud Gaia DR3 tsefeiidide ja Hunt &amp; Reffert (2023) parvede võrdlusest. Väljatsefeiidide ja CD Cyg W<sub>H</sub>: Riess jt (2021);
+    tsefeiidide perioodid Gaia DR3 tabelist vari_cepheid (Ripepi jt 2023).
+    Parvetsefeiidide W<sub>H</sub> ja avaldatud seos: Cruz Reyes &amp; Anderson (2023). Salvestatud kaugused hoitakse ainult selles brauseris.
     Galaktikate tsefeiidid (periood, F160W, V − I ja nende viga): Riess jt (2016, SH0ES); W<sub>H</sub> = F160W − 0,386 (V − I).
     Supernoovade punanihked z<sub>HD</sub> ja standardiseeritud maksimumheledused: Pantheon+ (Scolnic jt 2022; Brout jt 2022).
     Võrdluseks H<sub>0</sub> = 67,4 km/s/Mpc: Planck Collaboration (2020).
@@ -527,38 +525,32 @@ const EXAMPLES = [
 ];
 
 // Classical Cepheids in open clusters (Cruz Reyes & Anderson 2023, A&A 672, A85), membership
-// probability >= 0.5, fundamental mode only. Cluster centre (ra, dec) is from that catalogue; the
+// probability >= 0.5, fundamental mode only, with an HST Wesenheit magnitude WH. TW Nor and CD Cyg are added from a match of
+// Gaia DR3 Cepheids with the Hunt & Reffert (2023) clusters (position, proper motion, parallax),
+// which also gives their cluster centres. Cluster centre (ra, dec) is from that catalogue; the
 // query radius r covers the Cepheid. P (days) and intensity-averaged G, BP, RP magnitudes are from
-// the Gaia DR3 vari_cepheid table; the Cepheid position, proper motion and mean G (for marking it in
-// the plots) from gaia_source. WH is the HST Wesenheit magnitude F160W - 0.386 (F555W - F814W)
-// from Cruz Reyes & Anderson (2023), where available.
+// the Gaia DR3 vari_cepheid table (G, BP, RP only mark the Cepheid in the HR diagram); the Cepheid
+// position, proper motion and mean G from gaia_source. WH is the HST Wesenheit magnitude
+// F160W - 0.386 (F555W - F814W) from Cruz Reyes & Anderson (2023) or, for CD Cyg, Riess et al. (2021).
 const CEPHEIDS = [
   { cluster: "NGC 6087", ra: 244.742, dec: -57.912, r: 0.3, g: 18, cep: "S Nor", src: "5835124087174043136", P: 9.75442, G: 6.1654, BP: 6.6543, RP: 5.4916, WH: 3.940,
     at: [244.71595, -57.89980, -1.608, -2.136, 6.176] },
   { cluster: "UBC 129", ra: 299.131, dec: 26.464, r: 0.4, g: 18, cep: "X Vul", src: "2027263738133623168", P: 6.31970, G: 8.2379, BP: 9.1245, RP: 7.2970, WH: 4.860,
     at: [299.36918, 26.55645, -1.352, -4.247, 8.322] },
-  { cluster: "CWNU 175", ra: 188.395, dec: -63.506, r: 0.2, g: 18, cep: "VW Cru", src: "6053622679932061056", P: 5.26513, G: 9.0276, BP: 9.8885, RP: 8.1047, WH: null,
-    at: [188.32775, -63.50637, -3.903, -1.134, 9.076] },
-  { cluster: "UBC 290", ra: 191.807, dec: -59.373, r: 0.4, g: 18, cep: "X Cru", src: "6059764002146656128", P: 6.22066, G: 8.0801, BP: 8.6287, RP: 7.3779, WH: null,
-    at: [191.59278, -59.12473, -5.926, -0.173, 8.172] },
   { cluster: "FSR 0951", ra: 95.572, dec: 14.636, r: 0.2, g: 18, cep: "RS Ori", src: "3368698813404804352", P: 7.56695, G: 8.0931, BP: 8.6498, RP: 7.3367, WH: 5.603,
     at: [95.55497, 14.67813, 0.196, 0.005, 8.193] },
   { cluster: "vdBergh 1", ra: 99.283, dec: 3.074, r: 0.2, g: 18, cep: "CV Mon", src: "3127142323596470144", P: 5.37877, G: 9.6592, BP: 10.5364, RP: 8.7349, WH: 6.205,
     at: [99.27019, 3.06396, 0.349, -0.666, 9.701] },
   { cluster: "NGC 129", ra: 7.606, dec: 60.200, r: 0.3, g: 18, cep: "DL Cas", src: "428620663657823232", P: 8.00063, G: 8.5152, BP: 9.2136, RP: 7.6945, WH: 5.645,
     at: [7.49410, 60.21196, -2.706, -1.189, 8.577] },
-  { cluster: "Cl IQ Nor", ra: 228.444, dec: -54.590, r: 0.3, g: 18, cep: "IQ Nor", src: "5887482762148283008", P: 8.21843, G: 9.0258, BP: 9.8562, RP: 8.1305, WH: null,
-    at: [228.20632, -54.75528, -0.897, -1.821, 9.107] },
   { cluster: "NGC 6067", ra: 243.304, dec: -54.229, r: 0.3, g: 18, cep: "V340 Nor", src: "5932569709575669504", P: 11.28861, G: 7.9931, BP: 8.6239, RP: 7.2184, WH: 5.313,
     at: [243.32248, -54.23490, -2.066, -2.634, 8.036] },
-  { cluster: "UBC 106", ra: 280.469, dec: -5.411, r: 0.3, g: 18, cep: "CM Sct", src: "4253603501158148736", P: 3.91726, G: 10.5152, BP: 11.3918, RP: 9.5860, WH: null,
-    at: [280.61175, -5.34085, -1.064, -1.414, 10.546] },
   { cluster: "UBC 130", ra: 298.043, dec: 27.443, r: 0.3, g: 18, cep: "SV Vul", src: "2027951173435143680", P: 44.91376, G: 6.6647, BP: 7.4766, RP: 5.7735, WH: 3.589,
     at: [297.87876, 27.46021, -2.158, -5.962, 6.809] },
-  { cluster: "NGC 7790", ra: 359.619, dec: 61.206, r: 0.2, g: 18, cep: "CE Cas A", src: "2011892325047232256", P: 5.14093, G: 10.4977, BP: 11.0802, RP: 9.5866, WH: null,
-    at: [359.53933, 61.21370, -3.298, -1.873, 10.532] },
-  { cluster: "NGC 7790", ra: 359.619, dec: 61.206, r: 0.2, g: 18, cep: "CE Cas B", src: "2011892320749270912", P: 4.47940, G: 10.5846, BP: 11.1485, RP: 9.6777, WH: null,
-    at: [359.53791, 61.21362, -3.301, -1.809, 10.628] },
+  { cluster: "Lynga 6", ra: 241.221, dec: -51.965, r: 0.3, g: 18, cep: "TW Nor", src: "5981406000300438016", P: 10.78702, G: 10.5260, BP: 11.9143, RP: 9.3778, WH: 5.855,
+    at: [241.23010, -51.95353, -1.891, -2.806, 10.565] },
+  { cluster: "Berkeley 84", ra: 301.200, dec: 33.986, r: 0.3, g: 18, cep: "CD Cyg", src: "2058374144759464064", P: 17.06869, G: 8.4561, BP: 9.2141, RP: 7.5898, WH: 5.307,
+    at: [301.11066, 34.11225, -1.970, -5.583, 8.587] },
   { cluster: "NGC 7790", ra: 359.619, dec: 61.206, r: 0.2, g: 18, cep: "CF Cas", src: "2011892703004353792", P: 4.87496, G: 10.6583, BP: 11.3869, RP: 9.8169, WH: 7.641,
     at: [359.57487, 61.22105, -3.240, -1.766, 10.724] },
   { cluster: "Ruprecht 79", ra: 145.253, dec: -53.850, r: 0.2, g: 18, cep: "CS Vel", src: "5308893149150949248", P: 5.90443, G: 11.0984, BP: 11.9579, RP: 10.1763, WH: 7.669,
@@ -599,15 +591,23 @@ const H0_PLANCK = 67.4;              // km/s/Mpc, Planck Collaboration (2020)
 const EXPANSION = (1 - -0.55) / 2;
 const R_H = 0.386;                   // W_H = F160W - 0.386 (V - I)
 
-const WESENHEIT = 1.90;              // W = G - 1.90 (BP - RP), Ripepi et al. (2019)
-// The two Wesenheit systems of the period-luminosity relation, with a published relation
-// M = a (log P - 1) + b for comparison (solar metallicity).
-const PL_SYS = {
-  G: { name: "Gaia W<sub>G</sub>", W: (x) => x.G - WESENHEIT * (x.BP - x.RP),
-       pub: { a: -3.176, b: -5.988, ref: "Ripepi jt (2022)" } },
-  H: { name: "HST W<sub>H</sub>", W: (x) => x.WH,
-       pub: { a: -3.29, b: -5.914, ref: "Cruz Reyes &amp; Anderson (2023)" } },
-};
+// Long-period Cepheids outside clusters, with their own Gaia DR3 parallax (mas) instead of a
+// cluster distance: P > 14 d, parallax error < 5 %, BP - RP < 2.5, RUWE < 1.4, with WH from
+// Riess et al. (2021). P from Gaia DR3 vari_cepheid.
+const FIELD_CEPHEIDS = [
+  { cep: "U Car", src: "5338359442320395904", P: 38.79100, G: 5.9048, BP: 6.5351, RP: 5.0971, WH: 3.272, plx: 0.5530, ePlx: 0.0226 },
+  { cep: "WZ Sgr", src: "4094784475310672128", P: 21.84748, G: 7.5338, BP: 8.3985, RP: 6.6522, WH: 4.242, plx: 0.5742, ePlx: 0.0277 },
+  { cep: "RY Sco", src: "4041690364529590144", P: 20.32950, G: 7.3083, BP: 8.2758, RP: 6.3582, WH: 3.685, plx: 0.7279, ePlx: 0.0321 },
+  { cep: "VY Car", src: "5351161399793209984", P: 18.88145, G: 7.1617, BP: 7.8409, RP: 6.4025, WH: 4.513, plx: 0.5535, ePlx: 0.0167 },
+  { cep: "X Cyg", src: "1870258975238302208", P: 16.37655, G: 6.0862, BP: 6.6361, RP: 5.3242, WH: 3.629, plx: 0.8842, ePlx: 0.0199 },
+  { cep: "SZ Cyg", src: "2071433765909167232", P: 15.11440, G: 8.8054, BP: 9.7145, RP: 7.9060, WH: 5.329, plx: 0.4186, ePlx: 0.0124 },
+  { cep: "TX Cyg", src: "2161786374436607616", P: 14.71220, G: 8.4159, BP: 9.6853, RP: 7.2638, WH: 3.862, plx: 0.7954, ePlx: 0.0186 },
+  { cep: "SV Vel", src: "5351331755370445056", P: 14.09568, G: 8.1620, BP: 8.7907, RP: 7.3610, WH: 5.517, plx: 0.4211, ePlx: 0.0175 },
+];
+const FIELD_KEY = "kauguste-redel:valjatsefeiidid-seoses";
+
+// published period-luminosity relation in W_H, M = a (log P - 1) + b, for comparison
+const PL_PUB = { a: -3.29, b: -5.914, ref: "Cruz Reyes &amp; Anderson (2023)" };
 const STORE_KEY = "kauguste-redel:parvede-kaugused";
 const MATCH_DEG = 0.1;               // a query centred this close to a listed cluster measures that cluster
 
@@ -630,7 +630,7 @@ const S = {
   coordsLabel: null,  // status label for those coordinates, when they came from a name lookup
   page: 0,            // data table page
   stored: {},         // stored cluster parallaxes for part 2, by cluster name
-  plSys: "G",         // Wesenheit system shown in the period-luminosity plot
+  fieldOn: new Set(), // field Cepheids added to the period-luminosity relation, by name
   calib: "own",       // period-luminosity relation used for the galaxies
   gal: "M101",        // galaxy shown in the galaxy period-luminosity plot
   galOff: new Set(),  // galaxies left out of the Hubble fit and the supernova calibration
@@ -1165,6 +1165,12 @@ function storeDistance() {
   drawCepheids();
 }
 
+function toggleField(name) {
+  if (S.fieldOn.has(name)) S.fieldOn.delete(name); else S.fieldOn.add(name);
+  try { localStorage.setItem(FIELD_KEY, JSON.stringify([...S.fieldOn])); } catch { /* kept in memory only */ }
+  drawCepheids();
+}
+
 function forgetDistance(cl) {
   delete S.stored[cl];
   saveStored();
@@ -1185,13 +1191,21 @@ function measureCluster(cl) {
   $("go").focus({ preventScroll: true });
 }
 
-// Cepheids with a stored cluster distance and a magnitude in the given Wesenheit system
-function cepheidPoints(sys) {
-  return CEPHEIDS.filter((x) => S.stored[x.cluster] && PL_SYS[sys].W(x) != null).map((x) => {
-    const s = S.stored[x.cluster];
-    const W = PL_SYS[sys].W(x);
-    return { ...x, W, logP: Math.log10(x.P), M: W + 5 * Math.log10(s.plx) - 10, eM: (5 / Math.LN10) * (s.e / s.plx), plx: s.plx, ePlx: s.e };
-  });
+// own parallax of a field Cepheid, with the same zero-point correction and systematic floor as a cluster
+const fieldPlx = (x) => ({ plx: x.plx - ZP, e: Math.hypot(x.ePlx, SYS) });
+
+// Cepheid with a distance s and its absolute Wesenheit magnitude M_H^W, or null without a distance
+function cepheidPoint(x, s, field) {
+  if (!s) return null;
+  return { ...x, field, logP: Math.log10(x.P), M: x.WH + 5 * Math.log10(s.plx) - 10, eM: (5 / Math.LN10) * (s.e / s.plx), plx: s.plx, ePlx: s.e };
+}
+
+// Cepheids with a stored cluster distance and the field Cepheids added to the relation;
+// clusterOnly leaves the field Cepheids out
+function cepheidPoints(clusterOnly) {
+  const pts = CEPHEIDS.map((x) => cepheidPoint(x, S.stored[x.cluster], false));
+  if (!clusterOnly) pts.push(...FIELD_CEPHEIDS.filter((x) => S.fieldOn.has(x.cep)).map((x) => cepheidPoint(x, fieldPlx(x), true)));
+  return pts.filter(Boolean);
 }
 
 // Weighted least-squares line M = a (log P - 1) + b; with a given slope only b is fitted.
@@ -1216,41 +1230,43 @@ function plFormula(f, sub, withErr) {
 }
 
 function drawCepheids() {
-  const ptsG = new Map(cepheidPoints("G").map((p) => [p.cep, p]));
-  const ptsH = new Map(cepheidPoints("H").map((p) => [p.cep, p]));
   const clusters = new Set(CEPHEIDS.map((x) => x.cluster));
   const done = new Set(Object.keys(S.stored).filter((k) => clusters.has(k)));
-  $("cepCount").textContent = `${fmt(CEPHEIDS.length)} tsefeiidi ${fmt(clusters.size)} parves, kaugus salvestatud ${fmt(done.size)} parvel`;
+  $("cepCount").textContent = `${fmt(CEPHEIDS.length)} tsefeiidi parvedes (kaugus salvestatud ${fmt(done.size)} parvel), ` +
+    `${fmt(FIELD_CEPHEIDS.length)} väljatsefeiidi (seoses ${fmt(S.fieldOn.size)})`;
   const dash = `<td class="muted">—</td>`;
-  const rows = CEPHEIDS.map((x, k) => {
-    const s = S.stored[x.cluster];
-    const pG = ptsG.get(x.cep), pH = ptsH.get(x.cep);
-    const first = k === 0 || CEPHEIDS[k - 1].cluster !== x.cluster;   // one set of buttons per cluster
-    const act = !first ? "" :
-      `<button type="button" data-measure="${esc(x.cluster)}">Mõõda</button>` +
-      (s ? `<button type="button" data-forget="${esc(x.cluster)}">Kustuta</button>` : "");
+  const row = (x, s, p, cluster, act) => {
     const dist = s ? valErr(1000 / s.plx, (1000 * s.e) / (s.plx * s.plx)) : null;
-    return `<tr${s ? ' class="sel"' : ""}><td>${esc(x.cluster)}</td><td>${esc(x.cep)}</td>` +
-      `<td>${fmtN(x.P, 3)}</td><td>${fmtN(Math.log10(x.P), 3)}</td><td>${fmtN(x.G, 2)}</td><td>${fmtN(x.BP - x.RP, 2)}</td>` +
-      `<td>${fmtN(PL_SYS.G.W(x), 2)}</td>${x.WH != null ? `<td>${fmtN(x.WH, 2)}</td>` : dash}` +
+    return `<tr${p ? ' class="sel"' : ""}>${cluster}<td>${esc(x.cep)}</td><td>${fmtN(x.P, 3)}</td><td>${fmtN(Math.log10(x.P), 3)}</td><td>${fmtN(x.WH, 2)}</td>` +
       (s ? `<td>${fmtN(s.plx, 4)} ± ${fmtN(s.e, 4)}</td><td>${dist[0]} ± ${dist[1]}</td>` : dash + dash) +
-      (pG ? `<td>${fmtN(pG.M, 2)} ± ${fmtN(pG.eM, 2)}</td>` : dash) +
-      (pH ? `<td>${fmtN(pH.M, 2)} ± ${fmtN(pH.eM, 2)}</td>` : dash) +
-      `<td class="act">${act}</td></tr>`;
+      (p ? `<td>${fmtN(p.M, 2)} ± ${fmtN(p.eM, 2)}</td>` : dash) + `<td class="act">${act}</td></tr>`;
+  };
+  const byPeriod = (list) => [...list].sort((a, b) => a.P - b.P);
+  const rows = byPeriod(CEPHEIDS).map((x) => {
+    const s = S.stored[x.cluster];
+    const act = `<button type="button" data-measure="${esc(x.cluster)}">Mõõda</button>` +
+      (s ? `<button type="button" data-forget="${esc(x.cluster)}">Kustuta</button>` : "");
+    return row(x, s, cepheidPoint(x, s, false), `<td>${esc(x.cluster)}</td>`, act);
   });
+  rows.push(`<tr class="group"><td colspan="9">Väljatsefeiidid — kaugus tsefeiidi enda Gaia parallaksist</td></tr>`);
+  for (const x of byPeriod(FIELD_CEPHEIDS)) {
+    const on = S.fieldOn.has(x.cep);
+    const s = fieldPlx(x);
+    const act = `<button type="button" data-field="${esc(x.cep)}"${on ? "" : ' class="primary"'}>${on ? "Eemalda seosest" : "Lisa seosesse"}</button>`;
+    rows.push(row(x, s, on ? cepheidPoint(x, s, true) : null, `<td class="muted">—</td>`, act));
+  }
   $("cepBody").innerHTML = rows.join("");
   drawPL();
   drawHubble();
 }
 
 function drawPL() {
-  const sys = S.plSys;
-  const pts = cepheidPoints(sys);
-  const pub = PL_SYS[sys].pub;
-  const sub = sys === "G" ? "G" : "H";
+  const pts = cepheidPoints();
+  const pub = PL_PUB;
+  const sub = "H";
   const pubText = `Avaldatud seos (${pub.ref}): ${plFormula(pub, sub, false)}.`;
   if (!pts.length) {
-    emptyPlot("pl", sys === "H" ? "Salvesta W<sub>H</sub>-ga tsefeiidide parvede kaugused." : "Salvesta ülal vähemalt kahe parve kaugus.");
+    emptyPlot("pl", "Salvesta ülal vähemalt kahe parve kaugus.");
     $("fit").innerHTML = pubText;
     return;
   }
@@ -1266,20 +1282,25 @@ function drawPL() {
     type: "scatter", mode: "lines", x: [lo, hi], y: line(fit),
     hoverinfo: "skip", line: { color: css("--accent"), width: 2, dash: "dash" },
   });
-  traces.push({
-    type: "scatter", mode: "markers", x: xs, y: pts.map((p) => p.M),
-    error_y: { type: "data", array: pts.map((p) => p.eM), color: css("--field"), thickness: 1, width: 0 },
-    text: pts.map((p) => `${p.cep} (${p.cluster})<br>P = ${fmtN(p.P, 3)} ööp<br>M<sub>${sub}</sub><sup>W</sup> = ${fmtN(p.M, 2)} ± ${fmtN(p.eM, 2)} mag`),
-    hovertemplate: "%{text}<extra></extra>",
-    marker: { size: 8, color: css("--sel"), line: { width: 1, color: css("--surface") } },
-  });
+  for (const field of [false, true]) {
+    const q = pts.filter((p) => p.field === field);
+    if (!q.length) continue;
+    traces.push({
+      type: "scatter", mode: "markers", x: q.map((p) => p.logP), y: q.map((p) => p.M),
+      error_y: { type: "data", array: q.map((p) => p.eM), color: css("--field"), thickness: 1, width: 0 },
+      text: q.map((p) => `${p.cep} (${field ? "väljatsefeiid" : p.cluster})<br>P = ${fmtN(p.P, 3)} ööp<br>M<sub>${sub}</sub><sup>W</sup> = ${fmtN(p.M, 2)} ± ${fmtN(p.eM, 2)} mag`),
+      hovertemplate: "%{text}<extra></extra>",
+      marker: field ? { size: 9, symbol: "diamond-open", color: css("--accent"), line: { width: 1.5 } }
+                    : { size: 8, color: css("--sel"), line: { width: 1, color: css("--surface") } },
+    });
+  }
   Plotly.react("pl", traces, baseLayout({
-    uirevision: sys,
     dragmode: "zoom",
     xaxis: axis("log P (P ööpäevades)", { range: [lo, hi] }),
     yaxis: axis(`M<sub>${sub}</sub><sup>W</sup> (mag)`, { autorange: "reversed" }),
   }), CONFIG);
-  const n = `${fmt(pts.length)} ${pts.length === 1 ? "tsefeiid" : "tsefeiidi"}`;
+  const nf = pts.filter((p) => p.field).length;
+  const n = `${fmt(pts.length)} ${pts.length === 1 ? "tsefeiid" : "tsefeiidi"}` + (nf ? `, neist ${fmt(nf)} väljatsefeiidi` : "");
   const own = !fit ? `${n}. Sirge sobitamiseks on vaja vähemalt kahte tsefeiidi.`
     : pts.length >= 3 ? `Sinu seos: <b>${plFormula(fit, sub, true)}</b> · ${n}.`
     : `Sinu seos: <b>${plFormula(fit, sub, false)}</b> · ${n}; vigade hindamiseks on vaja vähemalt kolme tsefeiidi.`;
@@ -1290,9 +1311,9 @@ function drawPL() {
 
 // the W_H period-luminosity relation chosen for the galaxies, or null when it cannot be formed
 function calibration() {
-  const pub = PL_SYS.H.pub;
+  const pub = PL_PUB;
   if (S.calib === "pub") return { a: pub.a, b: pub.b, ea: 0, eb: 0 };
-  const pts = cepheidPoints("H");
+  const pts = cepheidPoints();
   if (S.calib === "ownzp") return pts.length ? fitPL(pts, pub.a) : null;
   return pts.length >= 2 ? fitPL(pts) : null;
 }
@@ -1330,18 +1351,17 @@ function fitHubble(gals, cal) {
 // The Hubble law, and the choice of relation, appear only once the user has fitted an own
 // W_H period-luminosity relation in part 2 (at least two Cepheids).
 function drawHubble() {
-  const ready = cepheidPoints("H").length >= 2;
+  const ready = cepheidPoints(true).length >= 2;   // field Cepheids alone do not unlock it
   for (const id of ["calibField", "galWrap", "galCard", "hubCard", "snCalCard", "snHubCard"]) $(id).hidden = !ready;
   if (!ready) {
     $("snInfo").textContent = "See osa avaneb, kui 3. osas on galaktikate kaugused olemas.";
     S.calib = $("calib").value = "own";
-    $("calibInfo").innerHTML = `Hubble'i seaduse jaoks on vaja sinu enda periood-heledus seost. Salvesta 2. osas vähemalt kahe parve kaugus, ` +
-      `mille tsefeiidil on W<sub>H</sub> (${CEPHEIDS.filter((x) => x.WH != null).map((x) => esc(x.cep)).join(", ")}).`;
+    $("calibInfo").innerHTML = `Hubble'i seaduse jaoks on vaja sinu enda periood-heledus seost. Salvesta 2. osas vähemalt kahe parve kaugus. Väljatsefeiidid ainult täiendavad seost.`;
     return;
   }
   const cal = calibration();
-  const nH = cepheidPoints("H").length;
-  const what = S.calib === "pub" ? `avaldatud seos (${PL_SYS.H.pub.ref})`
+  const nH = cepheidPoints().length;
+  const what = S.calib === "pub" ? `avaldatud seos (${PL_PUB.ref})`
     : S.calib === "ownzp" ? `sinu nullpunkt ${nH} tsefeiidist, avaldatud tõus` : `sinu seos ${nH} tsefeiidist`;
   $("calibInfo").innerHTML = `Kasutusel: <b>${plFormula(cal, "H", S.calib !== "pub")}</b> — ${what}.`;
 
@@ -1693,7 +1713,6 @@ $("nextPage").addEventListener("click", () => { S.page++; drawTable(); });
 $("cmdAbs").addEventListener("change", refresh);
 $("restore").addEventListener("click", restoreSelection);
 $("results").addEventListener("click", (e) => { if (e.target.id === "saveDist") storeDistance(); });
-for (const r of document.querySelectorAll('input[name="plSys"]')) r.addEventListener("change", () => { S.plSys = r.value; drawPL(); });
 $("calib").addEventListener("change", () => { S.calib = $("calib").value; drawHubble(); });
 $("galBody").addEventListener("change", (e) => {
   const name = e.target.dataset.use;
@@ -1712,6 +1731,7 @@ $("cepBody").addEventListener("click", (e) => {
   if (!b) return;
   if (b.dataset.measure) measureCluster(b.dataset.measure);
   if (b.dataset.forget) forgetDistance(b.dataset.forget);
+  if (b.dataset.field) toggleField(b.dataset.field);
 });
 
 for (const ex of EXAMPLES) {
@@ -1731,6 +1751,7 @@ for (const ex of EXAMPLES) {
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawAll);
 
 S.stored = loadStored();
+try { S.fieldOn = new Set(JSON.parse(localStorage.getItem(FIELD_KEY)) || []); } catch { /* none added */ }
 redrawAll();
 drawResults();
 </script>
