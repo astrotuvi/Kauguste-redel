@@ -170,6 +170,10 @@ table.data-table td { text-align: right; padding: 4px 8px; border-top: 1px solid
 table.data-table th:first-child, table.data-table td:first-child { text-align: left; }
 table.data-table tr.sel td { background: color-mix(in srgb, var(--sel) 14%, transparent); }
 table.data-table tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--sel); }
+/* the star clicked in the sky view */
+#dataBody tr { cursor: pointer; }
+table.data-table tr.hl td { background: color-mix(in srgb, var(--accent) 22%, transparent); font-weight: 600; }
+table.data-table tr.hl td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .pager { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: flex-end; margin-top: 10px; font-size: 0.85rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .pager button { padding: 4px 12px; font-size: 0.85rem; }
 .pager button:disabled { cursor: default; opacity: 0.4; }
@@ -259,7 +263,7 @@ footer a { color: inherit; }
     <div class="card-head">
       <div>
         <h2>Päritud tähed</h2>
-        <p class="hint">Valitud tähed on esile tõstetud.</p>
+        <p class="hint">Valitud tähed on esile tõstetud. Klõps real märgib tähe joonistel.</p>
       </div>
       <span class="count" id="dataCount"></span>
     </div>
@@ -284,7 +288,7 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Asukohad taevas</h2>
-          <p class="hint">Omaliikumiste joonisel valitud tähed on esile tõstetud, tähekesega on märgitud tsefeiid; tähe andmete nägemiseks vii kursor selle kohale. Keri suumimiseks, topeltklõps taastab vaate.</p>
+          <p class="hint">Omaliikumiste joonisel valitud tähed on esile tõstetud, tähekesega on märgitud tsefeiid; tähe andmete nägemiseks vii kursor selle kohale, klõps märgib tähe sihikuga ja näitab selle rida tabelis. Keri suumimiseks, topeltklõps taastab vaate.</p>
         </div>
       </div>
       <div class="plot" id="sky"></div>
@@ -293,7 +297,7 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Omaliikumised</h2>
-          <p class="hint">Parve liikmed liiguvad ühtmoodi — leia tihe kogum (lohista ja keri) ning märgi see lassoga, mille saad joonise tööriistaribalt. Iga uus lasso lisab tähed valikule.</p>
+          <p class="hint">Parve liikmed liiguvad ühtmoodi — leia tihe kogum (lohista ja keri) ning märgi see lassoga, mille saad joonise tööriistaribalt. Iga uus lasso lisab tähed valikule. Klõps märgib tähe kõigil joonistel ja tabelis.</p>
         </div>
         <button type="button" id="clear">Tühista valik</button>
       </div>
@@ -303,7 +307,7 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Värvus-heledusdiagramm (HR-diagramm)</h2>
-          <p class="hint">Valitud tähed värviliselt, kõik ülejäänud hallilt. Rist: parallaksi kõrvalekalle (vt parallakside histogrammi). Klõpsa valitud tähel, et see valikust eemaldada; eemaldatud täht (rõngas) tuleb uuel klõpsul valikusse tagasi.</p>
+          <p class="hint">Valitud tähed värviliselt, kõik ülejäänud hallilt. Rist: parallaksi kõrvalekalle (vt parallakside histogrammi). Klõps märgib tähe. Shift + klõps valitud tähel eemaldab selle parallaksi arvutusest; eemaldatud täht (rõngas) tuleb Shift + klõpsuga tagasi.</p>
         </div>
         <div class="opts">
           <label class="toggle"><input type="checkbox" id="cmdAbs"> Absoluutne M<sub>G</sub></label>
@@ -648,6 +652,8 @@ const S = {
   coordsFor: null,    // name-box text that the coordinate box belongs to
   coordsLabel: null,  // status label for those coordinates, when they came from a name lookup
   page: 0,            // data table page
+  hl: null,           // data row of the star last clicked in a plot
+  cmdShift: 0,        // magnitude shift of the HR diagram (absolute magnitudes), for its crosshair
   stored: {},         // stored cluster parallaxes for part 2, by cluster name
   fieldOn: new Set(), // field Cepheids added to the period-luminosity relation, by name
   calib: "own",       // period-luminosity relation used for the galaxies
@@ -998,6 +1004,25 @@ function cepheidTrace(x, y, hover) {
   };
 }
 
+// Crosshair (a thin cross with a ring) on the star last clicked in the sky view, the proper-motion
+// plot or the HR diagram; it is the last trace of each of these plots.
+const CROSS_TRACE = { sky: 3, pm: 3, cmd: 4 };
+function crosshairXY(plot) {
+  const i = S.hl, d = S.d;
+  if (i == null) return { x: [], y: [] };
+  const [x, y] = plot === "sky" ? [S.sky.raPlot[i], d.dec[i]]
+    : plot === "pm" ? [d.pmra[i], d.pmdec[i]]
+    : [d.bprp[i], d.g[i] + S.cmdShift];
+  return { x: [x, x], y: [y, y] };
+}
+function crosshairTrace(plot) {
+  const m = { symbol: ["cross-thin-open", "circle-open"], size: [22, 14], color: css("--accent"), line: { width: 2, color: css("--accent") }, opacity: 1 };
+  return {
+    type: "scatter", mode: "markers", ...crosshairXY(plot), hoverinfo: "skip",
+    marker: m, selected: { marker: { opacity: 1 } }, unselected: { marker: { opacity: 1 } },
+  };
+}
+
 function linkedTraces(x, y, hover, cx, cy) {
   const sel = S.idx || [];
   const label = (text) => (hover ? { text, hovertemplate: "%{text}<extra></extra>" } : { hoverinfo: "none" });
@@ -1023,6 +1048,7 @@ function drawSky() {
   const cosd = Math.max(Math.cos((dec0 * Math.PI) / 180), 0.05);
   const r = S.radius;
   const traces = linkedTraces(raPlot, S.d.dec, true, S.ceph.map((c) => unwrapRA(c.at[0], ra0)), S.ceph.map((c) => c.at[1]));
+  traces.push(crosshairTrace("sky"));
   return Plotly.react("sky", traces, baseLayout({
     dragmode: "zoom",
     xaxis: axis("otsetõus α (°)", { autorange: "reversed", scaleanchor: "y", scaleratio: cosd }),
@@ -1042,6 +1068,7 @@ function drawPM() {
   const xr = pad(percentile(d.pmra, 0), percentile(d.pmra, 1));
   const yr = pad(percentile(d.pmdec, 0), percentile(d.pmdec, 1));
   const traces = linkedTraces(d.pmra, d.pmdec, false, S.ceph.map((c) => c.at[2]), S.ceph.map((c) => c.at[3]));
+  traces.push(crosshairTrace("pm"));
   return Plotly.react("pm", traces, baseLayout({
     dragmode: "pan",            // pan first to find the clump; the lasso is chosen from the toolbar
     xaxis: axis("μ<sub>α*</sub> (mas/a)", { range: xr }),
@@ -1055,6 +1082,7 @@ function drawCMD() {
   const abs = $("cmdAbs").checked && st && st.wmean > 0;
   const shift = abs ? 5 * Math.log10(st.wmean / 100) : 0;
   const yAll = abs ? d.g.map((g) => g + shift) : d.g;
+  S.cmdShift = shift;
   const sel = S.idx || [];
   const out = (st && st.outliers) || new Set();
   const removed = [...S.removed];
@@ -1067,7 +1095,7 @@ function drawCMD() {
   const xr = [lo - padX, hi + padX];
   Plotly.react("cmd", [
     {
-      type: "scattergl", mode: "markers", x: d.bprp, y: yAll, hoverinfo: "skip",
+      type: "scattergl", mode: "markers", x: d.bprp, y: yAll, hoverinfo: "none",   // no label, but clickable
       marker: { size: 3, color: css("--field-dim"), opacity: sel.length ? 0.5 : 0.8 },
     },
     {
@@ -1087,6 +1115,7 @@ function drawCMD() {
       marker: { size: 6, symbol: "circle-open", color: css("--text-3"), line: { width: 1 } },
     },
     cepheidTrace(S.ceph.map((c) => c.BP - c.RP), S.ceph.map((c) => c.at[4] + shift), true),
+    crosshairTrace("cmd"),
   ], baseLayout({
     uirevision: `${S.rev}-${abs}`,
     dragmode: "zoom",
@@ -1593,7 +1622,8 @@ function drawTable() {
   const num = (v, dp) => (v === null ? "—" : fmtN(v, dp));
   const rows = [];
   for (let i = first; i < last; i++) {
-    rows.push(`<tr${sel.has(i) ? ' class="sel"' : ""}><td>${esc(d.src[i])}</td><td>${num(d.ra[i], 5)}</td><td>${num(d.dec[i], 5)}</td>` +
+    const cls = [sel.has(i) && "sel", i === S.hl && "hl"].filter(Boolean).join(" ");
+    rows.push(`<tr data-row="${i}"${cls ? ` class="${cls}"` : ""}><td>${esc(d.src[i])}</td><td>${num(d.ra[i], 5)}</td><td>${num(d.dec[i], 5)}</td>` +
       `<td>${num(d.plx[i], 4)}</td><td>${num(d.eplx[i], 4)}</td><td>${num(d.pmra[i], 3)}</td><td>${num(d.pmdec[i], 3)}</td>` +
       `<td>${num(d.g[i], 3)}</td><td>${num(d.bprp[i], 3)}</td></tr>`);
   }
@@ -1602,6 +1632,22 @@ function drawTable() {
   $("pageInfo").textContent = `Read ${fmt(first + 1)}–${fmt(last)} / ${fmt(S.n)} · lehekülg ${fmt(S.page + 1)} / ${fmt(pages)}`;
   $("prevPage").disabled = S.page === 0;
   $("nextPage").disabled = S.page >= pages - 1;
+}
+
+// a clicked star: mark it with a crosshair in all three plots, open its table page and highlight its row;
+// clicking the marked star again removes the mark
+function showStar(i) {
+  if (i == null || i < 0 || !S.d) return;
+  if (i === S.hl) S.hl = null;              // a second click on the marked star unmarks it
+  else {
+    S.hl = i;
+    S.page = Math.floor(i / PAGE_SIZE);
+  }
+  drawTable();
+  for (const [plot, t] of Object.entries(CROSS_TRACE)) {   // restyle keeps the current zoom
+    const c = crosshairXY(plot);
+    Plotly.restyle(plot, { x: [c.x], y: [c.y] }, [t]);
+  }
 }
 
 /* ---------- Selection linking ---------- */
@@ -1653,14 +1699,27 @@ function attachSelection() {
   // a click or double-click makes Plotly drop its own selection; only the reset button clears ours
   el.on("plotly_deselect", () => { if (!S.syncing) applySelection(); });
 
-  // clicking a selected star in the HR diagram removes it from the selection,
-  // clicking a removed star puts it back
+  // data row of a clicked point; each plot lists, by trace number, where its points come from
+  const cepRow = (k) => S.d.src.indexOf(S.ceph[k].src);
+  const linked = { 0: (k) => k, 1: (k) => (S.idx || [])[k], 2: cepRow };
+  const source = { sky: linked, pm: linked, cmd: { 0: (k) => k, 1: (k) => S.cmdSel[k], 2: (k) => S.cmdRemoved[k], 3: cepRow } };
+  const rowOf = (plot, ev) => {
+    const p = ev && ev.points && ev.points.find((q) => source[plot][q.curveNumber]);
+    return p ? source[plot][p.curveNumber](p.pointIndex ?? p.pointNumber) : null;
+  };
+
+  // a click on a star in the sky view or the proper-motion plot marks it
+  for (const plot of ["sky", "pm"]) $(plot).on("plotly_click", (ev) => showStar(rowOf(plot, ev)));
+
+  // in the HR diagram a click marks the star; Shift-click removes a selected star from the
+  // parallax calculation or puts a removed star back
   $("cmd").on("plotly_click", (ev) => {
-    const p = ev && ev.points && ev.points.find((q) => q.curveNumber === 1 || q.curveNumber === 2);
-    if (!p) return;
-    const k = p.pointIndex ?? p.pointNumber;
-    if (p.curveNumber === 1) S.removed.add(S.cmdSel[k]);
-    else S.removed.delete(S.cmdRemoved[k]);
+    const i = rowOf("cmd", ev);
+    if (i == null || i < 0) return;
+    if (!(ev.event && ev.event.shiftKey)) { showStar(i); return; }
+    if (S.removed.has(i)) S.removed.delete(i);
+    else if ((S.idx || []).includes(i)) S.removed.add(i);
+    else return;
     onSelectionChange(false);
   });
 }
@@ -1719,7 +1778,7 @@ async function run() {
     if (!n) { setStatus(`${done} Sobivaid tähti ei leitud — suurenda raadiust või G piiri. Ridu: 0.`, "warn"); return; }
 
     S.d = d; S.n = n; S.center = c; S.radius = radius; S.rev++;
-    S.picked = new Set(); S.removed = new Set(); S.idx = null; S.stats = null; S.page = 0;
+    S.picked = new Set(); S.removed = new Set(); S.idx = null; S.stats = null; S.page = 0; S.hl = null;
     S.hover = d.src.map((_, i) =>
       `Gaia DR3 ${d.src[i]}<br>G = ${fmtN(d.g[i], 2)}` +
       (d.bprp[i] !== null ? `, BP−RP = ${fmtN(d.bprp[i], 2)}` : "") +
@@ -1793,6 +1852,11 @@ $("target").addEventListener("input", clearCoords);
 $("coords").addEventListener("input", () => { S.coordsFor = $("target").value.trim(); S.coordsLabel = null; });
 $("clear").addEventListener("click", clearSelection);
 $("download").addEventListener("click", downloadSelection);
+// a click on a data table row marks that star in the plots, like a click on the star itself
+$("dataBody").addEventListener("click", (e) => {
+  const tr = e.target.closest("tr[data-row]");
+  if (tr) showStar(+tr.dataset.row);
+});
 $("prevPage").addEventListener("click", () => { S.page--; drawTable(); });
 $("nextPage").addEventListener("click", () => { S.page++; drawTable(); });
 $("cmdAbs").addEventListener("change", refresh);
