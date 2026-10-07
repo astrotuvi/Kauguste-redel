@@ -299,7 +299,7 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Värvus-heledusdiagramm (HR-diagramm)</h2>
-          <p class="hint">Valitud tähed värviliselt, kõik ülejäänud hallilt. Klõpsa valitud tähel, et see valikust eemaldada; eemaldatud täht (rõngas) tuleb uuel klõpsul valikusse tagasi.</p>
+          <p class="hint">Valitud tähed värviliselt, kõik ülejäänud hallilt. Rist: parallaksi kõrvalekalle (vt parallakside histogrammi). Klõpsa valitud tähel, et see valikust eemaldada; eemaldatud täht (rõngas) tuleb uuel klõpsul valikusse tagasi.</p>
         </div>
         <div class="opts">
           <label class="toggle"><input type="checkbox" id="cmdAbs"> Absoluutne M<sub>G</sub></label>
@@ -312,7 +312,8 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Valitud tähtede parallaksid</h2>
-          <p class="hint" id="histHint">Katkendjoon: kaalutud keskmine parallaks.</p>
+          <p class="hint" id="histHint">Katkendjoon: kaalutud keskmine parallaks. Punktiir: kõrvalekallete piirid (alumine kvartiil − 3 × kvartiilhaare
+            ja ülemine kvartiil + 3 × kvartiilhaare). Piiridest väljapoole jäävad tähed on HR-diagrammil ristiga.</p>
         </div>
       </div>
       <div class="plot wide" id="hist"></div>
@@ -905,8 +906,18 @@ function computeStats(idx) {
   let chi2 = 0;
   for (const i of use) chi2 += ((d.plx[i] + off - wmean) / d.eplx[i]) ** 2;
 
+  // parallax outliers beyond 3 IQR from the quartiles (Tukey's far-out fences); only marked, not left out
+  let fences = null;
+  const outliers = new Set();
+  if (n >= 5) {
+    const p = use.map((i) => d.plx[i] + off);
+    const q1 = percentile(p, 0.25), q3 = percentile(p, 0.75), iqr = q3 - q1;
+    fences = [q1 - 3 * iqr, q3 + 3 * iqr];
+    use.forEach((i, k) => { if (p[k] < fences[0] || p[k] > fences[1]) outliers.add(i); });
+  }
+
   return {
-    use, off, n, wmean, etot,
+    use, off, n, wmean, etot, fences, outliers,
     redchi2: n > 1 ? chi2 / (n - 1) : NaN,
   };
 }
@@ -1050,6 +1061,7 @@ function drawCMD() {
   const shift = abs ? 5 * Math.log10(st.wmean / 100) : 0;
   const yAll = abs ? d.g.map((g) => g + shift) : d.g;
   const sel = S.idx || [];
+  const out = (st && st.outliers) || new Set();
   const removed = [...S.removed];
   S.cmdSel = sel;
   S.cmdRemoved = removed;
@@ -1066,8 +1078,12 @@ function drawCMD() {
     {
       type: "scattergl", mode: "markers",
       x: sel.map((i) => d.bprp[i]), y: sel.map((i) => yAll[i]),
-      text: sel.map((i) => S.hover[i]), hovertemplate: "%{text}<extra></extra>",
-      marker: { size: 5, color: css("--sel"), line: { width: 0.5, color: css("--surface") } },
+      text: sel.map((i) => S.hover[i] + (out.has(i) ? "<br>parallaksi kõrvalekalle" : "")), hovertemplate: "%{text}<extra></extra>",
+      // parallax outliers (1.5 IQR) as crosses in the same colour
+      marker: {
+        size: sel.map((i) => (out.has(i) ? 8 : 5)), symbol: sel.map((i) => (out.has(i) ? "x" : "circle")),
+        color: css("--sel"), line: { width: 0.5, color: css("--surface") },
+      },
     },
     {
       type: "scattergl", mode: "markers",
@@ -1114,7 +1130,10 @@ function drawHist() {
     shapes: [{
       type: "line", xref: "x", yref: "paper", x0: st.wmean, x1: st.wmean, y0: 0, y1: 1,
       line: { color: css("--accent"), width: 2, dash: "dash" },
-    }],
+    }, ...(st.fences || []).map((x) => ({
+      type: "line", xref: "x", yref: "paper", x0: x, x1: x, y0: 0, y1: 1,
+      line: { color: css("--text-3"), width: 1.5, dash: "dot" },
+    }))],
     annotations: [{
       xref: "x", yref: "paper", x: st.wmean, y: 1, yanchor: "top", xanchor: "left", xshift: 6, showarrow: false,
       text: `⟨ϖ⟩ = ${fmtN(st.wmean, 4)} mas`, font: { size: 12, color: css("--text-1") },
@@ -1129,7 +1148,8 @@ function drawResults() {
   $("download").disabled = !(S.idx && S.idx.length);
   if (!S.d) { el.innerHTML = `<p class="empty">Andmeid pole laaditud.</p>`; return; }
   const counts = `<p class="counts">Valitud tähti: <b>${fmt(S.idx ? S.idx.length : 0)}</b>` +
-    (S.removed.size ? ` (HR-diagrammil eemaldatud ${fmt(S.removed.size)})` : "") + ` · Kokku tähti: <b>${fmt(S.n)}</b></p>`;
+    (S.removed.size ? ` (HR-diagrammil eemaldatud ${fmt(S.removed.size)})` : "") +
+    (st && st.outliers.size ? ` · Parallaksi kõrvalekaldeid: <b>${fmt(st.outliers.size)}</b>` : "") + ` · Kokku tähti: <b>${fmt(S.n)}</b></p>`;
   if (!S.idx) { el.innerHTML = `${counts}<p class="empty">Ühtegi tähte pole veel valitud — märgi omaliikumiste joonisel parve kogum lassoga.</p>`; return; }
   if (!st) { el.innerHTML = `${counts}<p class="empty">Valik on tühi — kõik tähed on HR-diagrammil eemaldatud.</p>`; return; }
 
