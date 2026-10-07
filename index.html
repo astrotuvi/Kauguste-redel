@@ -143,8 +143,11 @@ ol.steps li::before {
 
 /* Plots */
 .grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 14px; }
-.plot { aspect-ratio: 3 / 2; max-height: 72vh; margin-top: 6px; }  /* capped so a plot fits a laptop screen */
-.plot.wide { aspect-ratio: 2 / 1; }
+/* Plots use the full card width; the height follows 3:2 (2:1 for .wide) but is capped at 72 % of the
+   window, so on a laptop a plot fits the screen and becomes a bit wider than 3:2. cqw is the card width. */
+.card { container-type: inline-size; }
+.plot { width: 100%; height: min(72vh, calc(100cqw / 1.5)); margin-top: 6px; }
+.plot.wide { height: min(72vh, calc(100cqw / 2)); }
 .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 14px; margin-top: 10px; }
 .toolbar.end { justify-content: flex-end; }
@@ -219,14 +222,14 @@ table.data-table tr.cur td { background: color-mix(in srgb, var(--accent) 12%, t
 table.data-table tr[data-gal] { cursor: pointer; }
 table.data-table tr.gal-detail > td { text-align: left; padding: 8px 4px 12px; background: var(--bg); }
 .gal-detail .hint { margin: 0 4px; white-space: normal; }
-.plot.small { aspect-ratio: auto; height: 300px; max-width: 720px; }
+.plot.small { height: 300px; max-width: 720px; }
 
 footer { margin-top: 28px; font-size: 0.78rem; color: var(--text-3); max-width: 90ch; }
 footer a { color: inherit; }
 .reset { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 36px; font-size: 0.85rem; color: var(--text-2); }
 
 @media (max-width: 900px) {
-  .plot, .plot.wide { aspect-ratio: auto; height: 340px; }
+  .plot, .plot.wide { height: 340px; }
   ol.steps { grid-template-columns: 1fr 1fr; }
   .tiles { grid-template-columns: 1fr; }
 }
