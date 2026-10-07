@@ -190,6 +190,10 @@ table.data-table tr.group td { text-align: left; font-weight: 600; color: var(--
 }
 table.data-table tr.cur td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .tiles.two { margin-top: 14px; }
+table.data-table tr[data-gal] { cursor: pointer; }
+table.data-table tr.gal-detail > td { text-align: left; padding: 8px 4px 12px; background: var(--bg); }
+.gal-detail .hint { margin: 0 4px; white-space: normal; }
+.plot.small { aspect-ratio: auto; height: 300px; max-width: 720px; }
 
 footer { margin-top: 28px; font-size: 0.78rem; color: var(--text-3); max-width: 90ch; }
 footer a { color: inherit; }
@@ -289,7 +293,7 @@ footer a { color: inherit; }
       <div class="card-head">
         <div>
           <h2>Omaliikumised</h2>
-          <p class="hint">Parve liikmed liiguvad ühtmoodi — leia tihe kogum ja märgi see lassoga. Iga uus lasso lisab tähed valikule.</p>
+          <p class="hint">Parve liikmed liiguvad ühtmoodi — leia tihe kogum (lohista ja keri) ning märgi see lassoga, mille saad joonise tööriistaribalt. Iga uus lasso lisab tähed valikule.</p>
         </div>
         <button type="button" id="clear">Tühista valik</button>
       </div>
@@ -378,7 +382,7 @@ footer a { color: inherit; }
         <div>
           <h2>Tsefeiididega galaktikad</h2>
           <p class="hint">Kauguse moodul μ on galaktika tsefeiidide W<sub>H</sub> − M<sub>H</sub><sup>W</sup>(P) kaalutud keskmine. Kiirus v = cz,
-            kus z on galaktikas plahvatanud supernoova punanihe, mis on parandatud galaktika omaliikumise jaoks. Klõpsa real, et näha galaktika tsefeiide.</p>
+            kus z on galaktikas plahvatanud supernoova punanihe, mis on parandatud galaktika omaliikumise jaoks. Klõpsa galaktika real, et näha selle tsefeiide; uus klõps peidab need.</p>
         </div>
         <div class="field" id="calibField">
           <label for="calib">Periood-heledus seos</label>
@@ -400,15 +404,6 @@ footer a { color: inherit; }
       </div>
     </section>
 
-    <section class="card" id="galCard">
-      <div class="card-head">
-        <div>
-          <h2 id="galTitle">Galaktika tsefeiidid</h2>
-          <p class="hint">Iga punkt on üks tsefeiid. Joon: periood-heledus seos, mida on nihutatud galaktika kauguse mooduli võrra.</p>
-        </div>
-      </div>
-      <div class="plot" id="gpl"></div>
-    </section>
 
     <section class="card" id="hubCard">
       <div class="card-head">
@@ -656,7 +651,7 @@ const S = {
   stored: {},         // stored cluster parallaxes for part 2, by cluster name
   fieldOn: new Set(), // field Cepheids added to the period-luminosity relation, by name
   calib: "own",       // period-luminosity relation used for the galaxies
-  gal: "M101",        // galaxy shown in the galaxy period-luminosity plot
+  gal: null,          // galaxy whose Cepheids are shown below its table row, or null
   galOff: new Set(),  // galaxies left out of the Hubble fit and the supernova calibration
   h0Local: null,      // H0 from part 3, for comparison in part 4
   ceph: [],           // listed Cepheids inside the queried field, marked in the plots
@@ -1048,7 +1043,7 @@ function drawPM() {
   const yr = pad(percentile(d.pmdec, 0), percentile(d.pmdec, 1));
   const traces = linkedTraces(d.pmra, d.pmdec, false, S.ceph.map((c) => c.at[2]), S.ceph.map((c) => c.at[3]));
   return Plotly.react("pm", traces, baseLayout({
-    dragmode: "lasso",
+    dragmode: "pan",            // pan first to find the clump; the lasso is chosen from the toolbar
     xaxis: axis("μ<sub>α*</sub> (mas/a)", { range: xr }),
     yaxis: axis("μ<sub>δ</sub> (mas/a)", { range: yr, scaleanchor: "x", scaleratio: 1 }),
   }), CONFIG);
@@ -1427,7 +1422,7 @@ function fitHubble(gals, cal) {
 // W_H period-luminosity relation in part 2 (at least two Cepheids).
 function drawHubble() {
   const ready = cepheidPoints(true).length >= 2;   // field Cepheids alone do not unlock it
-  for (const id of ["calibField", "galWrap", "galCard", "hubCard", "snCalCard", "snHubCard"]) $(id).hidden = !ready;
+  for (const id of ["calibField", "galWrap", "hubCard", "snCalCard", "snHubCard"]) $(id).hidden = !ready;
   if (!ready) {
     $("snInfo").textContent = "See osa avaneb, kui 3. osas on galaktikate kaugused olemas.";
     S.calib = $("calib").value = "own";
@@ -1441,14 +1436,19 @@ function drawHubble() {
   $("calibInfo").innerHTML = `Kasutusel: <b>${plFormula(cal, "H", S.calib !== "pub")}</b> — ${what}.`;
 
   const gals = GALAXIES.map((g) => galaxyFit(g, cal));
+  // a clicked galaxy opens a row with its Cepheid plot right below it; clicking again closes it
   $("galBody").innerHTML = gals.map((g) => {
     const [dV, dE] = valErr(g.d, g.eD);
-    return `<tr data-gal="${esc(g.name)}"${g.name === S.gal ? ' class="cur"' : ""}><td>${esc(g.name)}</td><td>SN ${esc(g.sn)}</td><td>${fmt(g.ceph.length)}</td>` +
+    const open = g.name === S.gal;
+    return `<tr data-gal="${esc(g.name)}" aria-expanded="${open}"${open ? ' class="cur"' : ""}><td>${esc(g.name)}</td><td>SN ${esc(g.sn)}</td><td>${fmt(g.ceph.length)}</td>` +
       `<td>${fmtN(g.mu, 2)} ± ${fmtN(g.eMu, 2)}</td><td>${dV} ± ${dE}</td><td>${fmtN(g.v, 0)}</td><td>${fmtN(g.v / g.d, 0)}</td>` +
-      `<td><input type="checkbox" data-use="${esc(g.name)}"${S.galOff.has(g.name) ? "" : " checked"} aria-label="${esc(g.name)} sobitusse"></td></tr>`;
+      `<td><input type="checkbox" data-use="${esc(g.name)}"${S.galOff.has(g.name) ? "" : " checked"} aria-label="${esc(g.name)} sobitusse"></td></tr>` +
+      (open ? `<tr class="gal-detail"><td colspan="8"><p class="hint">Galaktika ${esc(g.name)} tsefeiidid. Iga punkt on üks tsefeiid;
+        joon on periood-heledus seos, mida on nihutatud galaktika kauguse mooduli võrra.</p><div class="plot small" id="gpl"></div></td></tr>` : "");
   }).join("");
 
-  drawGalaxyPL(gals.find((g) => g.name === S.gal), cal);
+  const cur = gals.find((g) => g.name === S.gal);
+  if (cur) drawGalaxyPL(cur, cal);
 
   const used = gals.filter((g) => !S.galOff.has(g.name));
   const fit = used.length ? fitHubble(used, cal) : null;
@@ -1553,7 +1553,6 @@ function drawSupernovae(gals) {
 }
 
 function drawGalaxyPL(g, cal) {
-  $("galTitle").textContent = `Galaktika ${g.name} tsefeiidid`;
   const xs = g.ceph.map((c) => Math.log10(c.P));
   const lo = Math.min(...xs) - 0.05, hi = Math.max(...xs) + 0.05;
   Plotly.react("gpl", [
@@ -1821,9 +1820,9 @@ $("galBody").addEventListener("change", (e) => {
   drawHubble();
 });
 $("galBody").addEventListener("click", (e) => {
-  const tr = e.target.closest("tr");
+  const tr = e.target.closest("tr[data-gal]");
   if (!tr || e.target.matches("input")) return;
-  S.gal = tr.dataset.gal;
+  S.gal = S.gal === tr.dataset.gal ? null : tr.dataset.gal;
   drawHubble();
 });
 $("cepBody").addEventListener("click", (e) => {
