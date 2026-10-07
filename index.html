@@ -145,6 +145,7 @@ ol.steps li::before {
 .plot.wide { aspect-ratio: 2 / 1; }
 .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 14px; margin-top: 10px; }
+.toolbar.end { justify-content: flex-end; }
 .toolbar .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .toggle { display: flex; gap: 6px; align-items: center; font-size: 0.8rem; color: var(--text-2); white-space: nowrap; }
 
@@ -327,6 +328,8 @@ footer a { color: inherit; }
           <h2>Omaliikumised</h2>
           <p class="hint">Parve liikmed liiguvad ühtmoodi — leia tihe kogum (lohista ja keri) ning märgi see lassoga, mille saad joonise tööriistaribalt. Iga uus lasso lisab tähed valikule. Klõps märgib tähe kõigil joonistel ja tabelis.</p>
         </div>
+      </div>
+      <div class="toolbar end">
         <button type="button" id="clear">Tühista valik</button>
       </div>
       <div class="plot" id="pm"></div>
@@ -1190,7 +1193,7 @@ function drawCMD() {
   ], baseLayout({
     uirevision: `${S.rev}-${abs}`,
     dragmode: "zoom",
-    hoverdistance: 8,
+    hoverdistance: SHIFT_PICK_PX,   // clicks within this distance of any star are reported
     xaxis: axis("G<sub>BP</sub> − G<sub>RP</sub> (mag)", { range: xr }),
     yaxis: axis(abs ? `M<sub>G</sub> (mag), μ = ${fmtN(-shift, 2)}` : "G (mag)", { autorange: "reversed" }),
   }), CONFIG);
@@ -1832,16 +1835,11 @@ function attachSelection() {
   // a click on a star in the sky view or the proper-motion plot marks it
   for (const plot of ["sky", "pm"]) $(plot).on("plotly_click", (ev) => showStar(rowOf(plot, ev)));
 
-  // in the HR diagram a click marks the star; Shift-click removes a selected star from the
-  // parallax calculation or puts a removed star back
+  // in the HR diagram a click marks the star; Shift-click removes or restores the nearest selected
+  // or removed star (shiftClickCMD), whatever point Plotly itself picked
   $("cmd").on("plotly_click", (ev) => {
-    const i = rowOf("cmd", ev);
-    if (i == null || i < 0) return;
-    if (!(ev.event && ev.event.shiftKey)) { showStar(i); return; }
-    if (S.removed.has(i)) S.removed.delete(i);
-    else if ((S.idx || []).includes(i)) S.removed.add(i);
-    else return;
-    onSelectionChange(false);
+    if (ev.event && ev.event.shiftKey) shiftClickCMD(ev.event);
+    else showStar(rowOf("cmd", ev));
   });
 }
 
@@ -1851,6 +1849,30 @@ function dropOutliers() {
   const out = S.stats && S.stats.outliers;
   if (!out || !out.size) return;
   for (const i of out) S.removed.add(i);
+  onSelectionChange(false);
+}
+
+// Shift-click in the HR diagram removes the nearest selected star from the parallax calculation,
+// or puts the nearest removed star back. Only selected and removed stars are considered, so the
+// field stars around them cannot catch the click, as they could with Plotly's own nearest point.
+const SHIFT_PICK_PX = 15;
+function shiftClickCMD(e) {
+  if (!S.d) return;
+  const gd = $("cmd"), fl = gd._fullLayout;
+  if (!fl) return;
+  const xa = fl.xaxis, ya = fl.yaxis, box = gd.getBoundingClientRect();
+  const px = e.clientX - box.left - xa._offset, py = e.clientY - box.top - ya._offset;
+  if (px < 0 || py < 0 || px > xa._length || py > ya._length) return;
+  const d = S.d;
+  let best = null, bestDist = SHIFT_PICK_PX;
+  for (const i of [...S.cmdSel, ...S.cmdRemoved]) {
+    if (d.bprp[i] === null) continue;
+    const dist = Math.hypot(xa.c2p(d.bprp[i]) - px, ya.c2p(d.g[i] + S.cmdShift) - py);
+    if (dist < bestDist) { bestDist = dist; best = i; }
+  }
+  if (best === null) return;
+  if (S.removed.has(best)) S.removed.delete(best);
+  else S.removed.add(best);
   onSelectionChange(false);
 }
 
