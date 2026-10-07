@@ -71,7 +71,7 @@ for comparison.
 
 ### Hubble law
 
-The third part uses 19 type Ia supernova host galaxies with Cepheids
+The third part uses 29 type Ia supernova host galaxies with Cepheids
 observed by *HST*. It stays hidden until you have fitted your own W_H
 period-luminosity relation in the second part, which takes at least two
 stored cluster Cepheids. Choose a relation in the menu next to **Kasuta
@@ -90,10 +90,16 @@ time 1/H₀. Galaxies can be left out of the fit with the checkboxes.
 
 ### Type Ia supernovae
 
-The fourth part appears together with the third. At first it lists only the
-supernova peak magnitudes. **Kasuta 3. osa tulemusi** takes over the galaxy
-distances from the third part, derives the supernova luminosity and shows
-the Hubble diagram. From then on it follows changes in the third part. Each
+The fourth part appears once a relation has been applied in the third. At
+first it lists only the supernova peak magnitudes. Choose the supernova
+luminosity in the menu next to **Kasuta heledust** and press the button:
+- your own M_B, the mean over the galaxies of the third part;
+- or the SH0ES value, M_B = −19.253 ± 0.027 (Riess et al. 2022).
+
+The button takes over the galaxy distances from the third part, derives
+M_B for each galaxy and shows the Hubble diagram of the distant supernovae
+with the applied luminosity. From then on it follows changes in the third
+part. Changing the menu takes effect when the button is pressed again. Each
 Cepheid galaxy hosted a type Ia supernova. Its absolute peak magnitude is `M_B = m_B − μ`, with μ
 from the third part. The mean over the galaxies selected there gives the
 supernova luminosity. This is then applied to 166 distant supernovae
@@ -183,12 +189,21 @@ service uses only that one. The choice is remembered in the browser.
   All W_H values from Riess et al. (2021) are shifted by −0.046 mag onto the
   Cruz Reyes & Anderson (2023) scale used for the cluster Cepheids. For the
   six Cepheids in both catalogues, the difference is 0.046 ± 0.003 mag.
-- The galaxy Cepheids (period, F160W, V − I and the total error) come from
-  Riess et al. (2016, ApJ 826, 56; VizieR J/ApJ/826/56). The supernova
-  redshifts come from Pantheon+ (Scolnic et al. 2022; Brout et al. 2022).
-  Both are built into the page, as are the standardised peak magnitudes
-  `m_b_corr` of the calibrator supernovae (averaged over surveys) and the
-  redshifts and magnitudes of the distant SH0ES Hubble-flow supernovae.
+- The galaxy Cepheids (period, F160W, V − I and the total error) are the
+  2,043 Cepheids in the 29 supernova hosts of SH0ES (Riess et al. 2022, ApJL
+  934, L7) that have at least 20 Cepheids each. The eight hosts with fewer
+  are left out: NGC 4424, NGC 3021, NGC 5917, NGC 1015, NGC 4680, Mrk 1337,
+  NGC 7678 and NGC 105. They come from table 2 of the
+  [Pantheon+/SH0ES data release](https://github.com/PantheonPlusSH0ES/DataRelease/tree/main/SH0ES_Data).
+  The anchors (LMC, SMC, M31 and NGC 4258) are left out. As the release
+  notes, the table errors leave out the correlations used in the full SH0ES
+  fit.
+- The supernova redshifts come from Pantheon+ (Scolnic et al. 2022; Brout
+  et al. 2022), as do the standardised peak magnitudes `m_b_corr`, averaged
+  over surveys. For the four hosts with two or three supernovae (NGC 5643,
+  NGC 1448, NGC 3147, NGC 5468), the redshifts and peak magnitudes are
+  averaged per host. These, and the redshifts and magnitudes of the distant
+  SH0ES Hubble-flow supernovae, are built into the page.
 
 ## Code
 
