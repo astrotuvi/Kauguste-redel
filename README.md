@@ -87,8 +87,11 @@ time 1/H₀. Galaxies can be left out of the fit with the checkboxes.
 
 ### Type Ia supernovae
 
-The fourth part appears together with the third. Each Cepheid galaxy hosted
-a type Ia supernova. Its absolute peak magnitude is `M_B = m_B − μ`, with μ
+The fourth part appears together with the third. At first it lists only the
+supernova peak magnitudes. **Kasuta 3. osa tulemusi** takes over the galaxy
+distances from the third part, derives the supernova luminosity and shows
+the Hubble diagram. From then on it follows changes in the third part. Each
+Cepheid galaxy hosted a type Ia supernova. Its absolute peak magnitude is `M_B = m_B − μ`, with μ
 from the third part. The mean over the galaxies selected there gives the
 supernova luminosity. This is then applied to 166 distant supernovae
 (0.023 < z < 0.06, up to about 250 Mpc). Their velocity–distance plot gives

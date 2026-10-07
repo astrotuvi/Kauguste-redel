@@ -86,6 +86,7 @@ body {
 }
 main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
 h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 10px; font-weight: 650; letter-spacing: -0.01em; }
+.intro { color: var(--text-1); margin: 0 0 28px; max-width: 75ch; }
 h2.rung { font-size: 1.15rem; margin: 0 0 4px; color: var(--text-2); }
 .lede { color: var(--text-2); margin: 0 0 20px; max-width: 70ch; }
 h2 { font-size: 0.95rem; margin: 0; font-weight: 600; }
@@ -224,7 +225,13 @@ footer a { color: inherit; }
 <body>
 <main>
   <h1>Kosmiliste kauguste redel</h1>
-  <h2 class="rung">Hajusparvede kaugused Gaia parallaksidest</h2>
+  <p class="intro">Kaugusi kosmoses ei saa mõõta ühe meetodiga. Lähedaste tähtede kauguse annab otse parallaks — tähe näiv nihe taevas,
+    mis tekib Maa liikumisest ümber Päikese. Kaugemal on parallaks liiga väike ja appi tulevad <i>standardküünlad</i>: objektid, mille
+    tegelikku heledust me teame, nii et nende näiv heledus annab kauguse. Iga uus meetod kalibreeritakse eelmise abil, nii et meetodid
+    moodustavad redeli, mille iga pulk ulatub kaugemale. Sellel lehel ronid redelil neli pulka: hajusparvede kaugustest Gaia parallaksidega
+    (1. osa) tsefeiidide periood-heledus sõltuvuseni (2. osa), sealt tsefeiididega galaktikate kaugusteni ja Hubble'i seaduseni (3. osa)
+    ning lõpuks Ia tüüpi supernoovadeni, mis näitavad Universumi paisumist sadade megaparsekite kaugusel (4. osa).</p>
+  <h2 class="rung">1. osa: Hajusparvede kaugused Gaia parallaksidest</h2>
   <p class="lede">Päri Gaia DR3 tähed parve ümbrusest, vali välja koos üle taeva liikuvad tähed ja keskmista nende parallaksid, et leida parve kaugus.</p>
 
   <ol class="steps">
@@ -352,7 +359,7 @@ footer a { color: inherit; }
   </section>
 
   <div class="part" id="part2">
-    <h2 class="rung">Tsefeiidide periood-heledus sõltuvus</h2>
+    <h2 class="rung">2. osa: Tsefeiidide periood-heledus sõltuvus</h2>
     <p class="lede">Need hajusparved sisaldavad klassikalisi tsefeiide. Mõõda iga parve kaugus ülal (nupp „Mõõda“ täidab päringu vormi) ja salvesta see.
       Parve kaugusest saab tsefeiidi absoluutse heleduse ning mitme parve põhjal tekib periood-heledus sõltuvus.</p>
 
@@ -390,7 +397,7 @@ footer a { color: inherit; }
   </div>
 
   <div class="part" id="part3">
-    <h2 class="rung">Hubble'i seadus</h2>
+    <h2 class="rung">3. osa: Hubble'i seadus</h2>
     <p class="lede">Nende galaktikate tsefeiide on mõõtnud Hubble'i kosmoseteleskoop. Tsefeiidi periood annab periood-heledus seosest tema absoluutse
       tähesuuruse ning võrdlus näiva tähesuurusega galaktika kauguse. Koos galaktika eemaldumiskiirusega annab see Hubble'i konstandi.</p>
 
@@ -435,7 +442,7 @@ footer a { color: inherit; }
   </div>
 
   <div class="part" id="part4">
-    <h2 class="rung">Ia tüüpi supernoovad</h2>
+    <h2 class="rung">4. osa: Ia tüüpi supernoovad</h2>
     <p class="lede">Ia tüüpi supernoova on plahvatav valge kääbus. Kõik need plahvatused on maksimumis peaaegu ühesuguse heledusega, nii et supernoova sobib
       kauguse mõõtmiseks ja on nähtav ka väga kaugelt. Kõigepealt leia 3. osa galaktikate abil, kui hele on supernoova tegelikult, ja seejärel mõõda
       kaugete supernoovade abil Hubble'i konstant. Nii kaugel ei sega galaktikate omaliikumine enam palju.</p>
@@ -448,6 +455,7 @@ footer a { color: inherit; }
           <p class="hint">m<sub>B</sub> on supernoova näiv tähesuurus maksimumis, μ galaktika kauguse moodul 3. osast ja M<sub>B</sub> = m<sub>B</sub> − μ supernoova absoluutne tähesuurus.
             Kasutatakse samu galaktikaid, mis on valitud 3. osa sobitusse.</p>
         </div>
+        <button type="button" class="primary" id="snApply">Kasuta 3. osa tulemusi</button>
       </div>
       <div class="table-wrap">
         <table class="data-table">
@@ -666,6 +674,7 @@ const S = {
   coordsLabel: null,  // status label for those coordinates, when they came from a name lookup
   page: 0,            // data table page
   hl: null,           // data row of the star last clicked in a plot
+  snApplied: false,   // part 4 has taken over the galaxy distances of part 3
   sort: { col: null, dir: 1 }, // data table sort column and direction (1 ascending, -1 descending)
   order: null,        // data rows in table order, or null for the query order
   cmdShift: 0,        // magnitude shift of the HR diagram (absolute magnitudes), for its crosshair
@@ -1468,6 +1477,7 @@ function fitHubble(gals, cal) {
 function drawHubble() {
   const ready = cepheidPoints(true).length >= 2;   // field Cepheids alone do not unlock it
   for (const id of ["calibField", "galWrap", "hubCard", "snCalCard", "snHubCard"]) $(id).hidden = !ready;
+  if (!ready) S.snApplied = false;
   if (!ready) {
     $("snInfo").textContent = "See osa avaneb, kui 3. osas on galaktikate kaugused olemas.";
     S.calib = $("calib").value = "own";
@@ -1538,12 +1548,21 @@ function drawHubble() {
 
 // absolute peak magnitude of the supernovae from the selected Cepheid galaxies, then H0 from the
 // distant supernovae; errors are the standard error of the mean and the scatter about the line
+// Until "Kasuta 3. osa tulemusi" is pressed only the supernova magnitudes are shown; afterwards the
+// derived quantities, the plot and H0 follow the current results of part 3.
 function drawSupernovae(gals) {
   $("snInfo").textContent = "";
   const used = gals.filter((g) => !S.galOff.has(g.name));
+  const dash = `<td class="muted">—</td>`;
   $("snBody").innerHTML = gals.map((g) =>
-    `<tr${S.galOff.has(g.name) ? "" : ' class="sel"'}><td>${esc(g.name)}</td><td>SN ${esc(g.sn)}</td><td>${fmtN(g.mb, 2)}</td>` +
-    `<td>${fmtN(g.mu, 2)}</td><td>${fmtN(g.mb - g.mu, 2)}</td></tr>`).join("");
+    `<tr${S.snApplied && !S.galOff.has(g.name) ? ' class="sel"' : ""}><td>${esc(g.name)}</td><td>SN ${esc(g.sn)}</td><td>${fmtN(g.mb, 2)}</td>` +
+    (S.snApplied ? `<td>${fmtN(g.mu, 2)}</td><td>${fmtN(g.mb - g.mu, 2)}</td>` : dash + dash) + `</tr>`).join("");
+  $("snApply").hidden = S.snApplied;
+  $("snHubCard").hidden = !S.snApplied;
+  if (!S.snApplied) {
+    $("mb").innerHTML = `<p class="empty">Vajuta „Kasuta 3. osa tulemusi“, et võtta galaktikate kaugused 3. osast ja leida supernoovade heledus.</p>`;
+    return;
+  }
   if (used.length < 2) {
     $("mb").innerHTML = `<p class="empty">Vali 3. osas sobitusse vähemalt kaks galaktikat.</p>`;
     emptyPlot("snHub", "Supernoovade heledus on veel leidmata.");
@@ -1931,6 +1950,7 @@ $("restore").addEventListener("click", restoreSelection);
 $("dropOutliers").addEventListener("click", dropOutliers);
 $("results").addEventListener("click", (e) => { if (e.target.id === "saveDist") storeDistance(); });
 $("resetAll").addEventListener("click", resetAll);
+$("snApply").addEventListener("click", () => { S.snApplied = true; drawHubble(); });
 $("stop").addEventListener("click", stopQuery);
 
 // data source menu: "auto" plus every Gaia service; the choice is remembered in this browser
