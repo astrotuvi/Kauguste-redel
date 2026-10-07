@@ -412,7 +412,6 @@ footer a { color: inherit; }
           <label for="calib">Periood-heledus seos</label>
           <select id="calib">
             <option value="own">Minu seos (2. osa)</option>
-            <option value="ownzp">Minu nullpunkt, avaldatud tõus</option>
             <option value="pub">Avaldatud seos</option>
           </select>
         </div>
@@ -1332,14 +1331,13 @@ function cepheidPoints(clusterOnly) {
   return pts.filter(Boolean);
 }
 
-// Weighted least-squares line M = a (log P - 1) + b; with a given slope only b is fitted.
-function fitPL(pts, slope) {
+// Weighted least-squares line M = a (log P - 1) + b.
+function fitPL(pts) {
   let sw = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
   for (const p of pts) {
     const w = 1 / (p.eM * p.eM), x = p.logP - 1;
     sw += w; sx += w * x; sy += w * p.M; sxx += w * x * x; sxy += w * x * p.M;
   }
-  if (slope != null) return sw > 0 ? { a: slope, b: (sy - slope * sx) / sw, ea: 0, eb: Math.sqrt(1 / sw) } : null;
   const det = sw * sxx - sx * sx;
   if (!(det > 0)) return null;
   return { a: (sw * sxy - sx * sy) / det, b: (sxx * sy - sx * sxy) / det, ea: Math.sqrt(sw / det), eb: Math.sqrt(sxx / det) };
@@ -1438,7 +1436,6 @@ function calibration() {
   const pub = PL_PUB;
   if (S.calib === "pub") return { a: pub.a, b: pub.b, ea: 0, eb: 0 };
   const pts = cepheidPoints();
-  if (S.calib === "ownzp") return pts.length ? fitPL(pts, pub.a) : null;
   return pts.length >= 2 ? fitPL(pts) : null;
 }
 
@@ -1487,7 +1484,7 @@ function drawHubble() {
   const cal = calibration();
   const nH = cepheidPoints().length;
   const what = S.calib === "pub" ? `avaldatud seos (${PL_PUB.ref})`
-    : S.calib === "ownzp" ? `sinu nullpunkt ${nH} tsefeiidist, avaldatud tõus` : `sinu seos ${nH} tsefeiidist`;
+    : `sinu seos ${nH} tsefeiidist`;
   $("calibInfo").innerHTML = `Kasutusel: <b>${plFormula(cal, "H", S.calib !== "pub")}</b> — ${what}.`;
 
   const gals = GALAXIES.map((g) => galaxyFit(g, cal));

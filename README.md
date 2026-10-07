@@ -77,7 +77,6 @@ period-luminosity relation in the second part, which takes at least two
 stored cluster Cepheids. Each galaxy distance is then found from its
 Cepheids with the relation chosen in the menu:
 - the relation fitted in the second part;
-- its zero point with the published slope;
 - or the published relation, for comparison.
 
 Clicking a galaxy shows its Cepheids with the shifted relation. The
