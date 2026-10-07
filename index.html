@@ -136,10 +136,12 @@ ol.steps li::before {
 }
 
 /* Plots */
-.grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 14px; }
 .plot { aspect-ratio: 3 / 2; max-height: 72vh; margin-top: 6px; }  /* capped so a plot fits a laptop screen */
 .plot.wide { aspect-ratio: 2 / 1; }
 .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 14px; margin-top: 10px; }
+.toolbar .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .toggle { display: flex; gap: 6px; align-items: center; font-size: 0.8rem; color: var(--text-2); white-space: nowrap; }
 
 /* Results */
@@ -161,7 +163,7 @@ ol.steps li::before {
 .formula { color: var(--text-3); font-size: 0.82rem; margin-top: 10px; }
 
 /* Data table */
-.data { margin-bottom: 14px; }
+.data { margin: 14px 0; }
 .count { font-size: 0.85rem; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .table-wrap { overflow-x: auto; margin-top: 10px; }
 table.data-table { border-collapse: collapse; width: 100%; font-size: 0.84rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -172,6 +174,10 @@ table.data-table tr.sel td { background: color-mix(in srgb, var(--sel) 14%, tran
 table.data-table tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--sel); }
 /* the star clicked in the sky view */
 #dataBody tr { cursor: pointer; }
+table.data-table th[data-col] { cursor: pointer; user-select: none; }
+table.data-table th[data-col]:hover { color: var(--text-1); }
+table.data-table th.asc::after { content: " ▲"; }
+table.data-table th.desc::after { content: " ▼"; }
 table.data-table tr.hl td { background: color-mix(in srgb, var(--accent) 22%, transparent); font-weight: 600; }
 table.data-table tr.hl td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .pager { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: flex-end; margin-top: 10px; font-size: 0.85rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
@@ -194,6 +200,7 @@ table.data-table tr.group td { text-align: left; font-weight: 600; color: var(--
 }
 table.data-table tr.cur td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .tiles.two { margin-top: 14px; }
+.query-info .value { overflow-wrap: anywhere; }
 table.data-table tr[data-gal] { cursor: pointer; }
 table.data-table tr.gal-detail > td { text-align: left; padding: 8px 4px 12px; background: var(--bg); }
 .gal-detail .hint { margin: 0 4px; white-space: normal; }
@@ -220,6 +227,13 @@ footer a { color: inherit; }
   <h2 class="rung">Hajusparvede kaugused Gaia parallaksidest</h2>
   <p class="lede">Päri Gaia DR3 tähed parve ümbrusest, vali välja koos üle taeva liikuvad tähed ja keskmista nende parallaksid, et leida parve kaugus.</p>
 
+  <ol class="steps">
+    <li>Päri tähed parve ümbrusest.</li>
+    <li>Märgi lassoga omaliikumiste joonisel koos liikuvate tähtede tihe kogum.</li>
+    <li>Kontrolli värvus-heledusdiagrammi: parve liikmed moodustavad selge peajada.</li>
+    <li>Loe allpool keskmine parallaks ja kaugus.</li>
+  </ol>
+
   <section class="card">
     <div class="field source">
       <label for="source">Andmeallikas</label>
@@ -234,7 +248,7 @@ footer a { color: inherit; }
                placeholder="nt NGC 2516, Pleiades, 08:51:23 +11:48:50">
       </div>
       <div class="field coords">
-        <label for="coords">α δ (kümnendkraadides)</label>
+        <label for="coords">α δ (kraadides)</label>
         <input id="coords" name="coords" autocomplete="off" spellcheck="false" placeholder="nt 132.85 11.81">
       </div>
       <div class="field num">
@@ -251,35 +265,31 @@ footer a { color: inherit; }
     <div class="examples" id="examples">Proovi:</div>
     <p class="status" id="status" role="status" aria-live="polite"></p>
   </section>
-
-  <ol class="steps">
-    <li>Päri tähed parve ümbrusest.</li>
-    <li>Märgi lassoga omaliikumiste joonisel koos liikuvate tähtede tihe kogum.</li>
-    <li>Kontrolli värvus-heledusdiagrammi: parve liikmed moodustavad selge peajada.</li>
-    <li>Loe allpool keskmine parallaks ja kaugus.</li>
-  </ol>
+  <div class="tiles two query-info" id="queryInfo" hidden></div>
 
   <section class="card data" id="dataCard" hidden>
     <div class="card-head">
       <div>
         <h2>Päritud tähed</h2>
-        <p class="hint">Valitud tähed on esile tõstetud. Klõps real märgib tähe joonistel.</p>
+        <p class="hint">Valitud tähed on esile tõstetud. Klõps real märgib tähe joonistel, klõps veeru pealkirjal sorteerib (uus klõps pöörab järjekorra).</p>
       </div>
       <span class="count" id="dataCount"></span>
     </div>
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr>
-          <th>Gaia DR3 source_id</th><th>α (°)</th><th>δ (°)</th><th>ϖ (mas)</th><th>σ<sub>ϖ</sub> (mas)</th>
-          <th>μ<sub>α*</sub> (mas/a)</th><th>μ<sub>δ</sub> (mas/a)</th><th>G (mag)</th><th>BP−RP (mag)</th>
+          <th data-col="src" title="Tähe tunnus Gaia DR3 kataloogis">Gaia DR3 source_id</th><th data-col="ra" title="Otsetõus">α (°)</th><th data-col="dec" title="Kääne">δ (°)</th><th data-col="sep" title="Kaugus päringu keskmest">r (′)</th><th data-col="plx" title="Parallaks">ϖ (mas)</th><th data-col="eplx" title="Parallaksi viga">σ<sub>ϖ</sub> (mas)</th>
+          <th data-col="pmra" title="Omaliikumine otsetõusu sihis (μ_α* = μ_α cos δ)">μ<sub>α*</sub> (mas/a)</th><th data-col="pmdec" title="Omaliikumine käände sihis">μ<sub>δ</sub> (mas/a)</th><th data-col="g" title="Heledus Gaia G-ribas (näiv tähesuurus)">G (mag)</th><th data-col="bprp" title="Värvusindeks: sinise (BP) ja punase (RP) riba tähesuuruste vahe">BP−RP (mag)</th>
         </tr></thead>
         <tbody id="dataBody"></tbody>
       </table>
     </div>
     <div class="pager">
       <span id="pageInfo"></span>
+      <button type="button" id="firstPage" aria-label="Esimene lehekülg">« Esimene</button>
       <button type="button" id="prevPage" aria-label="Eelmine lehekülg">‹ Eelmine</button>
       <button type="button" id="nextPage" aria-label="Järgmine lehekülg">Järgmine ›</button>
+      <button type="button" id="lastPage" aria-label="Viimane lehekülg">Viimane »</button>
     </div>
   </section>
 
@@ -309,8 +319,11 @@ footer a { color: inherit; }
           <h2>Värvus-heledusdiagramm (HR-diagramm)</h2>
           <p class="hint">Valitud tähed värviliselt, kõik ülejäänud hallilt. Rist: parallaksi kõrvalekalle (vt parallakside histogrammi). Klõps märgib tähe. Shift + klõps valitud tähel eemaldab selle parallaksi arvutusest; eemaldatud täht (rõngas) tuleb Shift + klõpsuga tagasi.</p>
         </div>
-        <div class="opts">
-          <label class="toggle"><input type="checkbox" id="cmdAbs"> Absoluutne M<sub>G</sub></label>
+      </div>
+      <div class="toolbar">
+        <label class="toggle"><input type="checkbox" id="cmdAbs"> Absoluutne M<sub>G</sub></label>
+        <div class="btns">
+          <button type="button" id="dropOutliers" disabled>Eemalda erindid</button>
           <button type="button" id="restore" disabled>Taasta valik</button>
         </div>
       </div>
@@ -653,6 +666,8 @@ const S = {
   coordsLabel: null,  // status label for those coordinates, when they came from a name lookup
   page: 0,            // data table page
   hl: null,           // data row of the star last clicked in a plot
+  sort: { col: null, dir: 1 }, // data table sort column and direction (1 ascending, -1 descending)
+  order: null,        // data rows in table order, or null for the query order
   cmdShift: 0,        // magnitude shift of the HR diagram (absolute magnitudes), for its crosshair
   stored: {},         // stored cluster parallaxes for part 2, by cluster name
   fieldOn: new Set(), // field Cepheids added to the period-luminosity relation, by name
@@ -1089,6 +1104,7 @@ function drawCMD() {
   S.cmdSel = sel;
   S.cmdRemoved = removed;
   $("restore").disabled = !removed.length;
+  $("dropOutliers").disabled = !out.size;
   // full colour range of the data, so that every star is visible initially
   const lo = percentile(d.bprp, 0), hi = percentile(d.bprp, 1);
   const padX = 0.03 * (hi - lo || 1);
@@ -1621,17 +1637,46 @@ function drawTable() {
   const sel = new Set(S.idx || []);
   const num = (v, dp) => (v === null ? "—" : fmtN(v, dp));
   const rows = [];
-  for (let i = first; i < last; i++) {
+  for (let k = first; k < last; k++) {
+    const i = S.order ? S.order[k] : k;
     const cls = [sel.has(i) && "sel", i === S.hl && "hl"].filter(Boolean).join(" ");
-    rows.push(`<tr data-row="${i}"${cls ? ` class="${cls}"` : ""}><td>${esc(d.src[i])}</td><td>${num(d.ra[i], 5)}</td><td>${num(d.dec[i], 5)}</td>` +
+    rows.push(`<tr data-row="${i}"${cls ? ` class="${cls}"` : ""}><td>${esc(d.src[i])}</td><td>${num(d.ra[i], 5)}</td><td>${num(d.dec[i], 5)}</td><td>${num(d.sep[i], 2)}</td>` +
       `<td>${num(d.plx[i], 4)}</td><td>${num(d.eplx[i], 4)}</td><td>${num(d.pmra[i], 3)}</td><td>${num(d.pmdec[i], 3)}</td>` +
       `<td>${num(d.g[i], 3)}</td><td>${num(d.bprp[i], 3)}</td></tr>`);
   }
   $("dataBody").innerHTML = rows.join("");
   $("dataCount").textContent = `${fmt(S.n)} rida` + (S.idx ? `, neist valitud ${fmt(S.idx.length)}` : "");
   $("pageInfo").textContent = `Read ${fmt(first + 1)}–${fmt(last)} / ${fmt(S.n)} · lehekülg ${fmt(S.page + 1)} / ${fmt(pages)}`;
-  $("prevPage").disabled = S.page === 0;
-  $("nextPage").disabled = S.page >= pages - 1;
+  $("firstPage").disabled = $("prevPage").disabled = S.page === 0;
+  $("lastPage").disabled = $("nextPage").disabled = S.page >= pages - 1;
+  for (const th of document.querySelectorAll("#dataCard th[data-col]")) {
+    const on = th.dataset.col === S.sort.col;
+    th.classList.toggle("asc", on && S.sort.dir > 0);
+    th.classList.toggle("desc", on && S.sort.dir < 0);
+    th.setAttribute("aria-sort", on ? (S.sort.dir > 0 ? "ascending" : "descending") : "none");
+  }
+}
+
+// row order of the data table for the chosen column and direction; missing values go last
+function sortRows() {
+  const { col, dir } = S.sort;
+  if (!S.d || !col) { S.order = null; return; }
+  const v = S.d[col];
+  const key = col === "src" ? (i) => BigInt(v[i]) : (i) => v[i];
+  S.order = Array.from({ length: S.n }, (_, i) => i).sort((a, b) => {
+    const x = key(a), y = key(b);
+    if (x === null) return y === null ? 0 : 1;
+    if (y === null) return -1;
+    return x < y ? -dir : x > y ? dir : 0;
+  });
+}
+
+// a click on a column header sorts by it; a second click reverses the order
+function sortBy(col) {
+  S.sort = { col, dir: S.sort.col === col ? -S.sort.dir : 1 };
+  sortRows();
+  S.page = 0;
+  drawTable();
 }
 
 // a clicked star: mark it with a crosshair in all three plots, open its table page and highlight its row;
@@ -1641,7 +1686,7 @@ function showStar(i) {
   if (i === S.hl) S.hl = null;              // a second click on the marked star unmarks it
   else {
     S.hl = i;
-    S.page = Math.floor(i / PAGE_SIZE);
+    S.page = Math.floor((S.order ? S.order.indexOf(i) : i) / PAGE_SIZE);
   }
   drawTable();
   for (const [plot, t] of Object.entries(CROSS_TRACE)) {   // restyle keeps the current zoom
@@ -1724,6 +1769,15 @@ function attachSelection() {
   });
 }
 
+// remove all current parallax outliers from the selection, as with Shift-click on each;
+// the limits are then recomputed, so pressing again may find new ones
+function dropOutliers() {
+  const out = S.stats && S.stats.outliers;
+  if (!out || !out.size) return;
+  for (const i of out) S.removed.add(i);
+  onSelectionChange(false);
+}
+
 function restoreSelection() {
   if (!S.removed.size) return;
   S.removed = new Set();
@@ -1756,7 +1810,7 @@ async function run() {
     // use the coordinate box when it belongs to the current name (or was typed in directly)
     if (coordText && (!target || S.coordsFor === target)) {
       const p = parseCoords(coordText);
-      if (!p) throw new Error("Koordinaadid peavad olema kujul α δ kümnendkraadides, nt 132.85 11.81.");
+      if (!p) throw new Error("Koordinaadid peavad olema kujul α δ kraadides, nt 132.85 11.81.");
       c = { ...p, label: S.coordsLabel || `α = ${fmtN(p.ra, 4)}°, δ = ${p.dec >= 0 ? "+" : ""}${fmtN(p.dec, 4)}°` };
     } else {
       setStatus(`Otsin „${target}“…`);
@@ -1777,8 +1831,10 @@ async function run() {
     const done = `Päring lõpetatud (${source}), ${fmtN((performance.now() - t0) / 1000, 1)} s.`;
     if (!n) { setStatus(`${done} Sobivaid tähti ei leitud — suurenda raadiust või G piiri. Ridu: 0.`, "warn"); return; }
 
+    d.sep = d.ra.map((ra, i) => 60 * sepDeg(c.ra, c.dec, ra, d.dec[i]));   // arcmin from the query centre
     S.d = d; S.n = n; S.center = c; S.radius = radius; S.rev++;
     S.picked = new Set(); S.removed = new Set(); S.idx = null; S.stats = null; S.page = 0; S.hl = null;
+    sortRows();                 // keep the chosen column order for the new data
     S.hover = d.src.map((_, i) =>
       `Gaia DR3 ${d.src[i]}<br>G = ${fmtN(d.g[i], 2)}` +
       (d.bprp[i] !== null ? `, BP−RP = ${fmtN(d.bprp[i], 2)}` : "") +
@@ -1787,6 +1843,14 @@ async function run() {
     S.sky = { ra0: c.ra, dec0: c.dec, raPlot: d.ra.map((ra) => unwrapRA(ra, c.ra)) };
     S.ceph = CEPHEIDS.filter((x) => sepDeg(c.ra, c.dec, x.at[0], x.at[1]) <= radius);
 
+    // the cluster name, unless coordinates were typed in
+    const name = target && !parseCoords(target) ? target : null;
+    const sign = c.dec >= 0 ? "+" : "";
+    $("queryInfo").innerHTML = (name ? `<div class="tile"><div class="label">Parv</div><div class="value">${esc(name)}</div>
+        <div class="unit">α = ${fmtN(c.ra, 4)}°, δ = ${sign}${fmtN(c.dec, 4)}°</div></div>` : "") +
+      `<div class="tile"><div class="label">Saadud ridu</div><div class="value">${fmt(n)}</div>
+        <div class="unit">Gaia DR3 tähte (G &lt; ${fmt(gmax)} mag, raadius ${fmt(radius)}°)</div></div>`;
+    $("queryInfo").hidden = false;
     const trunc = n >= MAXREC;
     setStatus(`${done}` + (trunc ? ` Tulemus on kärbitud — vähenda raadiust või G piiri.` : "") + ` Ridu: ${fmt(n)}.`, trunc ? "warn" : "");
 
@@ -1853,14 +1917,18 @@ $("coords").addEventListener("input", () => { S.coordsFor = $("target").value.tr
 $("clear").addEventListener("click", clearSelection);
 $("download").addEventListener("click", downloadSelection);
 // a click on a data table row marks that star in the plots, like a click on the star itself
+for (const th of document.querySelectorAll("#dataCard th[data-col]")) th.addEventListener("click", () => sortBy(th.dataset.col));
 $("dataBody").addEventListener("click", (e) => {
   const tr = e.target.closest("tr[data-row]");
   if (tr) showStar(+tr.dataset.row);
 });
+$("firstPage").addEventListener("click", () => { S.page = 0; drawTable(); });
+$("lastPage").addEventListener("click", () => { S.page = Infinity; drawTable(); });   // drawTable clamps to the last page
 $("prevPage").addEventListener("click", () => { S.page--; drawTable(); });
 $("nextPage").addEventListener("click", () => { S.page++; drawTable(); });
 $("cmdAbs").addEventListener("change", refresh);
 $("restore").addEventListener("click", restoreSelection);
+$("dropOutliers").addEventListener("click", dropOutliers);
 $("results").addEventListener("click", (e) => { if (e.target.id === "saveDist") storeDistance(); });
 $("resetAll").addEventListener("click", resetAll);
 $("stop").addEventListener("click", stopQuery);
