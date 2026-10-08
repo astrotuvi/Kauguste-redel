@@ -423,8 +423,12 @@ footer a { color: inherit; }
         <div>
           <h2>Valitud tähtede parallaksid</h2>
           <p class="hint" id="histHint">Katkendjoon: kaalutud keskmine parallaks. Punktiir: kõrvalekallete piirid (alumine kvartiil − 3 × kvartiilhaare
-            ja ülemine kvartiil + 3 × kvartiilhaare). Piiridest väljapoole jäävad tähed on HR-diagrammil ristiga.</p>
+            ja ülemine kvartiil + 3 × kvartiilhaare). Piiridest väljapoole jäävad tähed on HR-diagrammil ristiga.
+            Hall taust: kõik päritud tähed.</p>
         </div>
+      </div>
+      <div class="toolbar">
+        <label class="toggle"><input type="checkbox" id="histAll"> Kõik tähed taustal</label>
       </div>
       <div class="plot wide" id="hist"></div>
       <div id="plxStats"></div>
@@ -1304,15 +1308,32 @@ function drawHist() {
   if (!(size > 0)) size = (hi - lo) / 20;
   size = Math.max(size, (hi - lo) / 80);
   const bins = { start: lo - size / 2, end: hi + size, size };
+  // all queried stars: the same bin grid widened to their full parallax range (at most ~400 bins)
+  const showAll = $("histAll").checked;
+  const field = showAll ? d.plx.map((p) => p + st.off) : null;
+  if (showAll) {
+    let flo = Infinity, fhi = -Infinity;
+    for (const p of field) { if (p < flo) flo = p; if (p > fhi) fhi = p; }
+    bins.size = size = Math.max(size, (fhi - flo) / 400);
+    bins.start = lo - size / 2 - Math.max(0, Math.ceil((lo - flo) / size)) * size;
+    bins.end = Math.max(hi, fhi) + size;
+  }
   const traces = [{
     type: "histogram", x: all, xbins: bins,
     marker: { color: css("--sel"), line: { color: css("--surface"), width: 1 } },
     hoverinfo: "skip",
   }];
+  // all queried stars in grey behind the selection, with the same bins
+  if (showAll) traces.unshift({
+    type: "histogram", x: field, xbins: bins,
+    marker: { color: css("--field-dim"), line: { color: css("--surface"), width: 1 } },
+    hoverinfo: "skip",
+  });
   Plotly.react("hist", traces, baseLayout({
     uirevision: S.rev,
     dragmode: "zoom",
     bargap: 0,
+    barmode: "overlay",
     xaxis: axis("Parallaks (mas)"),
     yaxis: axis("Tähti"),
     shapes: [{
@@ -2144,6 +2165,7 @@ $("lastPage").addEventListener("click", () => { S.page = Infinity; drawTable(); 
 $("prevPage").addEventListener("click", () => { S.page--; drawTable(); });
 $("nextPage").addEventListener("click", () => { S.page++; drawTable(); });
 $("cmdAbs").addEventListener("change", refresh);
+$("histAll").addEventListener("change", drawHist);
 $("restore").addEventListener("click", restoreSelection);
 $("dropOutliers").addEventListener("click", dropOutliers);
 $("results").addEventListener("click", (e) => { if (e.target.id === "saveDist") storeDistance(); });
