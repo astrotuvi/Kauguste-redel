@@ -231,7 +231,8 @@ table.data-table tr.group td { text-align: left; font-weight: 600; color: var(--
   border: 1px solid var(--border); border-radius: 7px; padding: 6px 8px; max-width: 100%;
 }
 table.data-table tr.cur td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.tiles.two { margin-top: 14px; }
+.tiles.two, .tiles.four { margin-top: 14px; }
+.tiles.four { grid-template-columns: repeat(4, 1fr); }
 .table-note { margin-top: 12px; }
 .calib-prompt { margin-top: 12px; }
 .calib-prompt + .calib-row { margin-top: 6px; }
@@ -251,11 +252,13 @@ footer a { color: inherit; }
 .reset { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 36px; font-size: 0.85rem; color: var(--text-2); }
 
 @media (max-width: 900px) {
+  .tiles.four { grid-template-columns: repeat(2, 1fr); }
   .plot, .plot.wide { height: 340px; }
   ol.steps { grid-template-columns: 1fr 1fr; }
   .tiles { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
+  .tiles.four { grid-template-columns: 1fr; }
   ol.steps { grid-template-columns: 1fr; }
   .field.num input { width: 80px; }
 }
@@ -424,6 +427,7 @@ footer a { color: inherit; }
         </div>
       </div>
       <div class="plot wide" id="hist"></div>
+      <div id="plxStats"></div>
     </section>
   </div>
 
@@ -790,6 +794,7 @@ const S = {
   cmdRemoved: [],     // star indices of the removed-star trace in the HR diagram
   idx: null,          // combined selection (sorted indices) or null
   stats: null,
+  distOn: false,      // cluster distance shown after "Arvuta kaugus"; reset with each new dataset
   rev: 0,             // uirevision, bumped per dataset
   token: 0,
   qctrl: null,        // AbortController of the running query
@@ -1074,7 +1079,7 @@ function computeStats(idx) {
   }
 
   return {
-    use, off, n, wmean, etot, fences, outliers,
+    use, off, n, wmean, estat, etot, fences, outliers,
     redchi2: n > 1 ? chi2 / (n - 1) : NaN,
   };
 }
@@ -1285,6 +1290,7 @@ function drawCMD() {
 
 function drawHist() {
   const st = S.stats;
+  drawPlxStats();
   if (!st) {
     emptyPlot("hist", S.idx && S.idx.length === 0 ? "Praegune valik ei sisalda ühtegi tähte." : "Märgi tähed lassoga omaliikumiste joonisel.");
     return;
@@ -1324,6 +1330,24 @@ function drawHist() {
   }), CONFIG);
 }
 
+// mean parallax of the selection with its error, the number of stars and the median single-star error
+function drawPlxStats() {
+  const st = S.stats;
+  if (!st) { $("plxStats").innerHTML = ""; return; }
+  const [pV, pE] = valErr(st.wmean, st.etot);
+  const typ = percentile(st.use.map((i) => S.d.eplx[i]), 0.5);
+  $("plxStats").innerHTML = `<div class="tiles four">
+      <div class="tile"><div class="label">Keskmine parallaks ⟨ϖ⟩</div><div class="value">${pV}</div><div class="unit">mas</div></div>
+      <div class="tile"><div class="label">Keskmise parallaksi viga σ<sub>⟨ϖ⟩</sub></div><div class="value">${pE}</div><div class="unit">mas</div></div>
+      <div class="tile"><div class="label">Tähti arvutuses</div><div class="value">${fmt(st.n)}</div><div class="unit">tähte</div></div>
+      <div class="tile"><div class="label">Ühe tähe tüüpiline viga σ<sub>ϖ</sub></div><div class="value">${fmtN(typ, typ < 0.1 ? 3 : 2)}</div><div class="unit">mas (mediaan)</div></div>
+    </div>
+    <p class="formula">Kaalutud keskmine ⟨ϖ⟩ = Σ w<sub>i</sub>ϖ<sub>i</sub> / Σ w<sub>i</sub>, kaal w<sub>i</sub> = 1/σ<sub>i</sub><sup>2</sup>, parallaksi nullpunkti parandusega +${fmtN(-ZP, 3)} mas.
+    Viga: statistiline 1/√Σw<sub>i</sub> = ${fmtN(st.estat, 4)} mas ja Gaia süsteemne ${fmtN(SYS, 3)} mas, liidetud ruutudena.</p>
+    <div class="calib-row"><button type="button" class="primary" id="calcDist"${S.distOn ? " disabled" : ""}>Arvuta kaugus</button>` +
+    (S.distOn ? `<span class="hint">Kaugus on allpool ja muutub koos valikuga.</span>` : "") + `</div>`;
+}
+
 function drawResults() {
   const el = $("results");
   const st = S.stats;
@@ -1334,6 +1358,7 @@ function drawResults() {
     (st && st.outliers.size ? ` · Parallaksi kõrvalekaldeid: <b>${fmt(st.outliers.size)}</b>` : "") + ` · Kokku tähti: <b>${fmt(S.n)}</b></p>`;
   if (!S.idx) { el.innerHTML = `${counts}<p class="empty">Ühtegi tähte pole veel valitud — märgi omaliikumiste joonisel parve kogum lassoga.</p>`; return; }
   if (!st) { el.innerHTML = `${counts}<p class="empty">Valik on tühi — kõik tähed on HR-diagrammil eemaldatud.</p>`; return; }
+  if (!S.distOn) { el.innerHTML = `<p class="empty">Vajuta parallaksi tulemuste all nuppu „Arvuta kaugus“.</p>`; return; }
 
   const notes = [];
   let tiles;
@@ -2025,7 +2050,7 @@ async function run() {
 
     d.sep = d.ra.map((ra, i) => 60 * sepDeg(c.ra, c.dec, ra, d.dec[i]));   // arcmin from the query centre
     S.d = d; S.n = n; S.center = c; S.radius = radius; S.rev++;
-    S.picked = new Set(); S.removed = new Set(); S.idx = null; S.stats = null; S.page = 0; S.hl = null;
+    S.picked = new Set(); S.removed = new Set(); S.idx = null; S.stats = null; S.distOn = false; S.page = 0; S.hl = null;
     sortRows();                 // keep the chosen column order for the new data
     S.hover = d.src.map((_, i) =>
       `Gaia DR3 ${d.src[i]}<br>G = ${fmtN(d.g[i], 2)}` +
@@ -2122,6 +2147,13 @@ $("cmdAbs").addEventListener("change", refresh);
 $("restore").addEventListener("click", restoreSelection);
 $("dropOutliers").addEventListener("click", dropOutliers);
 $("results").addEventListener("click", (e) => { if (e.target.id === "saveDist") storeDistance(); });
+$("plxStats").addEventListener("click", (e) => {
+  if (e.target.id !== "calcDist") return;
+  S.distOn = true;
+  drawPlxStats();
+  drawResults();
+  $("results").closest("section").scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
 $("resetAll").addEventListener("click", resetAll);
 // the menu only chooses; "Kasuta heledust" applies the chosen supernova luminosity
 $("snCal").addEventListener("change", () => { S.snChoice = $("snCal").value; });
