@@ -101,21 +101,28 @@ h2 { font-size: 0.95rem; margin: 0; font-weight: 600; }
   border-radius: 10px;
   padding: 14px 16px;
 }
-.views { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; }
-svg.scene { display: block; width: 100%; height: auto; margin-top: 8px; touch-action: none; user-select: none; -webkit-user-select: none; font-family: inherit; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 14px; align-items: start; }
+.tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; border-bottom: 1px solid var(--border); margin: -4px 0 10px; }
+.tabs button {
+  border: none; border-radius: 0; background: none; padding: 8px 14px; margin-bottom: -1px;
+  color: var(--text-2); font-weight: 550; border-bottom: 2px solid transparent;
+}
+.tabs button:hover { color: var(--text-1); }
+.tabs button[aria-selected="true"] { color: var(--text-1); border-bottom-color: var(--btn); }
+
+svg.scene { display: block; width: 100%; height: auto; max-height: calc(100vh - 240px); min-height: 280px; margin-top: 8px; touch-action: none; user-select: none; -webkit-user-select: none; font-family: inherit; }
 #space { cursor: grab; }
 #space.dragging { cursor: grabbing; }
 
 /* Controls */
-.controls { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; }
-.timebar { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; }
-.timebar input { flex: 1; }
-.readout { font-variant-numeric: tabular-nums; color: var(--text-2); font-size: 0.9rem; white-space: nowrap; min-width: 9.5em; text-align: right; }
-.group { display: flex; flex-direction: column; gap: 10px; }
+.controls { display: flex; flex-direction: column; gap: 12px; }
+.group { display: flex; flex-direction: column; gap: 8px; }
+.group + .group { border-top: 1px solid var(--border); padding-top: 12px; }
 .paxout { margin: 0; font-size: 0.85rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .paxout b { color: var(--text-1); font-weight: 600; }
 .group h3 { font-size: 0.82rem; font-weight: 600; color: var(--text-2); margin: 0; }
-.slider { display: grid; grid-template-columns: 11em 1fr 4.5em; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-2); }
+.slider { display: grid; grid-template-columns: 1fr 4.5em; align-items: center; gap: 2px 10px; font-size: 0.85rem; color: var(--text-2); }
+.slider label { grid-column: 1 / -1; }
 .slider output { font-variant-numeric: tabular-nums; text-align: right; color: var(--text-1); }
 .group.off .slider { opacity: 0.45; }
 input[type="range"] { accent-color: var(--btn); width: 100%; min-width: 0; }
@@ -127,7 +134,7 @@ button {
 }
 button.primary { background: var(--btn); color: var(--btn-text); border-color: transparent; font-weight: 600; min-width: 7.5em; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
-.views-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; font-size: 0.82rem; color: var(--text-3); }
+.views-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 4px auto; padding-left: 12px; font-size: 0.82rem; color: var(--text-3); }
 .views-btns button { font-size: 0.82rem; padding: 3px 10px; border-radius: 999px; background: var(--chip); border-color: transparent; color: var(--text-2); }
 .views-btns button[aria-pressed="true"] { background: var(--btn); color: var(--btn-text); }
 
@@ -137,7 +144,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
 .skybox { fill: var(--sky); stroke: var(--axis); }
 .orbit { fill: none; stroke: var(--axis); stroke-width: 1.5; }
 .sun { fill: var(--sun); }
-.sunglow { fill: var(--sun); opacity: 0.25; }
 .earth { fill: var(--earth); stroke: var(--surface); stroke-width: 1.5; }
 .star { fill: var(--star); stroke: var(--surface); stroke-width: 1; }
 .quasar { fill: var(--quasar); }
@@ -164,14 +170,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
 .explain li { margin: 4px 0; }
 
 @media (max-width: 900px) {
-  .views { grid-template-columns: 1fr; }
-  .controls { grid-template-columns: 1fr; }
-}
-@media (max-width: 520px) {
-  .slider { grid-template-columns: 1fr 3.5em; }
-  .slider label { grid-column: 1 / -1; }
-  .timebar { flex-wrap: wrap; }
-  .readout { min-width: 0; }
+  .layout { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -185,55 +184,59 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaksiks</a>: mida kaugemal on täht, seda väiksem on ellips. Liiguta aega, muuda tähe kaugust ja asukohta
     ning lisa tähele <a class="en" href="https://en.wikipedia.org/wiki/Proper_motion" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">omaliikumine</a>, et näha, kuidas ellipsist saavad silmused.</p>
 
-  <div class="views">
+  <div class="layout">
     <section class="card">
-      <h2>Ruumiline vaade</h2>
-      <p class="hint">Lohista joonist, et seda pöörata. Joon Maast läbi tähe tabab kvasarite tausta punktis, mis joonistab aasta jooksul ellipsi.
-        Mõõtkava ei ole õige: ka lähim täht on Päikesest umbes 270 000 korda kaugemal kui Maa.</p>
-      <div class="views-btns" role="group" aria-label="Vaatenurk">
-        <span>Vaade:</span>
-        <button type="button" data-view="oblique">Viltu</button>
-        <button type="button" data-view="sun">Päikese tagant</button>
-        <button type="button" data-view="side">Kõrvalt</button>
-        <button type="button" data-view="pole">Ekliptika pooluselt</button>
+      <div class="tabs" role="tablist" aria-label="Vaade">
+        <button type="button" role="tab" id="tab3d" aria-controls="pane3d" aria-selected="true">3D vaade</button>
+        <button type="button" role="tab" id="tab2d" aria-controls="pane2d" aria-selected="false" tabindex="-1">2D vaade: taevas Maalt</button>
+        <div class="views-btns" id="viewBtns" role="group" aria-label="Vaatenurk">
+          <button type="button" data-view="oblique">Viltu</button>
+          <button type="button" data-view="sun">Päikese tagant</button>
+          <button type="button" data-view="side">Kõrvalt</button>
+          <button type="button" data-view="pole">Ekliptika pooluselt</button>
+        </div>
       </div>
-      <svg id="space" class="scene" viewBox="0 0 760 520" role="img" aria-label="Ruumiline joonis: Päike, Maa orbiit, täht ja kvasarite taust"></svg>
-      <div class="legend">
-        <span><i style="border-color: var(--accent)"></i>vaatejoon Maast läbi tähe</span>
-        <span><i style="border-color: var(--text-3); border-top-style: dashed"></i>suund Päikesest</span>
-        <span id="lgPm" hidden><i style="border-color: var(--star); border-top-style: dashed"></i>tähe tegelik liikumine</span>
+      <div id="pane3d" role="tabpanel" aria-labelledby="tab3d">
+        <p class="hint">Lohista joonist, et seda pöörata. Joon Maast läbi tähe tabab kvasarite tausta punktis, mis joonistab aasta jooksul ellipsi.
+          Mõõtkava ei ole õige: ka lähim täht on Päikesest umbes 270 000 korda kaugemal kui Maa.</p>
+        <svg id="space" class="scene" viewBox="0 0 760 520" role="img" aria-label="Ruumiline joonis: Päike, Maa orbiit, täht ja kvasarite taust"></svg>
+        <div class="legend">
+          <span><i style="border-color: var(--accent)"></i>vaatejoon Maast läbi tähe</span>
+          <span><i style="border-color: var(--text-3); border-top-style: dashed"></i>suund Päikesest</span>
+          <span id="lgPm" hidden><i style="border-color: var(--star); border-top-style: dashed"></i>tähe tegelik liikumine</span>
+        </div>
+      </div>
+      <div id="pane2d" role="tabpanel" aria-labelledby="tab2d" hidden>
+        <p class="hint">Tähe näiv asukoht kvasarite taustal. Oranž: läbitud rada, hall: kogu rada valitud ajavahemiku jooksul.</p>
+        <svg id="sky" class="scene" viewBox="0 0 440 440" role="img" aria-label="Tähe näiv rada kvasarite taustal"></svg>
+        <div class="legend">
+          <span><i style="border-color: var(--accent)"></i>näiv rada</span>
+          <span id="lgTrue" hidden><i style="border-color: var(--text-3); border-top-style: dashed"></i>asukoht Päikesest vaadatuna</span>
+        </div>
       </div>
     </section>
-    <section class="card">
-      <h2>Taevas Maalt vaadatuna</h2>
-      <p class="hint">Tähe näiv asukoht kvasarite taustal. Oranž: läbitud rada, hall: kogu rada kolme aasta jooksul.</p>
-      <svg id="sky" class="scene" viewBox="0 0 440 440" role="img" aria-label="Tähe näiv rada kvasarite taustal"></svg>
-      <div class="legend">
-        <span><i style="border-color: var(--accent)"></i>näiv rada</span>
-        <span id="lgTrue" hidden><i style="border-color: var(--text-3); border-top-style: dashed"></i>asukoht Päikesest vaadatuna</span>
+
+    <section class="card controls" aria-label="Seaded">
+      <div class="group">
+        <div class="slider"><label for="span">Ajavahemik</label><input type="range" id="span" min="1" max="10.5" step="0.5" value="3"><output for="span" id="spanOut"></output></div>
+        <div class="slider"><label for="time">Aeg</label><input type="range" id="time" min="0" max="3" step="0.001" value="0"><output for="time" id="timeOut"></output></div>
+        <div><button type="button" class="primary" id="play">▶ Käivita</button></div>
+      </div>
+      <div class="group">
+        <div class="slider"><label for="dist">Kaugus (Maa orbiidi raadiustes)</label><input type="range" id="dist" min="4" max="10" step="0.1" value="5"><output for="dist" id="distOut"></output></div>
+        <div class="slider"><label for="beta">Ekliptiline laius β</label><input type="range" id="beta" min="0" max="90" step="1" value="50"><output for="beta" id="betaOut"></output></div>
+      </div>
+      <div class="group off" id="pmGroup">
+        <label class="toggle"><input type="checkbox" id="pm"> Omaliikumine</label>
+        <div class="slider"><label for="mu">Kiirus</label><input type="range" id="mu" min="0.1" max="1.5" step="0.01" value="0.8" disabled><output for="mu" id="muOut"></output></div>
+        <div class="slider"><label for="phi">Suund (põhjast itta)</label><input type="range" id="phi" min="0" max="360" step="1" value="60" disabled><output for="phi" id="phiOut"></output></div>
+      </div>
+      <div class="group">
+        <label class="toggle"><input type="checkbox" id="pax" checked> Näita parallaksinurka</label>
+        <p class="paxout" id="paxOut"></p>
       </div>
     </section>
   </div>
-
-  <section class="card controls">
-    <div class="timebar">
-      <button type="button" class="primary" id="play">▶ Käivita</button>
-      <input type="range" id="time" min="0" max="3" step="0.001" value="0" aria-label="Aeg aastates">
-      <span class="readout" id="timeOut"></span>
-    </div>
-    <div class="group">
-      <h3>Täht</h3>
-      <div class="slider"><label for="dist">Kaugus (Maa orbiidi raadiustes)</label><input type="range" id="dist" min="3" max="8" step="0.1" value="4"><output for="dist" id="distOut"></output></div>
-      <div class="slider"><label for="beta">Ekliptiline laius β</label><input type="range" id="beta" min="0" max="90" step="1" value="50"><output for="beta" id="betaOut"></output></div>
-      <label class="toggle"><input type="checkbox" id="pax" checked> Näita parallaksinurka</label>
-      <p class="paxout" id="paxOut"></p>
-    </div>
-    <div class="group off" id="pmGroup">
-      <label class="toggle"><input type="checkbox" id="pm"> Omaliikumine</label>
-      <div class="slider"><label for="mu">Kiirus</label><input type="range" id="mu" min="0.1" max="1.5" step="0.01" value="0.8" disabled><output for="mu" id="muOut"></output></div>
-      <div class="slider"><label for="phi">Suund (põhjast itta)</label><input type="range" id="phi" min="0" max="360" step="1" value="60" disabled><output for="phi" id="phiOut"></output></div>
-    </div>
-  </section>
 
   <section class="card explain">
     <h2>Mida joonis näitab</h2>
@@ -249,9 +252,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
 <script>
 (() => {
   // Schematic units: the Earth's orbit has radius 1, the quasar background is a plane at distance D from the Sun,
-  // perpendicular to the direction of the star, and spans ±H in both directions. The time runs from 0 to T years.
-  const D = 10, H = 5, T = 3, NS = 'http://www.w3.org/2000/svg';
-  const st = { t: 0, d: 4, beta: 50, pm: false, mu: 0.8, phi: 60, az: 50, el: -12, roll: false, view: 'oblique', pax: true, playing: false };
+  // perpendicular to the direction of the star, and spans ±H in both directions. The time runs from 0 to st.T years.
+  const D = 13, H = 5, NS = 'http://www.w3.org/2000/svg';
+  const st = { T: 3, t: 0, d: 5, beta: 50, pm: false, mu: 0.8, phi: 60, az: 50, el: -12, roll: false, view: 'oblique', pax: true, playing: false };
   // Preset viewing angles (az, el in the camera's star-based frame, see camera(); roll turns the picture upside down). The pole view depends on β, so the
   // presets are applied again whenever β changes; dragging the view leaves the preset.
   const VIEWS = {
@@ -284,7 +287,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
   // year, so that it does not change with the distance. The star is at its reference position in the middle of the time range.
   function pmOffset(t) {
     if (!st.pm) return [0, 0];
-    const k = st.mu * (t - T / 2), p = st.phi * rad;
+    const k = st.mu * (t - st.T / 2), p = st.phi * rad;
     return [k * Math.sin(p), k * Math.cos(p)];
   }
   function star(t, B) {
@@ -326,17 +329,16 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     el('polygon', { points: pts(p), class: 'star' }, g);
   }
 
-  // Path samples over the whole time range; recomputed only when the geometry changes.
-  const NSAMP = 900;
+  // Path samples over the whole time range, 300 per year; recomputed only when the geometry changes.
   let cache = null;
   function samples(B) {
-    const key = [st.d, st.beta, st.pm, st.mu, st.phi].join();
+    const key = [st.T, st.d, st.beta, st.pm, st.mu, st.phi].join();
     if (cache && cache.key === key) return cache;
-    const P = [];
-    for (let i = 0; i <= NSAMP; i++) P.push(hit(T * i / NSAMP, B));
+    const n = Math.round(300 * st.T), P = [];
+    for (let i = 0; i <= n; i++) P.push(hit(st.T * i / n, B));
     return (cache = { key, P });
   }
-  const upTo = (arr, t) => arr.slice(0, Math.floor(t / T * NSAMP) + 1);
+  const upTo = (arr, t) => arr.slice(0, Math.floor(t / st.T * (arr.length - 1)) + 1);
 
   /* ---------- 3D view ---------- */
   const space = document.getElementById('space');
@@ -351,7 +353,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     // Fit the quasar plane, the orbit and the star to the drawing, leaving room for the labels.
     const box = [[-H, -H], [H, -H], [H, H], [-H, H]].map(([a, b]) => add(mul(B.n, D), add(mul(B.u, a), mul(B.N, b))));
     for (let i = 0; i < 24; i++) box.push(earth(i / 24));
-    box.push(star(0, B), star(T, B));
+    box.push(star(0, B), star(st.T, B));
     const xs = box.map(P => dot(P, r)), ys = box.map(P => dot(P, up));
     const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
     const sc = Math.min(SCMAX, (W - 60) / (x1 - x0), (Hh - 70) / (y1 - y0));
@@ -387,30 +389,56 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     const pSun = cam.p([0, 0, 0]), pRef = cam.p(mul(Sx, D / st.d));
     el('line', { x1: pSun[0], y1: pSun[1], x2: pRef[0], y2: pRef[1], class: 'ref' }, front);
     if (st.pm) {
-      const a = cam.p(star(0, B)), b = cam.p(star(T, B));
+      const a = cam.p(star(0, B)), b = cam.p(star(st.T, B));
       el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], class: 'pmpath' }, front);
     }
     const pE = cam.p(E), pS = cam.p(Sx), pP = cam.p(Ph);
     el('line', { x1: pE[0], y1: pE[1], x2: pP[0], y2: pP[1], class: 'sight' }, front);
     el('circle', { cx: pP[0], cy: pP[1], r: 4, class: 'star' }, front);
 
-    const sun = g => { el('circle', { cx: pSun[0], cy: pSun[1], r: 15, class: 'sunglow' }, g); el('circle', { cx: pSun[0], cy: pSun[1], r: 9, class: 'sun' }, g); };
+    // With the parallax angle shown, the other two sides of the triangle: the Earth's orbital radius, 1 aü, and the
+    // distance d from the Sun to the star. Each label sits beside the middle of its side, away from the third corner.
+    const side = (a, b, away, s) => {
+      const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      let nx = (a[1] - b[1]) / L, ny = (b[0] - a[0]) / L;
+      if (nx * (away[0] - m[0]) + ny * (away[1] - m[1]) > 0) { nx = -nx; ny = -ny; }
+      text(front, m[0] + nx * 10, m[1] + ny * 10 + 6 + Math.max(0, ny) * 6, s, 'pax', nx > 0.35 ? 'start' : nx < -0.35 ? 'end' : 'middle');
+    };
+    if (st.pax) {
+      el('line', { x1: pSun[0], y1: pSun[1], x2: pE[0], y2: pE[1], class: 'axis' }, front);
+      side(pSun, pE, pS, '1 aü');
+      side(pSun, pS, pE, 'd');
+    }
+    const sun = g => el('circle', { cx: pSun[0], cy: pSun[1], r: 9, class: 'sun' }, g);
     const earthDot = g => el('circle', { cx: pE[0], cy: pE[1], r: 6, class: 'earth' }, g);
     if (cam.depth(E) > cam.depth([0, 0, 0])) { sun(front); earthDot(front); } else { earthDot(front); sun(front); }
     if (st.pax) {
-      // The parallax angle at the star, between the directions to the Sun and to the Earth. It is drawn as a wedge
-      // between the two lines where they go on past the star towards the quasars: the same angle, with more room.
+      // The parallax angle at the star, between the directions to the Sun and to the Earth, drawn as a wedge
+      // opening from the star towards them.
       const unit = v => mul(v, 1 / Math.hypot(...v));
-      const fromSun = unit(Sx), fromEarth = unit(sub(Sx, E)), rho = 0.6 * (D - st.d), arc = [];
-      for (let i = 0; i <= 24; i++) arc.push(cam.p(add(Sx, mul(unit(add(mul(fromSun, 1 - i / 24), mul(fromEarth, i / 24))), rho))));
+      const toSun = unit(mul(Sx, -1)), toEarth = unit(sub(E, Sx)), rho = 0.45 * st.d, arc = [];
+      for (let i = 0; i <= 24; i++) arc.push(cam.p(add(Sx, mul(unit(add(mul(toSun, 1 - i / 24), mul(toEarth, i / 24))), rho))));
       el('polygon', { points: pts([pS, ...arc]), class: 'wedge' }, front);
       el('polyline', { points: pts(arc), class: 'wedge-arc' }, front);
-      const m = cam.p(add(Sx, mul(unit(add(fromSun, fromEarth)), rho * 0.6)));
+      const m = cam.p(add(Sx, mul(unit(add(toSun, toEarth)), rho * 0.62)));
       text(front, m[0], m[1] + 6, 'p', 'pax', 'middle');
     }
     starGlyph(front, pS[0], pS[1], 9);
-    text(front, pSun[0], pSun[1] + 30, 'Päike', 'lbl', 'middle');
-    text(front, pE[0] + 9, pE[1] - 9, 'Maa', 'lbl');
+    // The Sun and the Earth are labelled on the outer side of the Sun-Earth-star triangle, leaving its sides free for
+    // the labels of the parallax angle, 1 aü and d.
+    const outward = (p, ...from) => {
+      let x = 0, y = 0;
+      for (const q of from) { const L = Math.hypot(p[0] - q[0], p[1] - q[1]) || 1; x += (p[0] - q[0]) / L; y += (p[1] - q[1]) / L; }
+      const L = Math.hypot(x, y);
+      if (L > 0.3) return [x / L, y / L];
+      // The corners are nearly in a line: go sideways instead, opposite to the side label placed by side() below.
+      const v = [p[0] - from[0][0], p[1] - from[0][1]], V = Math.hypot(...v) || 1;
+      return [v[1] / V, -v[0] / V];
+    };
+    const label = (p, dir, r, s) => text(front, p[0] + dir[0] * r, p[1] + dir[1] * r + 4 + Math.max(0, dir[1]) * 6, s, 'lbl',
+      dir[0] > 0.35 ? 'start' : dir[0] < -0.35 ? 'end' : 'middle');
+    label(pSun, outward(pSun, pE, pS), 20, 'Päike');
+    label(pE, outward(pE, pSun, pS), 12, 'Maa');
     text(front, pS[0] + 11, pS[1] - 9, 'Täht', 'lbl');
 
     // Draw the background plane behind the solar system unless the view is turned to look at it from behind.
@@ -433,7 +461,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     el('polyline', { points: pts(upTo(XY, t)), class: 'done' }, sky);
     const now = sp(skyXY(hit(t, B), B));
     if (st.pm) {
-      const a = sp(pmOffset(0)), b = sp(pmOffset(T)), c = sp(pmOffset(t));
+      const a = sp(pmOffset(0)), b = sp(pmOffset(st.T)), c = sp(pmOffset(t));
       el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], class: 'ref' }, sky);
       el('line', { x1: c[0], y1: c[1], x2: now[0], y2: now[1], class: 'offset' }, sky);
       el('circle', { cx: c[0], cy: c[1], r: 4, class: 'truepos' }, sky);
@@ -459,7 +487,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
   const $ = id => document.getElementById(id);
   const fmt = (v, d) => v.toFixed(d);
   function readouts() {
-    $('timeOut').textContent = 't = ' + fmt(st.t, 2) + ' a';
+    const yr = (v, d) => fmt(v, d) + ' a';
+    $('spanOut').textContent = yr(st.T, 1);
+    $('timeOut').textContent = yr(st.t, 2);
     $('distOut').textContent = fmt(st.d, 1);
     $('betaOut').textContent = st.beta + '°';
     $('muOut').textContent = fmt(st.mu, 2);
@@ -482,6 +512,22 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
   }
   function render() { readouts(); drawSpace(); drawSky(); }
 
+  // Over a long time span the proper motion would carry the star off the quasar background, so the speed is limited to
+  // keep the whole path on it even for the nearest star, whose ellipse has a semi-major axis of D/4 - 1.
+  function limitMu() {
+    const max = Math.min(1.5, Math.floor((H - 0.3 - (D / 4 - 1)) / (st.T / 2) * 100) / 100);
+    $('mu').max = max;
+    st.mu = Math.min(st.mu, max);
+    $('mu').value = st.mu;
+  }
+  $('span').addEventListener('input', e => {
+    st.T = +e.target.value;
+    st.t = Math.min(st.t, st.T);
+    $('time').max = st.T;
+    $('time').value = st.t;
+    limitMu();
+    render();
+  });
   $('time').addEventListener('input', e => { st.t = +e.target.value; stop(); render(); });
   $('dist').addEventListener('input', e => { st.d = +e.target.value; render(); });
   $('beta').addEventListener('input', e => { st.beta = +e.target.value; applyView(); render(); });
@@ -491,21 +537,22 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
   $('phi').addEventListener('input', e => { st.phi = +e.target.value; render(); });
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { st.view = b.dataset.view; applyView(); render(); }));
 
-  // Playing advances the time by half a year per second and stops at the end; pressing play at the end starts over.
+  // Playing advances the time by half a year per second, faster for long time spans so that a run takes at most about
+  // 12 seconds, and stops at the end; pressing play at the end starts over.
   let last = 0, raf = 0;
   function frame(ts) {
     if (!st.playing) return;
-    if (last) st.t = Math.min(T, st.t + (ts - last) / 2000);
+    if (last) st.t = Math.min(st.T, st.t + (ts - last) / 1000 * Math.max(0.5, st.T / 12));
     last = ts;
     $('time').value = st.t;
-    if (st.t >= T) st.playing = false;
+    if (st.t >= st.T) st.playing = false;
     render();
     if (st.playing) raf = requestAnimationFrame(frame);
   }
   function stop() { st.playing = false; cancelAnimationFrame(raf); }
   $('play').addEventListener('click', () => {
     if (st.playing) { stop(); render(); return; }
-    if (st.t >= T) st.t = 0;
+    if (st.t >= st.T) st.t = 0;
     st.playing = true; last = 0;
     raf = requestAnimationFrame(frame);
   });
@@ -525,6 +572,28 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
   const endDrag = () => { drag = null; space.classList.remove('dragging'); };
   space.addEventListener('pointerup', endDrag);
   space.addEventListener('pointercancel', endDrag);
+
+  // Tabs switch the left panel between the 3D and the sky view; the arrow keys move between them.
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  function selectTab(tab) {
+    for (const b of tabs) {
+      const on = b === tab;
+      b.setAttribute('aria-selected', on);
+      b.tabIndex = on ? 0 : -1;
+      $(b.getAttribute('aria-controls')).hidden = !on;
+    }
+    $('viewBtns').hidden = tab.id !== 'tab3d';
+  }
+  tabs.forEach((b, i) => {
+    b.addEventListener('click', () => selectTab(b));
+    b.addEventListener('keydown', e => {
+      const k = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (!k) return;
+      const next = tabs[(i + k + tabs.length) % tabs.length];
+      selectTab(next);
+      next.focus();
+    });
+  });
 
   render();
 })();
