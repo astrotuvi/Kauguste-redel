@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parallaksi meetod</title>
+<meta name="description" content="Interaktiivne joonis parallaksi meetodist: Maa tiirleb ümber Päikese ja lähedane täht joonistab kaugete kvasarite taustal ellipsi, omaliikumisega silmuseid.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f6f4;
+  --surface: #fcfcfb;
+  --border: #e3e2dd;
+  --text-1: #0b0b0b;
+  --text-2: #52514e;
+  --text-3: #75746e;
+  --grid: #ecebe7;
+  --axis: #c4c3bd;
+  --sel: #2a78d6;
+  --accent: #eb6834;
+  --btn: #2a78d6;
+  --btn-text: #ffffff;
+  --chip: #eeede9;
+  --sky: #e9edf4;
+  --quasar: #6d5bd0;
+  --sun: #f2b01e;
+  --earth: #2a78d6;
+  --star: #d32f2f;
+  --path-dim: #b9b8b2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --border: #2f2f2c;
+    --text-1: #ffffff;
+    --text-2: #c3c2b7;
+    --text-3: #959489;
+    --grid: #282826;
+    --axis: #4a4a46;
+    --sel: #3987e5;
+    --accent: #d95926;
+    --btn: #3987e5;
+    --btn-text: #ffffff;
+    --chip: #262624;
+    --sky: #161a24;
+    --quasar: #a99cf2;
+    --sun: #f5c04a;
+    --earth: #4f9cf0;
+    --star: #f05454;
+    --path-dim: #55554f;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --border: #2f2f2c;
+  --text-1: #ffffff;
+  --text-2: #c3c2b7;
+  --text-3: #959489;
+  --grid: #282826;
+  --axis: #4a4a46;
+  --sel: #3987e5;
+  --accent: #d95926;
+  --btn: #3987e5;
+  --btn-text: #ffffff;
+  --chip: #262624;
+  --sky: #161a24;
+  --quasar: #a99cf2;
+  --sun: #f5c04a;
+  --earth: #4f9cf0;
+  --star: #f05454;
+  --path-dim: #55554f;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
+.back { font-size: 0.88rem; margin: 0 0 14px; }
+.back a { color: var(--text-2); text-decoration: none; }
+.back a:hover { color: var(--sel); }
+h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 10px; font-weight: 650; letter-spacing: -0.01em; }
+.byline { color: var(--text-2); font-size: 0.9rem; margin: -4px 0 16px; }
+.intro a, .explain a { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
+.intro a:hover, .explain a:hover { color: var(--sel); text-decoration-style: solid; }
+.intro { margin: 0 0 24px; max-width: 75ch; }
+h2 { font-size: 0.95rem; margin: 0; font-weight: 600; }
+.hint { color: var(--text-3); font-size: 0.82rem; margin: 2px 0 0; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.views { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; }
+svg.scene { display: block; width: 100%; height: auto; margin-top: 8px; touch-action: none; user-select: none; -webkit-user-select: none; font-family: inherit; }
+#space { cursor: grab; }
+#space.dragging { cursor: grabbing; }
+
+/* Controls */
+.controls { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; }
+.timebar { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; }
+.timebar input { flex: 1; }
+.readout { font-variant-numeric: tabular-nums; color: var(--text-2); font-size: 0.9rem; white-space: nowrap; min-width: 9.5em; text-align: right; }
+.group { display: flex; flex-direction: column; gap: 10px; }
+.group h3 { font-size: 0.82rem; font-weight: 600; color: var(--text-2); margin: 0; }
+.slider { display: grid; grid-template-columns: 11em 1fr 4.5em; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-2); }
+.slider output { font-variant-numeric: tabular-nums; text-align: right; color: var(--text-1); }
+.group.off .slider { opacity: 0.45; }
+input[type="range"] { accent-color: var(--btn); width: 100%; min-width: 0; }
+.toggle { display: flex; gap: 8px; align-items: center; font-size: 0.88rem; color: var(--text-1); font-weight: 550; }
+.toggle input { accent-color: var(--btn); width: 16px; height: 16px; margin: 0; }
+button {
+  font: inherit; cursor: pointer; border-radius: 7px; padding: 7px 14px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-1);
+}
+button.primary { background: var(--btn); color: var(--btn-text); border-color: transparent; font-weight: 600; min-width: 7.5em; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
+.views-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; font-size: 0.82rem; color: var(--text-3); }
+.views-btns button { font-size: 0.82rem; padding: 3px 10px; border-radius: 999px; background: var(--chip); border-color: transparent; color: var(--text-2); }
+.views-btns button[aria-pressed="true"] { background: var(--btn); color: var(--btn-text); }
+
+/* Scene */
+.plane { fill: var(--sky); stroke: var(--axis); stroke-width: 1; }
+.plane.front { fill-opacity: 0.55; }
+.skybox { fill: var(--sky); stroke: var(--axis); }
+.orbit { fill: none; stroke: var(--axis); stroke-width: 1.5; }
+.sun { fill: var(--sun); }
+.sunglow { fill: var(--sun); opacity: 0.25; }
+.earth { fill: var(--earth); stroke: var(--surface); stroke-width: 1.5; }
+.star { fill: var(--star); stroke: var(--surface); stroke-width: 1; }
+.quasar { fill: var(--quasar); }
+.qspike { stroke: var(--quasar); stroke-width: 1; opacity: 0.7; }
+.sight { stroke: var(--accent); stroke-width: 1.8; fill: none; }
+.ref { stroke: var(--text-3); stroke-width: 1; stroke-dasharray: 4 4; fill: none; }
+.pmpath { stroke: var(--star); stroke-width: 1.2; stroke-dasharray: 3 3; fill: none; opacity: 0.8; }
+.full { stroke: var(--path-dim); stroke-width: 1.5; fill: none; }
+.done { stroke: var(--accent); stroke-width: 2.2; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.truepos { fill: var(--surface); stroke: var(--text-2); stroke-width: 1.5; }
+.offset { stroke: var(--text-2); stroke-width: 1; }
+.lbl { fill: var(--text-1); font-size: 13px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.lbl2 { fill: var(--text-2); font-size: 12px; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 0.8rem; color: var(--text-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; }
+
+.explain { margin-top: 14px; }
+.explain ul { margin: 8px 0 0; padding-left: 20px; max-width: 80ch; }
+.explain li { margin: 4px 0; }
+
+@media (max-width: 900px) {
+  .views { grid-template-columns: 1fr; }
+  .controls { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .slider { grid-template-columns: 1fr 3.5em; }
+  .slider label { grid-column: 1 / -1; }
+  .timebar { flex-wrap: wrap; }
+  .readout { min-width: 0; }
+}
+</style>
+</head>
+<body>
+<main>
+  <p class="back"><a href="index.html">← Kosmiliste kauguste redel</a></p>
+  <h1>Parallaksi meetod</h1>
+  <p class="byline">Taavi Tuvikene<br>TÜ Tartu observatoorium</p>
+  <p class="intro">Maa tiirleb ümber <a href="https://et.wikipedia.org/wiki/Päike" target="_blank" rel="noopener">Päikese</a>, seega vaatame lähedast tähte aasta jooksul veidi erinevatest kohtadest.
+    Väga kaugete <a href="https://et.wikipedia.org/wiki/Kvasar" target="_blank" rel="noopener">kvasarite</a> taustal näib täht seetõttu liikuvat mööda väikest ellipsit. Seda nihet nimetatakse
+    <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaksiks</a>: mida kaugemal on täht, seda väiksem on ellips. Liiguta aega, muuda tähe kaugust ja asukohta
+    ning lisa tähele <a class="en" href="https://en.wikipedia.org/wiki/Proper_motion" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">omaliikumine</a>, et näha, kuidas ellipsist saavad silmused.</p>
+
+  <div class="views">
+    <section class="card">
+      <h2>Ruumiline vaade</h2>
+      <p class="hint">Lohista joonist, et seda pöörata. Joon Maast läbi tähe tabab kvasarite tausta punktis, mis joonistab aasta jooksul ellipsi.
+        Mõõtkava ei ole õige: ka lähim täht on Päikesest umbes 270 000 korda kaugemal kui Maa.</p>
+      <div class="views-btns" role="group" aria-label="Vaatenurk">
+        <span>Vaade:</span>
+        <button type="button" data-view="oblique">Viltu</button>
+        <button type="button" data-view="sun">Päikese tagant</button>
+        <button type="button" data-view="side">Kõrvalt</button>
+        <button type="button" data-view="pole">Ekliptika pooluselt</button>
+      </div>
+      <svg id="space" class="scene" viewBox="0 0 760 520" role="img" aria-label="Ruumiline joonis: Päike, Maa orbiit, täht ja kvasarite taust"></svg>
+      <div class="legend">
+        <span><i style="border-color: var(--accent)"></i>vaatejoon Maast läbi tähe</span>
+        <span><i style="border-color: var(--text-3); border-top-style: dashed"></i>suund Päikesest</span>
+        <span id="lgPm" hidden><i style="border-color: var(--star); border-top-style: dashed"></i>tähe tegelik liikumine</span>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Taevas Maalt vaadatuna</h2>
+      <p class="hint">Tähe näiv asukoht kvasarite taustal. Oranž: läbitud rada, hall: kogu rada kolme aasta jooksul.</p>
+      <svg id="sky" class="scene" viewBox="0 0 440 440" role="img" aria-label="Tähe näiv rada kvasarite taustal"></svg>
+      <div class="legend">
+        <span><i style="border-color: var(--accent)"></i>näiv rada</span>
+        <span id="lgTrue" hidden><i style="border-color: var(--text-3); border-top-style: dashed"></i>asukoht Päikesest vaadatuna</span>
+      </div>
+    </section>
+  </div>
+
+  <section class="card controls">
+    <div class="timebar">
+      <button type="button" class="primary" id="play">▶ Käivita</button>
+      <input type="range" id="time" min="0" max="3" step="0.001" value="0" aria-label="Aeg aastates">
+      <span class="readout" id="timeOut"></span>
+    </div>
+    <div class="group">
+      <h3>Täht</h3>
+      <div class="slider"><label for="dist">Kaugus (Maa orbiidi raadiustes)</label><input type="range" id="dist" min="3" max="8" step="0.1" value="4"><output for="dist" id="distOut"></output></div>
+      <div class="slider"><label for="beta">Ekliptiline laius β</label><input type="range" id="beta" min="0" max="90" step="1" value="50"><output for="beta" id="betaOut"></output></div>
+    </div>
+    <div class="group off" id="pmGroup">
+      <label class="toggle"><input type="checkbox" id="pm"> Omaliikumine</label>
+      <div class="slider"><label for="mu">Kiirus</label><input type="range" id="mu" min="0.1" max="1.5" step="0.01" value="0.8" disabled><output for="mu" id="muOut"></output></div>
+      <div class="slider"><label for="phi">Suund (põhjast itta)</label><input type="range" id="phi" min="0" max="360" step="1" value="60" disabled><output for="phi" id="phiOut"></output></div>
+    </div>
+  </section>
+
+  <section class="card explain">
+    <h2>Mida joonis näitab</h2>
+    <ul>
+      <li>Täht nihkub taevas alati Maaga vastassuunas. Ellipsi pikem pooltelg on tähe parallaks ϖ. Kui ϖ on kaarsekundites, on tähe kaugus <a href="https://et.wikipedia.org/wiki/Parsek" target="_blank" rel="noopener">parsekites</a> d = 1/ϖ.</li>
+      <li>Ellipsi kuju sõltub tähe <a href="https://et.wikipedia.org/wiki/Ekliptika" target="_blank" rel="noopener">ekliptilisest</a> laiusest β: ekliptika poolusel (β = 90°) on see ring, ekliptika tasandis (β = 0°) sirglõik. Lühem pooltelg on ϖ sin β.</li>
+      <li>Kvasarid on nii kaugel, et nende parallaks on praktiliselt null. Seepärast sobivad nad liikumatuks taustaks, mille suhtes tähe nihet mõõta, ja <a href="https://et.wikipedia.org/wiki/Gaia_(kosmoseteleskoop)" target="_blank" rel="noopener">Gaia</a> seob nendega oma taevakoordinaadid.</li>
+      <li>Tegelikult liigub täht ka ise. Omaliikumise tõttu nihkub ellipsi keskpunkt ühtlaselt üle taeva ja ellipsist saavad silmused. Gaia mõõdab iga tähe asukohta aastate jooksul korduvalt ja leiab sellest korraga tähe asukoha, omaliikumise ja parallaksi.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(() => {
+  // Schematic units: the Earth's orbit has radius 1, the quasar background is a plane at distance D from the Sun,
+  // perpendicular to the direction of the star, and spans ±H in both directions. The time runs from 0 to T years.
+  const D = 10, H = 5, T = 3, NS = 'http://www.w3.org/2000/svg';
+  const st = { t: 0, d: 4, beta: 50, pm: false, mu: 0.8, phi: 60, az: 50, el: -12, roll: false, view: 'oblique', playing: false };
+  // Preset viewing angles (az, el in the camera's star-based frame, see camera(); roll turns the picture upside down). The pole view depends on β, so the
+  // presets are applied again whenever β changes; dragging the view leaves the preset.
+  const VIEWS = {
+    oblique: () => [50, -12, false],                      // the default: the orbit, the star and the quasar plane all at an angle
+    sun: () => [0, 0, false],                             // from behind the Sun along the line of sight: the ellipse face-on
+    side: () => [90, 0, false],                           // from the side: the orbit and the quasar plane edge-on, the parallax angle in full
+    pole: () => [180, Math.min(85, 90 - st.beta), true],  // from above the ecliptic north pole: the orbit face-on, the star up
+  };
+  function applyView() { if (st.view) [st.az, st.el, st.roll] = VIEWS[st.view](); }
+  const rad = Math.PI / 180;
+
+  const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+  // Fixed quasar positions on the background plane, from a seeded generator so they stay put between visits.
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const quasars = Array.from({ length: 34 }, () => [(rnd() * 2 - 1) * (H - 0.25), (rnd() * 2 - 1) * (H - 0.25), 0.6 + rnd() * 0.8]);
+
+  // Ecliptic coordinates: the Earth orbits in the x-y plane, and the star lies at ecliptic longitude 0 and latitude β.
+  // n points to the star, u to the east (increasing longitude) and N to the north on the sky.
+  function basis() {
+    const b = st.beta * rad;
+    return { n: [Math.cos(b), 0, Math.sin(b)], u: [0, 1, 0], N: [-Math.sin(b), 0, Math.cos(b)] };
+  }
+  const earth = t => [Math.cos(2 * Math.PI * t), Math.sin(2 * Math.PI * t), 0];
+  // Proper motion is given as the motion of the star's sky position seen from the Sun, in background-plane units per
+  // year, so that it does not change with the distance. The star is at its reference position in the middle of the time range.
+  function pmOffset(t) {
+    if (!st.pm) return [0, 0];
+    const k = st.mu * (t - T / 2), p = st.phi * rad;
+    return [k * Math.sin(p), k * Math.cos(p)];
+  }
+  function star(t, B) {
+    const [e, nn] = pmOffset(t), k = st.d / D;
+    return add(mul(B.n, st.d), add(mul(B.u, e * k), mul(B.N, nn * k)));
+  }
+  // Where the line from the Earth through the star meets the background plane.
+  function hit(t, B) {
+    const E = earth(t), dir = sub(star(t, B), E);
+    return add(E, mul(dir, (D - dot(B.n, E)) / dot(B.n, dir)));
+  }
+  const skyXY = (P, B) => [dot(P, B.u), dot(P, B.N)];
+
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  const pts = a => a.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  function text(parent, x, y, s, cls, anchor) {
+    const e = el('text', { x: x.toFixed(1), y: y.toFixed(1), class: cls || 'lbl', 'text-anchor': anchor || 'start' }, parent);
+    e.textContent = s;
+    return e;
+  }
+  function quasarGlyph(g, x, y, s) {
+    const r = 1.8 * s, k = 4.5 * s;
+    el('line', { x1: x - k, y1: y, x2: x + k, y2: y, class: 'qspike' }, g);
+    el('line', { x1: x, y1: y - k, x2: x, y2: y + k, class: 'qspike' }, g);
+    el('circle', { cx: x, cy: y, r, class: 'quasar' }, g);
+  }
+  function starGlyph(g, x, y, r) {
+    const p = [];
+    // Hexagram: six points, with the inner corners where the two triangles cross.
+    for (let i = 0; i < 12; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 6, rr = i % 2 ? r / Math.sqrt(3) : r;
+      p.push([x + rr * Math.cos(a), y + rr * Math.sin(a)]);
+    }
+    el('polygon', { points: pts(p), class: 'star' }, g);
+  }
+
+  // Path samples over the whole time range; recomputed only when the geometry changes.
+  const NSAMP = 900;
+  let cache = null;
+  function samples(B) {
+    const key = [st.d, st.beta, st.pm, st.mu, st.phi].join();
+    if (cache && cache.key === key) return cache;
+    const P = [];
+    for (let i = 0; i <= NSAMP; i++) P.push(hit(T * i / NSAMP, B));
+    return (cache = { key, P });
+  }
+  const upTo = (arr, t) => arr.slice(0, Math.floor(t / T * NSAMP) + 1);
+
+  /* ---------- 3D view ---------- */
+  const space = document.getElementById('space');
+  const W = 760, Hh = 520, SCMAX = 60;
+  // The camera is set relative to the star: az turns it from behind the Sun (0°) towards the east, and el raises it
+  // towards the sky north. Screen up stays close to the sky north, as in the sky view, so changing β tilts the orbit.
+  function camera(B) {
+    const a = st.az * rad, e = st.el * rad;
+    const f = add(mul(add(mul(B.n, -Math.cos(a)), mul(B.u, -Math.sin(a))), Math.cos(e)), mul(B.N, Math.sin(e)));  // towards the viewer
+    const cr = (p, q) => [p[1] * q[2] - p[2] * q[1], p[2] * q[0] - p[0] * q[2], p[0] * q[1] - p[1] * q[0]];
+    const sg = st.roll ? -1 : 1, r0 = cr(B.N, f), r = mul(r0, sg / Math.hypot(...r0)), up = cr(f, r);
+    // Fit the quasar plane, the orbit and the star to the drawing, leaving room for the labels.
+    const box = [[-H, -H], [H, -H], [H, H], [-H, H]].map(([a, b]) => add(mul(B.n, D), add(mul(B.u, a), mul(B.N, b))));
+    for (let i = 0; i < 24; i++) box.push(earth(i / 24));
+    box.push(star(0, B), star(T, B));
+    const xs = box.map(P => dot(P, r)), ys = box.map(P => dot(P, up));
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const sc = Math.min(SCMAX, (W - 60) / (x1 - x0), (Hh - 70) / (y1 - y0));
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    return {
+      p: P => [W / 2 + sc * (dot(P, r) - cx), Hh / 2 + 6 - sc * (dot(P, up) - cy)],
+      depth: P => dot(P, f),
+    };
+  }
+
+  function drawSpace() {
+    const B = basis(), cam = camera(B), S = samples(B);
+    const t = st.t, E = earth(t), Sx = star(t, B), Ph = hit(t, B);
+    space.textContent = '';
+
+    const back = el('g', {}), front = el('g', {});
+    // The background plane and everything on it.
+    const corners = [[-H, -H], [H, -H], [H, H], [-H, H]].map(([a, b]) => add(mul(B.n, D), add(mul(B.u, a), mul(B.N, b))));
+    const planeBehind = cam.depth(mul(B.n, D)) < cam.depth(mul(B.n, st.d));
+    el('polygon', { points: pts(corners.map(cam.p)), class: planeBehind ? 'plane' : 'plane front' }, back);
+    const onPlane = (a, b) => add(mul(B.n, D), add(mul(B.u, a), mul(B.N, b)));
+    for (const [a, b, s] of quasars) { const [x, y] = cam.p(onPlane(a, b)); quasarGlyph(back, x, y, s * 0.85); }
+    el('polyline', { points: pts(S.P.map(cam.p)), class: 'full' }, back);
+    el('polyline', { points: pts(upTo(S.P, t).map(cam.p)), class: 'done' }, back);
+    const lab = cam.p(onPlane(-H, H));
+    text(back, lab[0], lab[1] - 8, 'Kauged kvasarid', 'lbl', 'middle');
+
+    // Sun, orbit, star and the lines of sight.
+    const orbit = [];
+    for (let i = 0; i <= 96; i++) orbit.push(cam.p(earth(i / 96)));
+    el('polyline', { points: pts(orbit), class: 'orbit' }, front);
+    // The direction from the Sun through the star; the star's position relative to it is its parallax.
+    const pSun = cam.p([0, 0, 0]), pRef = cam.p(mul(Sx, D / st.d));
+    el('line', { x1: pSun[0], y1: pSun[1], x2: pRef[0], y2: pRef[1], class: 'ref' }, front);
+    if (st.pm) {
+      const a = cam.p(star(0, B)), b = cam.p(star(T, B));
+      el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], class: 'pmpath' }, front);
+    }
+    const pE = cam.p(E), pS = cam.p(Sx), pP = cam.p(Ph);
+    el('line', { x1: pE[0], y1: pE[1], x2: pP[0], y2: pP[1], class: 'sight' }, front);
+    el('circle', { cx: pP[0], cy: pP[1], r: 4, class: 'star' }, front);
+
+    const sun = g => { el('circle', { cx: pSun[0], cy: pSun[1], r: 15, class: 'sunglow' }, g); el('circle', { cx: pSun[0], cy: pSun[1], r: 9, class: 'sun' }, g); };
+    const earthDot = g => el('circle', { cx: pE[0], cy: pE[1], r: 6, class: 'earth' }, g);
+    if (cam.depth(E) > cam.depth([0, 0, 0])) { sun(front); earthDot(front); } else { earthDot(front); sun(front); }
+    starGlyph(front, pS[0], pS[1], 9);
+    text(front, pSun[0], pSun[1] + 30, 'Päike', 'lbl', 'middle');
+    text(front, pE[0] + 9, pE[1] - 9, 'Maa', 'lbl');
+    text(front, pS[0] + 11, pS[1] - 9, 'Täht', 'lbl');
+
+    // Draw the background plane behind the solar system unless the view is turned to look at it from behind.
+    if (planeBehind) { space.append(back, front); } else { space.append(front, back); }
+  }
+
+  /* ---------- Sky view ---------- */
+  const sky = document.getElementById('sky');
+  const SW = 440, SK = (SW - 40) / (2 * H);
+  // East is to the left on the sky, as seen from inside looking out.
+  const sp = ([e, n]) => [SW / 2 - SK * e, SW / 2 - SK * n];
+
+  function drawSky() {
+    const B = basis(), S = samples(B), t = st.t;
+    sky.textContent = '';
+    el('rect', { x: 20, y: 20, width: SW - 40, height: SW - 40, rx: 4, class: 'skybox' }, sky);
+    for (const [a, b, s] of quasars) { const [x, y] = sp([a, b]); quasarGlyph(sky, x, y, s); }
+    const XY = S.P.map(P => sp(skyXY(P, B)));
+    el('polyline', { points: pts(XY), class: 'full' }, sky);
+    el('polyline', { points: pts(upTo(XY, t)), class: 'done' }, sky);
+    const now = sp(skyXY(hit(t, B), B));
+    if (st.pm) {
+      const a = sp(pmOffset(0)), b = sp(pmOffset(T)), c = sp(pmOffset(t));
+      el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], class: 'ref' }, sky);
+      el('line', { x1: c[0], y1: c[1], x2: now[0], y2: now[1], class: 'offset' }, sky);
+      el('circle', { cx: c[0], cy: c[1], r: 4, class: 'truepos' }, sky);
+    } else {
+      const c = sp([0, 0]);
+      el('line', { x1: c[0], y1: c[1], x2: now[0], y2: now[1], class: 'offset' }, sky);
+      el('circle', { cx: c[0], cy: c[1], r: 3, class: 'truepos' }, sky);
+    }
+    starGlyph(sky, now[0], now[1], 10);
+    text(sky, SW / 2, 14, 'põhi', 'lbl2', 'middle');
+    text(sky, 14, SW / 2, 'ida', 'lbl2', 'middle').setAttribute('transform', `rotate(-90 14 ${SW / 2})`);
+  }
+
+  /* ---------- Controls ---------- */
+  const $ = id => document.getElementById(id);
+  const fmt = (v, d) => v.toFixed(d);
+  function readouts() {
+    $('timeOut').textContent = 't = ' + fmt(st.t, 2) + ' a';
+    $('distOut').textContent = fmt(st.d, 1);
+    $('betaOut').textContent = st.beta + '°';
+    $('muOut').textContent = fmt(st.mu, 2);
+    $('phiOut').textContent = st.phi + '°';
+    $('pmGroup').classList.toggle('off', !st.pm);
+    $('mu').disabled = $('phi').disabled = !st.pm;
+    $('lgPm').hidden = $('lgTrue').hidden = !st.pm;
+    $('play').textContent = st.playing ? '❚❚ Peata' : '▶ Käivita';
+    document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === st.view));
+  }
+  function render() { readouts(); drawSpace(); drawSky(); }
+
+  $('time').addEventListener('input', e => { st.t = +e.target.value; stop(); render(); });
+  $('dist').addEventListener('input', e => { st.d = +e.target.value; render(); });
+  $('beta').addEventListener('input', e => { st.beta = +e.target.value; applyView(); render(); });
+  $('pm').addEventListener('change', e => { st.pm = e.target.checked; render(); });
+  $('mu').addEventListener('input', e => { st.mu = +e.target.value; render(); });
+  $('phi').addEventListener('input', e => { st.phi = +e.target.value; render(); });
+  document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { st.view = b.dataset.view; applyView(); render(); }));
+
+  // Playing advances the time by half a year per second and stops at the end; pressing play at the end starts over.
+  let last = 0, raf = 0;
+  function frame(ts) {
+    if (!st.playing) return;
+    if (last) st.t = Math.min(T, st.t + (ts - last) / 2000);
+    last = ts;
+    $('time').value = st.t;
+    if (st.t >= T) st.playing = false;
+    render();
+    if (st.playing) raf = requestAnimationFrame(frame);
+  }
+  function stop() { st.playing = false; cancelAnimationFrame(raf); }
+  $('play').addEventListener('click', () => {
+    if (st.playing) { stop(); render(); return; }
+    if (st.t >= T) st.t = 0;
+    st.playing = true; last = 0;
+    raf = requestAnimationFrame(frame);
+  });
+
+  // Dragging the 3D view turns it around the scene.
+  let drag = null;
+  space.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; space.setPointerCapture(e.pointerId); space.classList.add('dragging'); });
+  space.addEventListener('pointermove', e => {
+    if (!drag) return;
+    st.view = null;
+    const k = 360 / space.getBoundingClientRect().width * (st.roll ? -1 : 1);
+    st.az += (e.clientX - drag[0]) * k * 0.6;
+    st.el = Math.max(-85, Math.min(85, st.el + (e.clientY - drag[1]) * k * 0.6));
+    drag = [e.clientX, e.clientY];
+    if (!st.playing) render();
+  });
+  const endDrag = () => { drag = null; space.classList.remove('dragging'); };
+  space.addEventListener('pointerup', endDrag);
+  space.addEventListener('pointercancel', endDrag);
+
+  render();
+})();
+</script>
+</body>
+</html>

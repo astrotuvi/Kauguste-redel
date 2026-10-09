@@ -110,6 +110,19 @@ Velocities are `v = cz (1 + 0.775 z)`. The small factor corrects for the
 expansion of the Universe while the light travelled, with deceleration
 parameter q₀ = −0.55 as in SH0ES. Without it, H₀ comes out about 3 % low.
 
+### Parallax demonstration
+
+`parallaks.html`, linked from the introduction, shows the parallax method with
+an interactive schematic. The left view shows the Sun, the Earth's orbit, the
+star and a plane of distant quasars in 3D; the line from the Earth through the
+star meets the quasar plane at a point that traces an ellipse during the year.
+Drag the view to turn it, or pick a preset view: oblique (the default),
+from behind the Sun along the line of sight, from the side, or from above the
+ecliptic north pole. The right view shows the same path on the sky. A
+time slider (0–3 years) and a play button move the Earth. Sliders set the star's
+distance and ecliptic latitude, and an optional proper motion with adjustable
+speed and direction turns the ellipse into loops. The drawing is not to scale.
+
 ## Method
 
 - Only stars with RUWE < 1.4 and with a measured parallax and proper motion
@@ -207,7 +220,9 @@ service uses only that one. The choice is remembered in the browser.
 
 ## Code
 
-Everything is in `index.html`: the HTML, the CSS and the JavaScript. The only
+Everything is in `index.html`: the HTML, the CSS and the JavaScript. The
+parallax demonstration is a separate self-contained page, `parallaks.html`,
+with no external dependencies. The only
 external dependency is [Plotly.js](https://plotly.com/javascript/), loaded
 from cdnjs. The TAP proxy in `proxy/` runs separately on Cloudflare.
 
