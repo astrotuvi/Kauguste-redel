@@ -507,7 +507,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     $('pmGroup').classList.toggle('off', !st.pm);
     $('mu').disabled = $('phi').disabled = !st.pm;
     $('lgPm').hidden = $('lgTrue').hidden = !st.pm;
-    $('play').textContent = st.playing ? '❚❚ Peata' : '▶ Käivita';
+    // The label is set only when it changes: replacing the text under the pointer on every animation frame makes
+    // browsers drop the click, so the animation could not be stopped.
+    const label = st.playing ? '❚❚ Peata' : '▶ Käivita';
+    if ($('play').textContent !== label) $('play').textContent = label;
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === st.view));
   }
   function render() { readouts(); drawSpace(); drawSky(); }
