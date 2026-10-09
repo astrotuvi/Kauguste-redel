@@ -121,15 +121,18 @@ from behind the Sun along the line of sight, from the side, or from above the
 ecliptic north pole. The right view shows the same path on the sky. A
 time slider (0–3 years) and a play button move the Earth. Sliders set the star's
 distance and ecliptic latitude, and an optional proper motion with adjustable
-speed and direction turns the ellipse into loops. The drawing is not to scale.
+speed and direction turns the ellipse into loops. With **Näita parallaksinurka**
+on, the parallax angle is marked as a wedge at the star in the 3D view and as
+the semi-major axis of the ellipse in the sky view; a readout gives the angle
+in the drawing, arcsin(1/d), and for a real star as many parsecs away. The drawing is not to scale.
 
 ## Method
 
 - Only stars with RUWE < 1.4 and with a measured parallax and proper motion
   are queried.
-- The distance is `d = 1000 / ⟨ϖ⟩` pc, where `⟨ϖ⟩` is the inverse-variance
+- The distance is `d = 1000 / ⟨p⟩` pc, where `⟨p⟩` is the inverse-variance
   weighted mean parallax in mas. The parallaxes are averaged before inverting,
-  because the mean of 1/ϖ is biased.
+  because the mean of 1/p is biased.
 - The global DR3 parallax zero-point of −0.017 mas (Lindegren et al. 2021)
   is always corrected.
 - A 0.010 mas systematic error is added in quadrature to the statistical
@@ -143,8 +146,8 @@ speed and direction turns the ellipse into loops. The drawing is not to scale.
 
 - Cepheid luminosities use the reddening-free *HST* Wesenheit magnitude
   `W_H = F160W − 0.386 (F555W − F814W)`, the same system as the galaxy
-  Cepheids. The absolute magnitude is `M_H^W = W_H + 5 log10(ϖ / mas) − 10`.
-  Here ϖ is the stored cluster parallax, or for a field Cepheid its own
+  Cepheids. The absolute magnitude is `M_H^W = W_H + 5 log10(p / mas) − 10`.
+  Here p is the stored cluster parallax, or for a field Cepheid its own
   *Gaia* parallax with the same zero-point correction. The fit is
   `M_H^W = a (log P − 1) + b`, weighted by the parallax errors.
 - The published relation is `M_H^W = −5.914 − 3.29 (log P − 1)` (Cruz Reyes &

@@ -370,7 +370,7 @@ footer a { color: inherit; }
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr>
-          <th data-col="src" title="Tähe tunnus Gaia DR3 kataloogis">Gaia DR3 source_id</th><th data-col="ra" title="Otsetõus">α (°)</th><th data-col="dec" title="Kääne">δ (°)</th><th data-col="sep" title="Kaugus päringu keskmest">r (′)</th><th data-col="plx" title="Parallaks">ϖ (mas)</th><th data-col="eplx" title="Parallaksi viga">σ<sub>ϖ</sub> (mas)</th>
+          <th data-col="src" title="Tähe tunnus Gaia DR3 kataloogis">Gaia DR3 source_id</th><th data-col="ra" title="Otsetõus">α (°)</th><th data-col="dec" title="Kääne">δ (°)</th><th data-col="sep" title="Kaugus päringu keskmest">r (′)</th><th data-col="plx" title="Parallaks">p (mas)</th><th data-col="eplx" title="Parallaksi viga">σ<sub>p</sub> (mas)</th>
           <th data-col="pmra" title="Omaliikumine otsetõusu sihis (μ_α* = μ_α cos δ)">μ<sub>α*</sub> (mas/a)</th><th data-col="pmdec" title="Omaliikumine käände sihis">μ<sub>δ</sub> (mas/a)</th><th data-col="g" title="Heledus Gaia G-ribas (näiv tähesuurus)">G (mag)</th><th data-col="bprp" title="Värvusindeks: sinise (BP) ja punase (RP) riba tähesuuruste vahe">BP−RP (mag)</th>
         </tr></thead>
         <tbody id="dataBody"></tbody>
@@ -469,7 +469,7 @@ footer a { color: inherit; }
         <table class="data-table">
           <thead><tr>
             <th title="Hajusparv, mille liige tsefeiid on">Parv</th><th title="Tsefeiidi nimi">Tsefeiid</th><th title="Heleduse muutumise periood ööpäevades (Gaia DR3)">P (ööp)</th><th title="Perioodi kümnendlogaritm">log P</th><th title="Wesenheiti näiv tähesuurus Hubble'i kosmoseteleskoobi mõõtmistest; ei sõltu tähtedevahelisest tolmust">W<sub>H</sub> (mag)</th>
-            <th title="Parallaks: parvel salvestatud parve keskmine, väljatsefeiidil tema enda Gaia parallaks">ϖ (mas)</th><th title="Kaugus d = 1000 / ϖ parsekites">Kaugus (pc)</th><th title="Absoluutne Wesenheiti tähesuurus: M = W_H + 5 log ϖ − 10">M<sub>H</sub><sup>W</sup> (mag)</th><th title="Toimingud: parve mõõtmine või tsefeiidi lisamine seosesse"></th>
+            <th title="Parallaks: parvel salvestatud parve keskmine, väljatsefeiidil tema enda Gaia parallaks">p (mas)</th><th title="Kaugus d = 1000 / p parsekites">Kaugus (pc)</th><th title="Absoluutne Wesenheiti tähesuurus: M = W_H + 5 log p − 10">M<sub>H</sub><sup>W</sup> (mag)</th><th title="Toimingud: parve mõõtmine või tsefeiidi lisamine seosesse"></th>
           </tr></thead>
           <tbody id="cepBody"></tbody>
         </table>
@@ -1350,7 +1350,7 @@ function drawHist() {
     }))],
     annotations: [{
       xref: "x", yref: "paper", x: st.wmean, y: 1, yanchor: "top", xanchor: "left", xshift: 6, showarrow: false,
-      text: `⟨ϖ⟩ = ${fmtN(st.wmean, 4)} mas`, font: { size: 12, color: css("--text-1") },
+      text: `⟨p⟩ = ${fmtN(st.wmean, 4)} mas`, font: { size: 12, color: css("--text-1") },
       bgcolor: css("--surface"),
     }],
   }), CONFIG);
@@ -1363,12 +1363,12 @@ function drawPlxStats() {
   const [pV, pE] = valErr(st.wmean, st.etot);
   const typ = percentile(st.use.map((i) => S.d.eplx[i]), 0.5);
   $("plxStats").innerHTML = `<div class="tiles four">
-      <div class="tile"><div class="label">Keskmine parallaks ⟨ϖ⟩</div><div class="value">${pV}</div><div class="unit">mas</div></div>
-      <div class="tile"><div class="label">Keskmise parallaksi viga σ<sub>⟨ϖ⟩</sub></div><div class="value">${pE}</div><div class="unit">mas</div></div>
+      <div class="tile"><div class="label">Keskmine parallaks ⟨p⟩</div><div class="value">${pV}</div><div class="unit">mas</div></div>
+      <div class="tile"><div class="label">Keskmise parallaksi viga σ<sub>⟨p⟩</sub></div><div class="value">${pE}</div><div class="unit">mas</div></div>
       <div class="tile"><div class="label">Tähti arvutuses</div><div class="value">${fmt(st.n)}</div><div class="unit">tähte</div></div>
-      <div class="tile"><div class="label">Ühe tähe tüüpiline viga σ<sub>ϖ</sub></div><div class="value">${fmtN(typ, typ < 0.1 ? 3 : 2)}</div><div class="unit">mas (mediaan)</div></div>
+      <div class="tile"><div class="label">Ühe tähe tüüpiline viga σ<sub>p</sub></div><div class="value">${fmtN(typ, typ < 0.1 ? 3 : 2)}</div><div class="unit">mas (mediaan)</div></div>
     </div>
-    <p class="formula">Kaalutud keskmine ⟨ϖ⟩ = Σ w<sub>i</sub>ϖ<sub>i</sub> / Σ w<sub>i</sub>, kaal w<sub>i</sub> = 1/σ<sub>i</sub><sup>2</sup>, parallaksi nullpunkti parandusega +${fmtN(-ZP, 3)} mas.
+    <p class="formula">Kaalutud keskmine ⟨p⟩ = Σ w<sub>i</sub>p<sub>i</sub> / Σ w<sub>i</sub>, kaal w<sub>i</sub> = 1/σ<sub>i</sub><sup>2</sup>, parallaksi nullpunkti parandusega +${fmtN(-ZP, 3)} mas.
     Viga: statistiline 1/√Σw<sub>i</sub> = ${fmtN(st.estat, 4)} mas ja Gaia süsteemne ${fmtN(SYS, 3)} mas, liidetud ruutudena.</p>
     <div class="calib-row"><button type="button" class="primary" id="calcDist"${S.distOn ? " disabled" : ""}>Arvuta kaugus</button>` +
     (S.distOn ? `<span class="hint">Kaugus on allpool ja muutub koos valikuga.</span>` : "") + `</div>`;
@@ -1404,7 +1404,7 @@ function drawResults() {
       <div class="tile"><div class="label">Kaugus</div><div class="value">${auV}</div><div class="unit">astronoomilist ühikut</div></div>
       <div class="tile"><div class="label">Kaugus</div><div class="value">${kmV}</div><div class="unit">kilomeetrit</div></div>
     </div>`;
-    if (st.etot / st.wmean > 0.1) notes.push(`<div class="note warn">Parallaksi suhteline viga on ${fmtN(100 * st.etot / st.wmean, 0)}%. Üle ~10% muutub 1/ϖ nihkega ja asümmeetriliseks kauguse hinnanguks.</div>`);
+    if (st.etot / st.wmean > 0.1) notes.push(`<div class="note warn">Parallaksi suhteline viga on ${fmtN(100 * st.etot / st.wmean, 0)}%. Üle ~10% muutub 1/p nihkega ja asümmeetriliseks kauguse hinnanguks.</div>`);
   }
   if (st.n < 10) notes.push(`<div class="note warn">Valitud on ainult ${st.n} ${st.n === 1 ? "täht" : "tähte"} — keskmine on ebakindel.</div>`);
   if (st.redchi2 > 3 && st.n >= 10) notes.push(`<div class="note warn">Parallakside hajuvus on ${fmtN(Math.sqrt(st.redchi2), 1)}× suurem, kui antud vead ennustavad (χ²/vabadusaste = ${fmtN(st.redchi2, 1)}). Valikus on tõenäoliselt taustatähti — kitsenda omaliikumiste lassot.</div>`);
@@ -1414,10 +1414,10 @@ function drawResults() {
   if (cl && st.wmean > 0) {
     const old = S.stored[cl];
     save = `<div class="save"><button type="button" class="primary" id="saveDist">${old ? "Uuenda" : "Salvesta"} parve ${esc(cl)} kaugus tsefeiidide jaoks</button>` +
-      (old ? `<span>Salvestatud: ϖ = ${fmtN(old.plx, 4)} ± ${fmtN(old.e, 4)} mas (${fmt(old.n)} tähte)</span>` : "") + `</div>`;
+      (old ? `<span>Salvestatud: p = ${fmtN(old.plx, 4)} ± ${fmtN(old.e, 4)} mas (${fmt(old.n)} tähte)</span>` : "") + `</div>`;
   }
   el.innerHTML = `${counts}${tiles}${notes.join("")}${save}
-    <p class="formula">d [pc] = 1000 / ⟨ϖ⟩ [mas]. Keskmista kõigepealt parallaksid ja alles siis pööra ümber — 1/ϖ keskmine on nihkega.
+    <p class="formula">d [pc] = 1000 / ⟨p⟩ [mas]. Keskmista kõigepealt parallaksid ja alles siis pööra ümber — 1/p keskmine on nihkega.
     1 pc = 3,2616 valgusaastat = 30 856 775 814 914 km = 206 265 aü.</p>`;
 }
 
@@ -2081,7 +2081,7 @@ async function run() {
     S.hover = d.src.map((_, i) =>
       `Gaia DR3 ${d.src[i]}<br>G = ${fmtN(d.g[i], 2)}` +
       (d.bprp[i] !== null ? `, BP−RP = ${fmtN(d.bprp[i], 2)}` : "") +
-      `<br>ϖ = ${fmtN(d.plx[i], 3)} ± ${fmtN(d.eplx[i], 3)} mas` +
+      `<br>p = ${fmtN(d.plx[i], 3)} ± ${fmtN(d.eplx[i], 3)} mas` +
       `<br>μ = (${fmtN(d.pmra[i], 2)}; ${fmtN(d.pmdec[i], 2)}) mas/a`);
     S.sky = { ra0: c.ra, dec0: c.dec, raPlot: d.ra.map((ra) => unwrapRA(ra, c.ra)) };
     S.ceph = CEPHEIDS.filter((x) => sepDeg(c.ra, c.dec, x.at[0], x.at[1]) <= radius);
