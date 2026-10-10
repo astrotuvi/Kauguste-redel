@@ -131,6 +131,7 @@ svg.scene { display: block; width: 100%; height: auto; max-height: calc(100vh - 
 .group.off .slider { opacity: 0.45; }
 input[type="range"] { accent-color: var(--btn); width: 100%; min-width: 0; }
 .toggle { display: flex; gap: 8px; align-items: center; font-size: 0.88rem; color: var(--text-1); font-weight: 550; }
+.toggles { display: flex; flex-wrap: wrap; gap: 6px 20px; }
 .toggle input { accent-color: var(--btn); width: 16px; height: 16px; margin: 0; }
 button {
   font: inherit; cursor: pointer; border-radius: 7px; padding: 7px 14px;
@@ -161,6 +162,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
 .pax { fill: var(--text-1); font-size: 17px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
 .goal { stroke: var(--text-1); stroke-width: 2; stroke-dasharray: 6 5; fill: none; opacity: 0.75; stroke-linejoin: round; }
 .goal.solved { stroke: var(--good); stroke-width: 5; stroke-dasharray: none; opacity: 0.6; }
+.obs { stroke: var(--text-1); stroke-width: 1.6; stroke-linecap: round; }
+.goalpt { fill: var(--text-1); opacity: 0.8; }
+.goalpt.solved { fill: var(--good); opacity: 1; }
 .quizbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 8px; }
 .quizout { margin: 0; font-size: 0.88rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .quizout.solved { color: var(--good); font-weight: 600; }
@@ -197,7 +201,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     <section class="card">
       <div class="tabs" role="tablist" aria-label="Vaade">
         <button type="button" role="tab" id="tab3d" aria-controls="pane3d" aria-selected="true">3D vaade</button>
-        <button type="button" role="tab" id="tab2d" aria-controls="pane2d" aria-selected="false" tabindex="-1">2D vaade: taevas Maalt</button>
+        <button type="button" role="tab" id="tab2d" aria-controls="pane2d" aria-selected="false" tabindex="-1">Taeva tasand</button>
         <button type="button" role="tab" id="tabpx" aria-controls="panepx" aria-selected="false" tabindex="-1">Parallaksinurk</button>
         <button type="button" role="tab" id="tabquiz" aria-controls="panequiz" aria-selected="false" tabindex="-1">Ülesanne</button>
       </div>
@@ -216,6 +220,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
           <span><i style="border-color: var(--accent)"></i>vaatejoon Maast läbi tähe</span>
           <span><i style="border-color: var(--text-3); border-top-style: dashed"></i>suund Päikesest</span>
           <span id="lgPm" hidden><i style="border-color: var(--star); border-top-style: dashed"></i>tähe tegelik liikumine</span>
+          <span class="lgGaia">× Gaia vaatlus</span>
         </div>
       </div>
       <div id="pane2d" role="tabpanel" aria-labelledby="tab2d" hidden>
@@ -224,6 +229,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
         <div class="legend">
           <span><i style="border-color: var(--accent)"></i>näiv rada</span>
           <span id="lgTrue" hidden><i style="border-color: var(--text-3); border-top-style: dashed"></i>asukoht Päikesest vaadatuna</span>
+          <span class="lgGaia">× Gaia vaatlus</span>
         </div>
       </div>
       <div id="panepx" role="tabpanel" aria-labelledby="tabpx" hidden>
@@ -236,8 +242,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
         </div>
       </div>
       <div id="panequiz" role="tabpanel" aria-labelledby="tabquiz" hidden>
-        <p class="hint">Punktiirjoon on ühe tähe näiv rada taevas. Sea paremal tähe kaugus, ekliptiline laius ja omaliikumine nii, et sinu tähe rada
-          (oranž) kattuks punktiirjoonega.</p>
+        <p class="hint">Punktiirjoon ja Gaia vaatlused punktidena näitavad ühe tähe näivat rada taevas. Sea paremal tähe kaugus, ekliptiline laius ja omaliikumine nii, et sinu tähe rada
+          (oranž) kattuks sellega.</p>
         <div class="quizbar">
           <button type="button" id="newQuiz">Uus ülesanne</button>
           <p class="quizout" id="quizOut" aria-live="polite"></p>
@@ -251,6 +257,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
         <div class="slider"><label for="span">Ajavahemik</label><input type="range" id="span" min="1" max="10.5" step="0.5" value="3"><output for="span" id="spanOut"></output></div>
         <div class="slider"><label for="time">Aeg</label><input type="range" id="time" min="0" max="3" step="0.001" value="0"><output for="time" id="timeOut"></output></div>
         <div class="playrow"><button type="button" class="primary" id="play">▶ Käivita</button></div>
+        <div class="toggles">
+          <label class="toggle"><input type="checkbox" id="line" checked> Rada joonena</label>
+          <label class="toggle"><input type="checkbox" id="gaia" checked> Gaia vaatlused (14 aastas)</label>
+        </div>
       </div>
       <div class="group">
         <div class="slider"><label for="dist">Kaugus (Maa orbiidi raadiustes)</label><input type="range" id="dist" min="4" max="10" step="0.1" value="5"><output for="dist" id="distOut"></output></div>
@@ -284,7 +294,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
   // Schematic units: the Earth's orbit has radius 1, the quasar background is a plane at distance D from the Sun,
   // perpendicular to the direction of the star, and spans ±H in both directions. The time runs from 0 to st.T years.
   const D = 13, H = 5, NS = 'http://www.w3.org/2000/svg';
-  const st = { T: 3, t: 0, d: 5, beta: 50, pm: false, mu: 0.8, phi: 60, az: 28, el: 0, roll: false, view: 'oblique', pax: true, playing: false };
+  const st = { T: 3, t: 0, d: 5, beta: 50, pm: false, mu: 0.8, phi: 60, az: 28, el: 0, roll: false, view: 'oblique', pax: true, line: true, gaia: true, playing: false };
   // Preset viewing angles (az, el in the camera's star-based frame, see camera(); roll turns the picture upside down). The pole view depends on β, so the
   // presets are applied again whenever β changes; dragging the view leaves the preset.
   const VIEWS = {
@@ -370,6 +380,21 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
   }
   const upTo = (arr, t) => arr.slice(0, Math.floor(t / st.T * (arr.length - 1)) + 1);
 
+  // Times when Gaia measures the star: 14 in every year, at random times within the year, over the longest time span.
+  // They are drawn again with every new puzzle.
+  let obsT = [];
+  function newObs() {
+    const Tmax = +document.getElementById('span').max;
+    obsT = [];
+    for (let y = 0; y < Tmax; y++) for (let i = 0; i < 14; i++) obsT.push(y + Math.random());
+    obsT = obsT.filter(t => t <= Tmax).sort((a, b) => a - b);
+  }
+  newObs();
+  function cross(g, [x, y], k = 4) {
+    el('line', { x1: x - k, y1: y - k, x2: x + k, y2: y + k, class: 'obs' }, g);
+    el('line', { x1: x - k, y1: y + k, x2: x + k, y2: y - k, class: 'obs' }, g);
+  }
+
   /* ---------- 3D view ---------- */
   const space = document.getElementById('space');
   const W = 760, Hh = 520, SCMAX = 60;
@@ -406,8 +431,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     el('polygon', { points: pts(corners.map(cam.p)), class: planeBehind ? 'plane' : 'plane front' }, back);
     const onPlane = (a, b) => add(mul(B.n, D), add(mul(B.u, a), mul(B.N, b)));
     for (const [a, b, s] of quasars) { const [x, y] = cam.p(onPlane(a, b)); quasarGlyph(back, x, y, s * 0.85); }
-    el('polyline', { points: pts(S.P.map(cam.p)), class: 'full' }, back);
-    el('polyline', { points: pts(upTo(S.P, t).map(cam.p)), class: 'done' }, back);
+    if (st.line) {
+      el('polyline', { points: pts(S.P.map(cam.p)), class: 'full' }, back);
+      el('polyline', { points: pts(upTo(S.P, t).map(cam.p)), class: 'done' }, back);
+    }
+    if (st.gaia) for (const o of obsT) { if (o > t) break; cross(back, cam.p(hit(o, B))); }
     const lab = cam.p(onPlane(-H, H));
     text(back, lab[0], lab[1] - 8, 'Taevasfäär', 'lbl', 'middle');
     // Name the objects on the sphere next to one quasar low in the middle, away from the star's path, unless the sphere
@@ -501,8 +529,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     el('rect', { x: 20, y: 20, width: SW - 40, height: SW - 40, rx: 4, class: 'skybox' }, sky);
     for (const [a, b, s] of quasars) { const [x, y] = sp([a, b]); quasarGlyph(sky, x, y, s); }
     const XY = S.P.map(P => sp(skyXY(P, B)));
-    el('polyline', { points: pts(XY), class: 'full' }, sky);
-    el('polyline', { points: pts(upTo(XY, t)), class: 'done' }, sky);
+    if (st.line) {
+      el('polyline', { points: pts(XY), class: 'full' }, sky);
+      el('polyline', { points: pts(upTo(XY, t)), class: 'done' }, sky);
+    }
+    if (st.gaia) for (const o of obsT) { if (o > t) break; cross(sky, sp(skyXY(hit(o, B), B)), 3); }
     const now = sp(skyXY(hit(t, B), B));
     if (st.pm) {
       const a = sp(pmOffset(0)), b = sp(pmOffset(st.T)), c = sp(pmOffset(t));
@@ -578,10 +609,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
   /* ---------- Puzzle ---------- */
   // A target path from random hidden parameters, always with proper motion; the user's path matches it when the RMS
   // distance between the two, sampled at the same times over the time span, is below QUIZ_OK in sky units.
-  const quiz = document.getElementById('quiz'), QUIZ_OK = 0.2;
+  const quiz = document.getElementById('quiz'), QUIZ_OK = 0.1;
   let goal = null, goalCache = null;
   function newGoal() {
     const pick = (a, b, step) => Math.round((a + Math.random() * (b - a)) / step) * step;
+    newObs();
     goal = { d: pick(4.5, 9.5, 0.1), beta: pick(10, 85, 1), mu: pick(0.15, Math.min(1, +$('mu').max), 0.01), phi: pick(0, 359, 1) };
     goalCache = null;
   }
@@ -611,7 +643,16 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     el('rect', { x: 20, y: 20, width: SW - 40, height: SW - 40 }, el('clipPath', { id: 'quizClip' }, quiz));
     for (const [a, b, s] of quasars) { const [x, y] = sp([a, b]); quasarGlyph(quiz, x, y, s); }
     const g = el('g', { 'clip-path': 'url(#quizClip)' }, quiz);
-    el('polyline', { points: pts(target), class: solved ? 'goal solved' : 'goal' }, g);
+    // The target as a line, as Gaia would see it at the observation times, or both. The user's own path is always shown.
+    if (st.line) el('polyline', { points: pts(target), class: solved ? 'goal solved' : 'goal' }, g);
+    if (st.gaia) {
+      const n = target.length - 1;
+      for (const o of obsT) {
+        if (o > st.T) break;
+        const [x, y] = target[Math.round(o / st.T * n)];
+        el('circle', { cx: x, cy: y, r: solved ? 4.5 : 3.5, class: solved ? 'goalpt solved' : 'goalpt' }, g);
+      }
+    }
     el('polyline', { points: pts(mine), class: 'done' }, g);
     const now = sp(skyXY(hit(st.t, B), B));
     starGlyph(quiz, now[0], now[1], 10);
@@ -621,7 +662,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     out.classList.toggle('solved', solved);
     out.textContent = solved
       ? `✓ Lahendatud! Õige oli: kaugus ${goal.d.toFixed(1)}, β = ${goal.beta}°, kiirus ${goal.mu.toFixed(2)}, suund ${goal.phi}°.`
-      : `Erinevus punktiirjoonest: ${err.toFixed(2)} (lahendamiseks alla ${QUIZ_OK.toFixed(2)})`;
+      : `Erinevus sihtrajast: ${err.toFixed(2)} (lahendamiseks alla ${QUIZ_OK.toFixed(2)})`;
   }
 
   /* ---------- Controls ---------- */
@@ -648,6 +689,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     $('pmGroup').classList.toggle('off', !st.pm);
     $('mu').disabled = $('phi').disabled = !st.pm;
     $('lgPm').hidden = $('lgTrue').hidden = !st.pm;
+    document.querySelectorAll('.lgGaia').forEach(e => { e.hidden = !st.gaia; });
     // The label is set only when it changes: replacing the text under the pointer on every animation frame makes
     // browsers drop the click, so the animation could not be stopped.
     const label = st.playing ? '❚❚ Peata' : '▶ Käivita';
@@ -741,6 +783,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
   // A new puzzle is drawn again if the current settings would already solve it.
   function startQuiz() { do newGoal(); while (quizError() < 2 * QUIZ_OK); render(); }
   $('newQuiz').addEventListener('click', startQuiz);
+  $('line').addEventListener('change', e => { st.line = e.target.checked; render(); });
+  $('gaia').addEventListener('change', e => { st.gaia = e.target.checked; render(); });
 
   newGoal();
   while (quizError() < 2 * QUIZ_OK) newGoal();
