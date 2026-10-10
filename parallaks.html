@@ -27,6 +27,7 @@
   --earth: #2a78d6;
   --star: #d32f2f;
   --path-dim: #b9b8b2;
+  --good: #1f8a4c;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -50,6 +51,7 @@
     --earth: #4f9cf0;
     --star: #f05454;
     --path-dim: #55554f;
+    --good: #4cc27a;
   }
 }
 :root[data-theme="dark"] {
@@ -73,6 +75,7 @@
   --earth: #4f9cf0;
   --star: #f05454;
   --path-dim: #55554f;
+  --good: #4cc27a;
 }
 
 * { box-sizing: border-box; }
@@ -156,6 +159,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
 .wedge { fill: color-mix(in srgb, var(--accent) 28%, transparent); stroke: none; }
 .wedge-arc, .axis { stroke: var(--text-1); stroke-width: 1.5; fill: none; }
 .pax { fill: var(--text-1); font-size: 17px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.goal { stroke: var(--text-1); stroke-width: 2; stroke-dasharray: 6 5; fill: none; opacity: 0.75; stroke-linejoin: round; }
+.goal.solved { stroke: var(--good); stroke-width: 5; stroke-dasharray: none; opacity: 0.6; }
+.quizbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 8px; }
+.quizout { margin: 0; font-size: 0.88rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.quizout.solved { color: var(--good); font-weight: 600; }
 .done { stroke: var(--accent); stroke-width: 2.2; fill: none; stroke-linejoin: round; stroke-linecap: round; }
 .truepos { fill: var(--surface); stroke: var(--text-2); stroke-width: 1.5; }
 .offset { stroke: var(--text-2); stroke-width: 1; }
@@ -191,6 +199,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
         <button type="button" role="tab" id="tab3d" aria-controls="pane3d" aria-selected="true">3D vaade</button>
         <button type="button" role="tab" id="tab2d" aria-controls="pane2d" aria-selected="false" tabindex="-1">2D vaade: taevas Maalt</button>
         <button type="button" role="tab" id="tabpx" aria-controls="panepx" aria-selected="false" tabindex="-1">Parallaksinurk</button>
+        <button type="button" role="tab" id="tabquiz" aria-controls="panequiz" aria-selected="false" tabindex="-1">Ülesanne</button>
       </div>
       <div id="pane3d" role="tabpanel" aria-labelledby="tab3d">
         <div class="views-btns" role="group" aria-label="Vaatenurk">
@@ -225,6 +234,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
           <span><i style="border-color: var(--accent)"></i>vaatejoon Maast läbi tähe</span>
           <span><i style="border-color: var(--text-3); border-top-style: dashed"></i>suund Päikesest</span>
         </div>
+      </div>
+      <div id="panequiz" role="tabpanel" aria-labelledby="tabquiz" hidden>
+        <p class="hint">Punktiirjoon on ühe tähe näiv rada taevas. Sea paremal tähe kaugus, ekliptiline laius ja omaliikumine nii, et sinu tähe rada
+          (oranž) kattuks punktiirjoonega.</p>
+        <div class="quizbar">
+          <button type="button" id="newQuiz">Uus ülesanne</button>
+          <p class="quizout" id="quizOut" aria-live="polite"></p>
+        </div>
+        <svg id="quiz" class="scene" viewBox="0 0 440 440" role="img" aria-label="Ülesanne: tähe näiv rada, mida tuleb järele teha"></svg>
       </div>
     </section>
 
@@ -557,6 +575,55 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     text(tri, (pS[0] + pX[0]) / 2, pS[1] + 26, `d = ${d.toFixed(1)} aü`, 'pax', 'middle');
   }
 
+  /* ---------- Puzzle ---------- */
+  // A target path from random hidden parameters, always with proper motion; the user's path matches it when the RMS
+  // distance between the two, sampled at the same times over the time span, is below QUIZ_OK in sky units.
+  const quiz = document.getElementById('quiz'), QUIZ_OK = 0.2;
+  let goal = null, goalCache = null;
+  function newGoal() {
+    const pick = (a, b, step) => Math.round((a + Math.random() * (b - a)) / step) * step;
+    goal = { d: pick(4.5, 9.5, 0.1), beta: pick(10, 85, 1), mu: pick(0.15, Math.min(1, +$('mu').max), 0.01), phi: pick(0, 359, 1) };
+    goalCache = null;
+  }
+  function goalPath() {
+    const key = [st.T, goal.d, goal.beta, goal.mu, goal.phi].join();
+    if (goalCache && goalCache.key === key) return goalCache.XY;
+    // The path functions read the parameters from st, so swap the goal in for a moment.
+    const keep = { d: st.d, beta: st.beta, pm: st.pm, mu: st.mu, phi: st.phi };
+    Object.assign(st, goal, { pm: true });
+    const B = basis(), n = Math.round(300 * st.T), XY = [];
+    for (let i = 0; i <= n; i++) XY.push(skyXY(hit(st.T * i / n, B), B));
+    Object.assign(st, keep);
+    return (goalCache = { key, XY }).XY;
+  }
+  function quizError() {
+    const B = basis(), mine = samples(B).P.map(P => skyXY(P, B)), target = goalPath();
+    let sum = 0;
+    for (let i = 0; i < target.length; i++) sum += (mine[i][0] - target[i][0]) ** 2 + (mine[i][1] - target[i][1]) ** 2;
+    return Math.sqrt(sum / target.length);
+  }
+
+  function drawQuiz() {
+    const B = basis(), mine = samples(B).P.map(P => sp(skyXY(P, B))), target = goalPath().map(sp);
+    const err = quizError(), solved = err < QUIZ_OK;
+    quiz.textContent = '';
+    el('rect', { x: 20, y: 20, width: SW - 40, height: SW - 40, rx: 4, class: 'skybox' }, quiz);
+    el('rect', { x: 20, y: 20, width: SW - 40, height: SW - 40 }, el('clipPath', { id: 'quizClip' }, quiz));
+    for (const [a, b, s] of quasars) { const [x, y] = sp([a, b]); quasarGlyph(quiz, x, y, s); }
+    const g = el('g', { 'clip-path': 'url(#quizClip)' }, quiz);
+    el('polyline', { points: pts(target), class: solved ? 'goal solved' : 'goal' }, g);
+    el('polyline', { points: pts(mine), class: 'done' }, g);
+    const now = sp(skyXY(hit(st.t, B), B));
+    starGlyph(quiz, now[0], now[1], 10);
+    text(quiz, SW / 2, 14, 'põhi', 'lbl2', 'middle');
+    text(quiz, 14, SW / 2, 'ida', 'lbl2', 'middle').setAttribute('transform', `rotate(-90 14 ${SW / 2})`);
+    const out = $('quizOut');
+    out.classList.toggle('solved', solved);
+    out.textContent = solved
+      ? `✓ Lahendatud! Õige oli: kaugus ${goal.d.toFixed(1)}, β = ${goal.beta}°, kiirus ${goal.mu.toFixed(2)}, suund ${goal.phi}°.`
+      : `Erinevus punktiirjoonest: ${err.toFixed(2)} (lahendamiseks alla ${QUIZ_OK.toFixed(2)})`;
+  }
+
   /* ---------- Controls ---------- */
   const $ = id => document.getElementById(id);
   const fmt = (v, d) => v.toFixed(d);
@@ -587,7 +654,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     if ($('play').textContent !== label) $('play').textContent = label;
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === st.view));
   }
-  function render() { readouts(); drawSpace(); drawSky(); drawTri(); }
+  function render() { readouts(); drawSpace(); drawSky(); drawTri(); drawQuiz(); }
 
   // Over a long time span the proper motion would carry the star off the quasar background, so the speed is limited to
   // keep the whole path on it even for the nearest star, whose ellipse has a semi-major axis of D/4 - 1.
@@ -671,6 +738,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     });
   });
 
+  // A new puzzle is drawn again if the current settings would already solve it.
+  function startQuiz() { do newGoal(); while (quizError() < 2 * QUIZ_OK); render(); }
+  $('newQuiz').addEventListener('click', startQuiz);
+
+  newGoal();
+  while (quizError() < 2 * QUIZ_OK) newGoal();
   render();
 })();
 </script>
