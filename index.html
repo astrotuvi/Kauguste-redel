@@ -198,6 +198,10 @@ ol.steps li > span { padding-top: 4px; }
 .plot-side { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; margin-top: 6px; }
 .plot-side .plot { height: auto; min-height: 0; margin-top: 0; }
 .plot-side .side .tiles { grid-template-columns: 1fr; margin-top: 0; }
+.side-choice { margin-bottom: 12px; }
+.side-choice label { font-size: 0.78rem; color: var(--text-2); font-weight: 550; }
+.side-choice .calib-row { margin-top: 4px; }
+.side-choice select { flex: 1 1 100%; min-width: 0; }
 /* a single plot card that fills its tab */
 .pane.fit > .card.fill { display: flex; flex-direction: column; height: 100%; container-type: normal; }
 .card.fill .plot { flex: 1 1 0; min-height: 0; height: auto; }
@@ -697,11 +701,11 @@ footer a { color: inherit; }
       </div>
       <p class="hint calib-prompt" id="calibPrompt">Vali periood-heledus seos ja vajuta „Kasuta seost“, et leida galaktikate kaugused.</p>
       <div class="calib-row" id="calibRow">
-        <select id="calib" aria-label="Periood-heledus seos">
+        <select id="calib" class="calib-menu" aria-label="Periood-heledus seos">
           <option value="own">Minu seos (2. osa)</option>
           <option value="pub">Avaldatud seos</option>
         </select>
-        <button type="button" class="primary" id="calibApply">Kasuta seost</button>
+        <button type="button" class="primary calib-apply" id="calibApply">Kasuta seost</button>
       </div>
       <p class="fit" id="calibInfo"></p>
       <p class="hint table-note" id="galNote">Kauguse moodul μ on galaktika tsefeiidide W<sub>H</sub> − M<sub>H</sub><sup>W</sup>(P) kaalutud keskmine. Kiirus v = cz,
@@ -736,7 +740,20 @@ footer a { color: inherit; }
       </div>
       <div class="plot-side">
         <div class="plot" id="hub"></div>
-        <div class="side" id="h0"></div>
+        <div class="side">
+          <div class="side-choice">
+            <label for="calibHub">Periood-heledus seos</label>
+            <div class="calib-row">
+              <select id="calibHub" class="calib-menu">
+                <option value="own">Minu seos (2. osa)</option>
+                <option value="pub">Avaldatud seos</option>
+              </select>
+              <button type="button" class="primary calib-apply">Kasuta seost</button>
+            </div>
+            <p class="hint" id="calibHubInfo"></p>
+          </div>
+          <div id="h0"></div>
+        </div>
       </div>
     </section>
     <section class="card" id="hubEmpty"><p class="empty">Hubble'i seadus ilmub, kui vahelehel „Galaktikad“ on periood-heledus seos rakendatud.</p></section>
@@ -776,11 +793,11 @@ footer a { color: inherit; }
       </div>
       <p class="hint calib-prompt" id="snPrompt">Vali supernoovade heledus ja vajuta „Kasuta heledust“, et võtta galaktikate kaugused 3. osast ja leida Hubble'i konstant kaugete supernoovade abil.</p>
       <div class="calib-row" id="snRow">
-        <select id="snCal" aria-label="Supernoovade heledus">
+        <select id="snCal" class="sn-menu" aria-label="Supernoovade heledus">
           <option value="own">Minu M_B (3. osa galaktikatest)</option>
           <option value="pub">SH0ES: M_B = −19,253</option>
         </select>
-        <button type="button" class="primary" id="snApply">Kasuta heledust</button>
+        <button type="button" class="primary sn-apply" id="snApply">Kasuta heledust</button>
       </div>
       <div id="mb"></div>
       <p class="hint table-note">m<sub>B</sub> on supernoova näiv tähesuurus maksimumis, μ galaktika kauguse moodul 3. osast ja M<sub>B</sub> = m<sub>B</sub> − μ supernoova absoluutne tähesuurus.
@@ -814,7 +831,20 @@ footer a { color: inherit; }
       </div>
       <div class="plot-side">
         <div class="plot" id="snHub"></div>
-        <div class="side" id="snH0"></div>
+        <div class="side">
+          <div class="side-choice">
+            <label for="snCalHub">Supernoovade heledus</label>
+            <div class="calib-row">
+              <select id="snCalHub" class="sn-menu">
+                <option value="own">Minu M_B (3. osa galaktikatest)</option>
+                <option value="pub">SH0ES: M_B = −19,253</option>
+              </select>
+              <button type="button" class="primary sn-apply">Kasuta heledust</button>
+            </div>
+            <p class="hint" id="snCalHubInfo"></p>
+          </div>
+          <div id="snH0"></div>
+        </div>
       </div>
     </section>
     <section class="card" id="snHubEmpty"><p class="empty">Kaugete supernoovade Hubble'i seadus ilmub, kui vahelehel „Supernoovad“ on heledus rakendatud.</p></section>
@@ -1921,7 +1951,8 @@ function drawHubble() {
   }
   if (!ready) {
     S.calibUsed = null;
-    S.calib = $("calib").value = "own";
+    S.calib = "own";
+    syncMenus("calib-menu", "own");
     $("calibInfo").innerHTML = `Hubble'i seaduse jaoks on vaja sinu enda periood-heledus seost. Salvesta 2. osas vähemalt kahe parve kaugus. Väljatsefeiidid ainult täiendavad seost.`;
     return;
   }
@@ -1930,6 +1961,7 @@ function drawHubble() {
   const what = S.calibUsed === "pub" ? `avaldatud seos (${PL_PUB.ref})`
     : `sinu seos ${nH} tsefeiidist`;
   $("calibInfo").innerHTML = `Kasutusel: <b>${plFormula(cal, "H", S.calibUsed !== "pub")}</b> — ${what}.`;
+  $("calibHubInfo").textContent = `Kasutusel: ${what}.`;
 
   const gals = GALAXIES.map((g) => galaxyFit(g, cal));
   // a clicked galaxy opens a row with its Cepheid plot right below it; clicking again closes it
@@ -2037,6 +2069,8 @@ function drawSupernovae(gals) {
   const [uV, uE] = cal ? valErr(cal.M, cal.e) : [];
   $("mb").innerHTML = `<p class="fit">${ownLine}` + (cal ? `<br>Kasutusel: <b>M<sub>B</sub> = ${uV} ± ${uE} mag</b> — ` +
     (S.snUsed === "pub" ? "SH0ES (Riess jt 2022)." : "sinu väärtus 3. osa galaktikatest.") : "") + `</p>`;
+  $("snCalHubInfo").innerHTML = cal ? `Kasutusel: M<sub>B</sub> = ${uV} ± ${uE} mag, ` +
+    (S.snUsed === "pub" ? "SH0ES (Riess jt 2022)." : "sinu väärtus 3. osa galaktikatest.") : ownLine;
   if (!cal) {
     emptyPlot("snHub", "Supernoovade heledus on veel leidmata.");
     $("snH0").innerHTML = "";
@@ -2608,8 +2642,13 @@ document.addEventListener("keydown", (e) => {
   else if (fullCard) setFull(null);
 });
 // the menu only chooses; "Kasuta heledust" applies the chosen supernova luminosity
-$("snCal").addEventListener("change", () => { S.snChoice = $("snCal").value; });
-$("snApply").addEventListener("click", () => { S.snUsed = S.snChoice; drawHubble(); });
+// The relation (part 3) and the supernova luminosity (part 4) are chosen both in the table tab and in
+// the plot tab; the menus of a pair show the same choice, which the buttons apply.
+function syncMenus(cls, value) {
+  for (const m of document.querySelectorAll(`select.${cls}`)) m.value = value;
+}
+for (const m of document.querySelectorAll("select.sn-menu")) m.addEventListener("change", () => { S.snChoice = m.value; syncMenus("sn-menu", m.value); });
+for (const b of document.querySelectorAll(".sn-apply")) b.addEventListener("click", () => { S.snUsed = S.snChoice; drawHubble(); });
 $("stop").addEventListener("click", stopQuery);
 
 // data source menu: "auto" plus every Gaia service; the choice is remembered in this browser
@@ -2623,8 +2662,8 @@ $("source").addEventListener("change", () => {
   try { localStorage.setItem(SOURCE_KEY, $("source").value); } catch { /* kept for this visit */ }
 });
 // the menu only chooses; "Kasuta seost" applies the chosen relation
-$("calib").addEventListener("change", () => { S.calib = $("calib").value; });
-$("calibApply").addEventListener("click", () => { S.calibUsed = S.calib; drawHubble(); });
+for (const m of document.querySelectorAll("select.calib-menu")) m.addEventListener("change", () => { S.calib = m.value; syncMenus("calib-menu", m.value); });
+for (const b of document.querySelectorAll(".calib-apply")) b.addEventListener("click", () => { S.calibUsed = S.calib; drawHubble(); });
 for (const key of ["gal", "sn"]) $(`${key}Pager`).addEventListener("click", (e) => {
   const p = S.pages[key];
   const step = { first: -Infinity, prev: -1, next: 1, last: Infinity }[e.target.dataset.page];
