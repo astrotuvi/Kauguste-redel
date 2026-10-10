@@ -30,25 +30,35 @@ queries the data services directly from the browser.
    coordinates appear in the right box. The example buttons fill in suitable
    values for a few well-known clusters. A query runs only when you press
    the button (or Enter).
-2. Check the queried stars in the table, which shows 10 rows per page.
-3. On the proper-motion plot, use the lasso to mark the dense clump of stars
-   that move together. Each lasso adds stars to the selection, and
-   **Tühista valik** clears it. The selected stars are highlighted in the sky
-   view, the colour–magnitude diagram and the table.
+   Part 1 is split into five tabs under its title: **Sissejuhatus** (the
+   steps below), **Päring** (the query), **Tabel** (the queried stars),
+   **Joonised** (the four plots on a 2 × 2 grid) and **Kaugus** (the mean
+   parallax and the distance). Each tab is about one window high, so the
+   four plots fit on the screen together.
+2. Check the queried stars on the **Tabel** tab. It shows as many rows per
+   page as fit the window, at least 10.
+3. On the **Joonised** tab, use the lasso on the proper-motion plot to mark
+   the dense clump of stars that move together. Each lasso adds stars to the
+   selection, and **Tühista valik** clears it. The selected stars are
+   highlighted in the sky view, the colour–magnitude diagram and the table.
+   **selgitus** after a plot title opens its explanation. **Suurenda**
+   enlarges a plot to the full window, with the explanation shown; **Sulge**
+   or Esc closes it.
 4. Optionally refine the selection in the colour–magnitude diagram: clicking
    a selected star removes it, clicking a removed star puts it back, and
    **Taasta valik** brings all removed stars back. Any change to the lasso selection discards these removals.
-5. Read the number of selected stars and the distance in parsecs, light
-   years, astronomical units and kilometres below the plots. The parallax
-   histogram marks the mean parallax. You can download the selected stars
-   as a CSV file.
+5. On the **Kaugus** tab, read the mean parallax, press **Arvuta kaugus** and
+   read the number of selected stars and the distance in parsecs, light
+   years, astronomical units and kilometres. The parallax histogram marks the
+   mean parallax. You can download the selected stars as a CSV file.
 
 ### Cepheids
 
 The second part of the page lists 11 classical Cepheids in 11 open clusters, all with *HST* Wesenheit magnitudes W_H.
-**Mõõda** fills in the query form for a cluster, but you still start the query
-yourself. After selecting the cluster members, press **Salvesta parve … kaugus**
-below the distance tiles to store the mean cluster parallax. Each stored
+**Mõõda** switches to the **Päring** tab and fills in the query form for a
+cluster, but you still start the query yourself. After selecting the cluster
+members, press **Salvesta parve … kaugus** below the distance tiles on the
+**Kaugus** tab to store the mean cluster parallax. Each stored
 cluster adds its Cepheids to the period-luminosity plot. With two or more
 Cepheids, the app fits a weighted straight line. Stored distances are kept in
 the browser (`localStorage`) and can be removed with **Kustuta**. The

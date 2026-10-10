@@ -100,7 +100,7 @@ h2 { font-size: 0.95rem; margin: 0; font-weight: 600; }
 
 /* Distance ladder schematic */
 .ladder { margin: 0 0 44px; }
-.ladder[hidden] + h2.rung { margin-top: 36px; }
+.ladder[hidden] + .part-head { margin-top: 36px; }
 .ladder-toggle { margin: -16px 0 14px; font-size: 0.92rem; }
 .ladder-toggle a { color: var(--sel); text-decoration: none; }
 .ladder-toggle a:hover { text-decoration: underline; }
@@ -159,26 +159,84 @@ button:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
 .status.error { color: var(--err-text); }
 
 /* Steps */
-ol.steps { list-style: none; padding: 0; margin: 18px 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; counter-reset: s; }
-ol.steps li { counter-increment: s; font-size: 0.85rem; color: var(--text-2); display: flex; gap: 8px; }
+ol.steps { list-style: none; padding: 0; margin: 24px 0; display: grid; gap: 18px; max-width: 90ch; counter-reset: s; }
+ol.steps li { counter-increment: s; font-size: 1.1rem; line-height: 1.45; color: var(--text-1); display: flex; gap: 14px; align-items: baseline; }
 ol.steps li::before {
-  content: counter(s); flex: none; width: 22px; height: 22px; border-radius: 50%;
-  background: var(--chip); color: var(--text-1); font-weight: 600; font-size: 0.78rem;
+  content: counter(s); flex: none; width: 34px; height: 34px; border-radius: 50%; align-self: flex-start;
+  background: var(--chip); color: var(--text-1); font-weight: 650; font-size: 1rem;
   display: grid; place-items: center;
 }
+ol.steps li > span { padding-top: 4px; }
+.go { color: var(--sel); text-decoration: none; font-size: 0.9rem; font-weight: 550; white-space: nowrap; margin-left: 6px; }
+.go:hover { text-decoration: underline; }
 
 /* Plots */
 .grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 14px; }
-/* Plots use the full card width; the height follows 3:2 (2:1 for .wide) but is capped at 72 % of the
+/* Plots use the full card width; the height follows 3:2 but is capped at 72 % of the
    window, so on a laptop a plot fits the screen and becomes a bit wider than 3:2. cqw is the card width. */
 .card { container-type: inline-size; }
 .plot { width: 100%; height: min(72vh, calc(100cqw / 1.5)); margin-top: 6px; }
-.plot.wide { height: min(72vh, calc(100cqw / 2)); }
 .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-.toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 14px; margin-top: 10px; }
-.toolbar.end { justify-content: flex-end; }
-.toolbar .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .toggle { display: flex; gap: 6px; align-items: center; font-size: 0.8rem; color: var(--text-2); white-space: nowrap; }
+
+/* Part 1 tabs */
+.tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; border-bottom: 1px solid var(--border); margin: 0 0 14px; }
+.tabs button {
+  border: none; border-radius: 0; background: none; padding: 8px 14px; margin-bottom: -1px;
+  color: var(--text-2); font-weight: 550; border-bottom: 2px solid transparent;
+}
+.tabs button:hover { color: var(--text-1); }
+.tabs button[aria-selected="true"] { color: var(--text-1); border-bottom-color: var(--btn); }
+/* Every tab is at least one window high (less the tab bar), so switching tabs does not move the page.
+   The plot tab is exactly that high, and its four plots on a 2 × 2 grid share the height. */
+/* --p1-head is the height of the part 1 title and tab bar, measured in the script */
+.part-head .tabs { margin-bottom: 0; }
+.pane { padding-top: 14px; min-height: max(460px, calc(100dvh - var(--p1-head, 90px))); }
+.pane.fit { height: max(460px, calc(100dvh - var(--p1-head, 90px))); }
+.pane > .card + .card, .pane > .card + .tiles { margin-top: 14px; }
+/* Each card spans a head row and a plot row of the outer grid (subgrid; it needs container-type: normal,
+   as containment turns a subgrid off), so the plots in a row stay
+   equal when one head wraps onto two lines. */
+.grid.quad { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 1fr); height: 100%; margin-top: 0; }
+.grid.quad > .card { display: grid; grid-row: span 2; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr); row-gap: 6px; container-type: normal; min-height: 0; padding: 10px 12px; }
+.grid.quad .plot { min-width: 0; min-height: 0; height: auto; margin-top: 0; overflow: hidden; }
+.grid.quad .card-head { position: relative; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.card-head .tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px 10px; margin-left: auto; }
+.card-head .tools button { padding: 3px 10px; font-size: 0.82rem; }
+/* the explanation of a plot opens over it from a keyword after the title */
+.help-key {
+  border: none; background: none; padding: 0 2px; margin-left: 6px; font-size: 0.8rem; font-weight: 500;
+  color: var(--sel); text-decoration: underline dotted; text-underline-offset: 2px;
+}
+.help-key:hover { text-decoration-style: solid; }
+.help {
+  display: none; position: absolute; left: -4px; right: -4px; top: calc(100% + 4px); z-index: 1002; margin: 0;
+  padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); color: var(--text-2);
+}
+.card.help-open .help { display: block; }
+/* an enlarged plot fills the window and shows its explanation */
+.grid.quad > .card.full { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; border: none; border-radius: 0; overflow: auto; padding: 14px 16px; }
+.card.full .help { display: block; position: static; flex-basis: 100%; order: 1; padding: 0; border: none; box-shadow: none; background: none; }
+.card.full .help-key { display: none; }
+.card.full .plot { flex: 1 0 300px; }
+body.has-full { overflow: hidden; }
+/* the distance tab is compact, so that it fits the window height */
+#paneDist .card { padding: 12px 16px; }
+#paneDist > .card + .card { margin-top: 10px; }
+#paneDist .tiles { gap: 10px; }
+#paneDist .tiles.four { margin-top: 10px; }
+#paneDist .tile { padding: 8px 12px; }
+#paneDist .tile .value { font-size: 1.4rem; margin-top: 2px; }
+#paneDist .results-head { margin-bottom: 6px; }
+#paneDist .results-head button { padding: 4px 12px; font-size: 0.85rem; }
+#paneDist .counts { margin: 0; }
+#paneDist .note { margin-top: 8px; padding: 6px 12px; }
+#paneDist .formula { margin-top: 8px; }
+#paneDist .calib-row, #paneDist .save { margin-top: 10px; }
+#paneDist .empty { padding: 6px 0; }
+/* the data table fills its tab */
+#dataCard { margin: 0; }
 
 /* Results */
 .results { margin-top: 14px; }
@@ -257,13 +315,15 @@ footer a { color: inherit; }
 
 @media (max-width: 900px) {
   .tiles.four { grid-template-columns: repeat(2, 1fr); }
-  .plot, .plot.wide { height: 340px; }
-  ol.steps { grid-template-columns: 1fr 1fr; }
+  .plot { height: 340px; }
+  .pane.fit { height: auto; }
+  .grid.quad { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .grid.quad > .card { display: block; grid-row: auto; }
+  .grid.quad .plot { height: 340px; margin-top: 6px; }
   .tiles { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
   .tiles.four { grid-template-columns: 1fr; }
-  ol.steps { grid-template-columns: 1fr; }
   .field.num input { width: 80px; }
 }
 </style>
@@ -316,16 +376,31 @@ footer a { color: inherit; }
     <figcaption class="hint">Iga meetod ulatub kaugemale kui eelmine ja kalibreeritakse eelmise abil seal, kus nende ulatused kattuvad. Kauguste skaala on logaritmiline:
       iga jaotis on eelmisest kümme korda kaugemal. Supernoovade riba kriipsjoonega osa jääb väljapoole selle lehe andmeid (kuni ~250 Mpc).</figcaption>
   </figure>
-  <h2 class="rung">1. osa: Hajusparvede kaugused Gaia parallaksidest</h2>
+  <div class="part-head" id="p1Head">
+    <h2 class="rung">1. osa: Hajusparvede kaugused Gaia parallaksidest</h2>
+    <div class="tabs" role="tablist" id="p1Tabs" aria-label="1. osa">
+      <button type="button" role="tab" id="tabIntro" data-tab="intro" aria-controls="paneIntro" aria-selected="true">Sissejuhatus</button>
+      <button type="button" role="tab" id="tabQuery" data-tab="query" aria-controls="paneQuery" aria-selected="false" tabindex="-1">Päring</button>
+      <button type="button" role="tab" id="tabTable" data-tab="table" aria-controls="paneTable" aria-selected="false" tabindex="-1">Tabel</button>
+      <button type="button" role="tab" id="tabPlots" data-tab="plots" aria-controls="panePlots" aria-selected="false" tabindex="-1">Joonised</button>
+      <button type="button" role="tab" id="tabDist" data-tab="dist" aria-controls="paneDist" aria-selected="false" tabindex="-1">Kaugus</button>
+    </div>
+  </div>
+
+  <div role="tabpanel" class="pane" id="paneIntro" aria-labelledby="tabIntro">
   <p class="lede">Päri <a href="https://et.wikipedia.org/wiki/Gaia_(kosmoseteleskoop)" target="_blank" rel="noopener">Gaia</a> DR3 tähed <a href="https://et.wikipedia.org/wiki/Hajusparv" target="_blank" rel="noopener">parve</a> ümbrusest, vali välja koos <a class="en" href="https://en.wikipedia.org/wiki/Proper_motion" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">üle taeva liikuvad</a> tähed ja keskmista nende <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaksid</a>, et leida parve kaugus.</p>
 
   <ol class="steps">
-    <li>Päri tähed parve ümbrusest.</li>
-    <li>Märgi lassoga omaliikumiste joonisel koos liikuvate tähtede tihe kogum.</li>
-    <li>Kontrolli värvus-heledusdiagrammi: parve liikmed moodustavad selge peajada.</li>
-    <li>Loe altpoolt keskmine parallaks ja kaugus.</li>
+    <li><span>Tee päring parve keskpunkti ümbert. <a class="go" href="#p1Tabs" data-go="query">Päring →</a></span></li>
+    <li><span>Päringuga saadud andmeid saad vaadata tabelist. <a class="go" href="#p1Tabs" data-go="table">Tabel →</a></span></li>
+    <li><span>Märgi lassoga omaliikumiste joonisel koos liikuvate tähtede tihe kogum. <a class="go" href="#p1Tabs" data-go="plots">Joonised →</a></span></li>
+    <li><span>Kontrolli värvus-heledusdiagrammi: parve liikmed moodustavad selge peajada. <a class="go" href="#p1Tabs" data-go="plots">Joonised →</a></span></li>
+    <li><span>Loe keskmine parallaks ja kaugus. <a class="go" href="#p1Tabs" data-go="dist">Kaugus →</a></span></li>
   </ol>
+  <button type="button" class="primary go-btn" data-go="query">Alusta päringuga</button>
+  </div>
 
+  <div role="tabpanel" class="pane" id="paneQuery" aria-labelledby="tabQuery" hidden>
   <section class="card">
     <div class="field source">
       <label for="source">Andmeallikas</label>
@@ -358,7 +433,10 @@ footer a { color: inherit; }
     <p class="status" id="status" role="status" aria-live="polite"></p>
   </section>
   <div class="tiles two query-info" id="queryInfo" hidden></div>
+  </div>
 
+  <div role="tabpanel" class="pane" id="paneTable" aria-labelledby="tabTable" hidden>
+  <section class="card" id="dataEmpty"><p class="empty">Andmeid pole laaditud — päri tähed vahelehel „Päring“.</p></section>
   <section class="card data" id="dataCard" hidden>
     <div class="card-head">
       <div>
@@ -384,61 +462,65 @@ footer a { color: inherit; }
       <button type="button" id="lastPage" aria-label="Viimane lehekülg">Viimane »</button>
     </div>
   </section>
+  </div>
 
-  <div class="grid">
+  <div role="tabpanel" class="pane fit" id="panePlots" aria-labelledby="tabPlots" hidden>
+  <div class="grid quad" id="plots">
     <section class="card">
       <div class="card-head">
-        <div>
-          <h2>Asukohad taevas</h2>
-          <p class="hint">Omaliikumiste joonisel valitud tähed on esile tõstetud, tähekesega on märgitud tsefeiid; tähe andmete nägemiseks vii kursor selle kohale, klõps märgib tähe sihikuga ja näitab selle rida tabelis. Keri suumimiseks, topeltklõps taastab vaate.</p>
+        <h2>Asukohad taevas<button type="button" class="help-key" aria-expanded="false">selgitus</button></h2>
+        <div class="tools">
+          <button type="button" class="expand">⤢ Suurenda</button>
         </div>
+        <p class="hint help">Omaliikumiste joonisel valitud tähed on esile tõstetud, tähekesega on märgitud tsefeiid; tähe andmete nägemiseks vii kursor selle kohale, klõps märgib tähe sihikuga ja näitab selle rida tabelis. Keri suumimiseks, topeltklõps taastab vaate.</p>
       </div>
       <div class="plot" id="sky"></div>
     </section>
     <section class="card">
       <div class="card-head">
-        <div>
-          <h2>Omaliikumised</h2>
-          <p class="hint">Parve liikmed liiguvad ühtmoodi — leia tihe kogum (lohista ja keri) ning märgi see lassoga, mille saad joonise tööriistaribalt. Iga uus lasso lisab tähed valikule. Klõps märgib tähe kõigil joonistel ja tabelis.</p>
+        <h2>Omaliikumised<button type="button" class="help-key" aria-expanded="false">selgitus</button></h2>
+        <div class="tools">
+          <button type="button" id="clear">Tühista valik</button>
+          <button type="button" class="expand">⤢ Suurenda</button>
         </div>
-      </div>
-      <div class="toolbar end">
-        <button type="button" id="clear">Tühista valik</button>
+        <p class="hint help">Parve liikmed liiguvad ühtmoodi — leia tihe kogum (lohista ja keri) ning märgi see lassoga, mille saad joonise tööriistaribalt. Iga uus lasso lisab tähed valikule. Klõps märgib tähe kõigil joonistel ja tabelis.</p>
       </div>
       <div class="plot" id="pm"></div>
     </section>
     <section class="card">
       <div class="card-head">
-        <div>
-          <h2>Värvus-heledusdiagramm (HR-diagramm)</h2>
-          <p class="hint">Valitud tähed värviliselt, kõik ülejäänud hallilt. Rist: parallaksi kõrvalekalle (vt parallakside histogrammi). Klõps märgib tähe. Shift + klõps valitud tähel eemaldab selle parallaksi arvutusest; eemaldatud täht (rõngas) tuleb Shift + klõpsuga tagasi.</p>
-        </div>
-      </div>
-      <div class="toolbar">
-        <label class="toggle"><input type="checkbox" id="cmdAbs"> Absoluutne M<sub>G</sub></label>
-        <div class="btns">
+        <h2>Värvus-heledusdiagramm<button type="button" class="help-key" aria-expanded="false">selgitus</button></h2>
+        <div class="tools">
+          <label class="toggle"><input type="checkbox" id="cmdAbs"> Absoluutne M<sub>G</sub></label>
           <button type="button" id="dropOutliers" disabled>Eemalda erindid</button>
           <button type="button" id="restore" disabled>Taasta valik</button>
+          <button type="button" class="expand">⤢ Suurenda</button>
         </div>
+        <p class="hint help">Valitud tähed värviliselt, kõik ülejäänud hallilt. Rist: parallaksi kõrvalekalle (vt parallakside histogrammi). Klõps märgib tähe. Shift + klõps valitud tähel eemaldab selle parallaksi arvutusest; eemaldatud täht (rõngas) tuleb Shift + klõpsuga tagasi.</p>
       </div>
       <div class="plot" id="cmd"></div>
     </section>
     <section class="card">
       <div class="card-head">
-        <div>
-          <h2>Valitud tähtede parallaksid</h2>
-          <p class="hint" id="histHint">Katkendjoon: kaalutud keskmine parallaks. Punktiir: kõrvalekallete piirid (alumine kvartiil − 3 × kvartiilhaare
+        <h2>Valitud tähtede parallaksid<button type="button" class="help-key" aria-expanded="false">selgitus</button></h2>
+        <div class="tools">
+          <label class="toggle"><input type="checkbox" id="histAll"> Kõik tähed taustal</label>
+          <button type="button" class="expand">⤢ Suurenda</button>
+        </div>
+        <p class="hint help" id="histHint">Katkendjoon: kaalutud keskmine parallaks. Punktiir: kõrvalekallete piirid (alumine kvartiil − 3 × kvartiilhaare
             ja ülemine kvartiil + 3 × kvartiilhaare). Piiridest väljapoole jäävad tähed on HR-diagrammil ristiga.
             Hall taust: kõik päritud tähed.</p>
-        </div>
       </div>
-      <div class="toolbar">
-        <label class="toggle"><input type="checkbox" id="histAll"> Kõik tähed taustal</label>
-      </div>
-      <div class="plot wide" id="hist"></div>
-      <div id="plxStats"></div>
+      <div class="plot" id="hist"></div>
     </section>
   </div>
+  </div>
+
+  <div role="tabpanel" class="pane" id="paneDist" aria-labelledby="tabDist" hidden>
+  <section class="card">
+    <h2>Keskmine parallaks</h2>
+    <div id="plxStats"><p class="empty">Andmeid pole laaditud.</p></div>
+  </section>
 
   <section class="card results">
     <div class="results-head">
@@ -449,6 +531,7 @@ footer a { color: inherit; }
     </div>
     <div id="results"><p class="empty">Ühtegi tähte pole veel valitud.</p></div>
   </section>
+  </div>
 
   <div class="part" id="part2">
     <h2 class="rung">2. osa: Tsefeiidide periood-heledus sõltuvus</h2>
@@ -669,7 +752,7 @@ const ASYNC_LIMIT = 300;   // s; give up on an async job after this long
 const ZP = -0.017;   // mas, Gaia DR3 global parallax zero-point
 const SYS = 0.010;   // mas, systematic floor for a cluster-mean parallax
 const RUWE_MAX = 1.4; // astrometric quality cut applied in every query
-const PAGE_SIZE = 10;  // data table rows per page
+const PAGE_MIN = 10;   // data table rows per page at least; more when they fit the tab
 const PC_LY = 3.261563777;
 const PC_KM = 3.0856775814913673e13;
 const PC_AU = 206264.80624709636;
@@ -803,6 +886,7 @@ const S = {
   cmdRemoved: [],     // star indices of the removed-star trace in the HR diagram
   idx: null,          // combined selection (sorted indices) or null
   stats: null,
+  pageSize: PAGE_MIN, // data table rows per page, see fitPageSize
   distOn: false,      // cluster distance shown after "Arvuta kaugus"; reset with each new dataset
   rev: 0,             // uirevision, bumped per dataset
   token: 0,
@@ -1176,7 +1260,8 @@ function cepheidTrace(x, y, hover) {
 }
 
 // Crosshair (a thin cross with a ring) on the star last clicked in the sky view, the proper-motion
-// plot or the HR diagram; it is the last trace of each of these plots.
+// plot or the HR diagram; it is the last trace of each of these plots. It is a WebGL trace like the
+// stars, since Plotly draws the WebGL canvas over SVG traces and the stars would hide it.
 const CROSS_TRACE = { sky: 3, pm: 3, cmd: 4 };
 function crosshairXY(plot) {
   const i = S.hl, d = S.d;
@@ -1189,7 +1274,7 @@ function crosshairXY(plot) {
 function crosshairTrace(plot) {
   const m = { symbol: ["cross-thin-open", "circle-open"], size: [22, 14], color: css("--accent"), line: { width: 2, color: css("--accent") }, opacity: 1 };
   return {
-    type: "scatter", mode: "markers", ...crosshairXY(plot), hoverinfo: "skip",
+    type: "scattergl", mode: "markers", ...crosshairXY(plot), hoverinfo: "skip",
     marker: m, selected: { marker: { opacity: 1 } }, unselected: { marker: { opacity: 1 } },
   };
 }
@@ -1359,7 +1444,7 @@ function drawHist() {
 // mean parallax of the selection with its error, the number of stars and the median single-star error
 function drawPlxStats() {
   const st = S.stats;
-  if (!st) { $("plxStats").innerHTML = ""; return; }
+  if (!st) { $("plxStats").innerHTML = `<p class="empty">Märgi parve tähed lassoga omaliikumiste joonisel (vaheleht „Joonised“).</p>`; return; }
   const [pV, pE] = valErr(st.wmean, st.etot);
   const typ = percentile(st.use.map((i) => S.d.eplx[i]), 0.5);
   $("plxStats").innerHTML = `<div class="tiles four">
@@ -1384,7 +1469,7 @@ function drawResults() {
     (st && st.outliers.size ? ` · Parallaksi kõrvalekaldeid: <b>${fmt(st.outliers.size)}</b>` : "") + ` · Kokku tähti: <b>${fmt(S.n)}</b></p>`;
   if (!S.idx) { el.innerHTML = `${counts}<p class="empty">Ühtegi tähte pole veel valitud — märgi omaliikumiste joonisel parve kogum lassoga.</p>`; return; }
   if (!st) { el.innerHTML = `${counts}<p class="empty">Valik on tühi — kõik tähed on HR-diagrammil eemaldatud.</p>`; return; }
-  if (!S.distOn) { el.innerHTML = `<p class="empty">Vajuta parallaksi tulemuste all nuppu „Arvuta kaugus“.</p>`; return; }
+  if (!S.distOn) { el.innerHTML = `<p class="empty">Vajuta keskmise parallaksi all nuppu „Arvuta kaugus“.</p>`; return; }
 
   const notes = [];
   let tiles;
@@ -1398,7 +1483,7 @@ function drawResults() {
     const [lyV, lyE] = valErr(dpc * PC_LY, epc * PC_LY);
     const auV = rounded(dpc * PC_AU, epc * PC_AU);
     const kmV = rounded(dpc * PC_KM, epc * PC_KM);
-    tiles = `<div class="tiles">
+    tiles = `<div class="tiles four">
       <div class="tile"><div class="label">Kaugus</div><div class="value">${pcV} <small>± ${pcE}</small></div><div class="unit">parsekit</div></div>
       <div class="tile"><div class="label">Kaugus</div><div class="value">${lyV} <small>± ${lyE}</small></div><div class="unit">valgusaastat</div></div>
       <div class="tile"><div class="label">Kaugus</div><div class="value">${auV}</div><div class="unit">astronoomilist ühikut</div></div>
@@ -1495,6 +1580,7 @@ function measureCluster(cl) {
   S.coordsLabel = `${x.cluster} → α = ${fmtN(x.ra, 4)}°, δ = ${x.dec >= 0 ? "+" : ""}${fmtN(x.dec, 4)}°`;
   $("radius").value = x.r;
   $("gmax").value = x.g;
+  showTab("query");
   $("form").scrollIntoView({ behavior: "smooth", block: "center" });
   $("go").focus({ preventScroll: true });
 }
@@ -1851,13 +1937,15 @@ function drawGalaxyPL(g, cal) {
 
 function drawTable() {
   const card = $("dataCard");
+  $("dataEmpty").hidden = !!S.d;
   if (!S.d) { card.hidden = true; return; }
   card.hidden = false;
   const d = S.d;
-  const pages = Math.max(1, Math.ceil(S.n / PAGE_SIZE));
+  const size = S.pageSize;
+  const pages = Math.max(1, Math.ceil(S.n / size));
   S.page = Math.min(Math.max(S.page, 0), pages - 1);
-  const first = S.page * PAGE_SIZE;
-  const last = Math.min(first + PAGE_SIZE, S.n);
+  const first = S.page * size;
+  const last = Math.min(first + size, S.n);
   const sel = new Set(S.idx || []);
   const num = (v, dp) => (v === null ? "—" : fmtN(v, dp));
   const rows = [];
@@ -1879,6 +1967,19 @@ function drawTable() {
     th.classList.toggle("desc", on && S.sort.dir < 0);
     th.setAttribute("aria-sort", on ? (S.sort.dir > 0 ? "ascending" : "descending") : "none");
   }
+}
+
+// as many table rows per page as fit the table tab; the first row shown stays on the page
+function fitPageSize() {
+  const pane = $("paneTable"), card = $("dataCard"), row = $("dataBody").rows[0];
+  if (pane.hidden || card.hidden || !row) return;
+  const room = parseFloat(getComputedStyle(pane).minHeight) - parseFloat(getComputedStyle(pane).paddingTop)
+    - (card.offsetHeight - $("dataBody").offsetHeight);
+  const size = Math.max(PAGE_MIN, Math.floor(room / row.offsetHeight));
+  if (size === S.pageSize) return;
+  S.page = Math.floor((S.page * S.pageSize) / size);
+  S.pageSize = size;
+  drawTable();
 }
 
 // row order of the data table for the chosen column and direction; missing values go last
@@ -1910,7 +2011,7 @@ function showStar(i) {
   if (i === S.hl) S.hl = null;              // a second click on the marked star unmarks it
   else {
     S.hl = i;
-    S.page = Math.floor((S.order ? S.order.indexOf(i) : i) / PAGE_SIZE);
+    S.page = Math.floor((S.order ? S.order.indexOf(i) : i) / S.pageSize);
   }
   drawTable();
   for (const [plot, t] of Object.entries(CROSS_TRACE)) {   // restyle keeps the current zoom
@@ -2182,6 +2283,93 @@ $("plxStats").addEventListener("click", (e) => {
   $("results").closest("section").scrollIntoView({ behavior: "smooth", block: "nearest" });
 });
 $("resetAll").addEventListener("click", resetAll);
+
+// part 1 tabs; Plotly sizes a hidden plot wrongly, so the plots are resized when their tab is shown
+const PLOTS = ["sky", "pm", "cmd", "hist"];
+const resizePlot = (id) => Plotly.Plots.resize(id).catch(() => { /* not drawn yet */ });
+function showTab(name) {
+  for (const b of document.querySelectorAll("#p1Tabs [role=tab]")) {
+    const on = b.dataset.tab === name;
+    b.setAttribute("aria-selected", on);
+    b.tabIndex = on ? 0 : -1;
+    $(b.getAttribute("aria-controls")).hidden = !on;
+  }
+  if (name === "plots") PLOTS.forEach(resizePlot);
+  if (name === "table") fitPageSize();
+}
+// a tab picked by the user is scrolled into view when it does not fit below the tab bar
+function pickTab(name) {
+  showTab(name);
+  const top = $("p1Head").getBoundingClientRect().top;
+  if (top < 0 || top > 0.15 * window.innerHeight) $("p1Head").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+// the tabs fill the window below the part 1 title and tab bar
+new ResizeObserver(() => {
+  document.documentElement.style.setProperty("--p1-head", `${$("p1Head").offsetHeight}px`);
+  fitPageSize();
+}).observe($("p1Head"));
+window.addEventListener("resize", fitPageSize);
+// the steps in the introduction lead to their tabs
+$("paneIntro").addEventListener("click", (e) => {
+  const a = e.target.closest("[data-go]");
+  if (!a) return;
+  e.preventDefault();
+  pickTab(a.dataset.go);
+});
+$("p1Tabs").addEventListener("click", (e) => {
+  const b = e.target.closest("[role=tab]");
+  if (b) pickTab(b.dataset.tab);
+});
+$("p1Tabs").addEventListener("keydown", (e) => {
+  const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+  if (!step) return;
+  const tabs = [...document.querySelectorAll("#p1Tabs [role=tab]")];
+  const b = tabs[(tabs.indexOf(document.activeElement) + step + tabs.length) % tabs.length];
+  pickTab(b.dataset.tab);
+  b.focus();
+});
+
+// a plot card enlarged to the full window, or null
+let fullCard = null;
+function setFull(card) {
+  if (fullCard) {
+    fullCard.classList.remove("full");
+    fullCard.querySelector(".expand").textContent = "⤢ Suurenda";
+    resizePlot(fullCard.querySelector(".plot").id);
+  }
+  fullCard = card;
+  document.body.classList.toggle("has-full", !!card);
+  if (!card) return;
+  showHelp(null);
+  card.classList.add("full");
+  card.querySelector(".expand").textContent = "✕ Sulge";
+  resizePlot(card.querySelector(".plot").id);
+}
+// the plot card whose explanation is open, or null; a click elsewhere closes it
+let helpCard = null;
+function showHelp(card) {
+  if (helpCard) {
+    helpCard.classList.remove("help-open");
+    helpCard.querySelector(".help-key").setAttribute("aria-expanded", false);
+  }
+  helpCard = card;
+  if (!card) return;
+  card.classList.add("help-open");
+  card.querySelector(".help-key").setAttribute("aria-expanded", true);
+}
+$("plots").addEventListener("click", (e) => {
+  const card = e.target.closest(".card");
+  if (e.target.matches(".expand")) setFull(card === fullCard ? null : card);
+  else if (e.target.matches(".help-key")) showHelp(card === helpCard ? null : card);
+});
+document.addEventListener("click", (e) => {
+  if (helpCard && !e.target.closest(".help, .help-key")) showHelp(null);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (helpCard) showHelp(null);
+  else if (fullCard) setFull(null);
+});
 // the menu only chooses; "Kasuta heledust" applies the chosen supernova luminosity
 $("snCal").addEventListener("change", () => { S.snChoice = $("snCal").value; });
 $("snApply").addEventListener("click", () => { S.snUsed = S.snChoice; drawHubble(); });
