@@ -193,6 +193,10 @@ ol.steps li > span { padding-top: 4px; }
 .part-head .tabs { margin-bottom: 0; }
 .pane { padding-top: 14px; min-height: max(460px, calc(100dvh - var(--head, 90px))); }
 .pane.fit { height: max(460px, calc(100dvh - var(--head, 90px))); }
+/* a Hubble diagram with its results in a column to the right */
+.plot-side { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; margin-top: 6px; }
+.plot-side .plot { height: auto; min-height: 0; margin-top: 0; }
+.plot-side .side .tiles { grid-template-columns: 1fr; margin-top: 0; }
 /* a single plot card that fills its tab */
 .pane.fit > .card.fill { display: flex; flex-direction: column; height: 100%; container-type: normal; }
 .card.fill .plot { flex: 1 1 0; min-height: 0; height: auto; }
@@ -224,20 +228,21 @@ ol.steps li > span { padding-top: 4px; }
 .card.full .help-key { display: none; }
 .card.full .plot { flex: 1 0 300px; }
 body.has-full { overflow: hidden; }
-/* the distance tab is compact, so that it fits the window height */
-#paneDist .card { padding: 12px 16px; }
-#paneDist > .card + .card { margin-top: 10px; }
-#paneDist .tiles { gap: 10px; }
-#paneDist .tiles.four { margin-top: 10px; }
-#paneDist .tile { padding: 8px 12px; }
-#paneDist .tile .value { font-size: 1.4rem; margin-top: 2px; }
-#paneDist .results-head { margin-bottom: 6px; }
-#paneDist .results-head button { padding: 4px 12px; font-size: 0.85rem; }
-#paneDist .counts { margin: 0; }
-#paneDist .note { margin-top: 8px; padding: 6px 12px; }
-#paneDist .formula { margin-top: 8px; }
-#paneDist .calib-row, #paneDist .save { margin-top: 10px; }
-#paneDist .empty { padding: 6px 0; }
+/* compact tabs (the distances and H0), so that they fit the window height */
+.compact .card { padding: 12px 16px; }
+.pane.compact > .card + .card { margin-top: 10px; }
+.compact .tiles { gap: 10px; }
+.compact .tiles.four, .compact .tiles.two { margin-top: 10px; }
+.compact .tile { padding: 8px 12px; }
+.compact .tile .value { font-size: 1.4rem; margin-top: 2px; }
+.compact .results-head { margin-bottom: 6px; }
+.compact .results-head button { padding: 4px 12px; font-size: 0.85rem; }
+.compact .counts { margin: 0; }
+.compact .note { margin-top: 8px; padding: 6px 12px; }
+.compact .formula { margin-top: 8px; }
+.compact .calib-row, .compact .save { margin-top: 10px; }
+.compact .empty { padding: 6px 0; }
+#hubEmpty, #snHubEmpty, #snCalEmpty { margin-top: 0; }   /* they follow the hidden plot cards */
 /* the data table fills its tab */
 #dataCard { margin: 0; }
 
@@ -323,6 +328,8 @@ footer a { color: inherit; }
   .grid.quad > .card { display: block; grid-row: auto; }
   .grid.quad .plot { height: 340px; margin-top: 6px; }
   .card.fill .plot { flex: none; height: 340px; }
+  .plot-side { grid-template-columns: minmax(0, 1fr); }
+  .plot-side .side .tiles { grid-template-columns: 1fr 1fr; }
   .tiles { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
@@ -519,7 +526,7 @@ footer a { color: inherit; }
   </div>
   </div>
 
-  <div role="tabpanel" class="pane" id="paneDist" aria-labelledby="tabDist" hidden>
+  <div role="tabpanel" class="pane compact" id="paneDist" aria-labelledby="tabDist" hidden>
   <section class="card">
     <h2>Keskmine parallaks</h2>
     <div id="plxStats"><p class="empty">Andmeid pole laaditud.</p></div>
@@ -618,15 +625,34 @@ footer a { color: inherit; }
   </div>
 
   <div class="part" id="part3">
-    <h2 class="rung">3. osa: Hubble'i seadus</h2>
+    <div class="part-head" id="p3Head">
+      <h2 class="rung">3. osa: Hubble'i seadus</h2>
+      <div class="tabs" role="tablist" id="p3Tabs" aria-label="3. osa">
+        <button type="button" role="tab" id="tabHubIntro" data-tab="hubIntro" aria-controls="paneHubIntro" aria-selected="true">Sissejuhatus</button>
+        <button type="button" role="tab" id="tabGal" data-tab="galaxies" aria-controls="paneGal" aria-selected="false" tabindex="-1">Galaktikad</button>
+        <button type="button" role="tab" id="tabHub" data-tab="hubble" aria-controls="paneHub" aria-selected="false" tabindex="-1">Hubble'i seadus</button>
+      </div>
+    </div>
+
+    <div role="tabpanel" class="pane" id="paneHubIntro" aria-labelledby="tabHubIntro">
     <p class="lede">Nende <a href="https://et.wikipedia.org/wiki/Galaktika" target="_blank" rel="noopener">galaktikate</a> tsefeiide on mõõtnud <a href="https://et.wikipedia.org/wiki/Hubble'i_kosmoseteleskoop" target="_blank" rel="noopener">Hubble'i kosmoseteleskoop</a>. <a class="en" href="https://en.wikipedia.org/wiki/Cepheid_variable" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">Tsefeiidi</a> periood annab <a class="en" href="https://en.wikipedia.org/wiki/Period-luminosity_relation" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">periood-heledus seosest</a> tema <a href="https://et.wikipedia.org/wiki/Absoluutne_t%C3%A4hesuurus" target="_blank" rel="noopener">absoluutse
       tähesuuruse</a> ning võrdlus <a href="https://et.wikipedia.org/wiki/T%C3%A4hesuurus" target="_blank" rel="noopener">näiva tähesuurusega</a> galaktika kauguse. Koos galaktika eemaldumiskiirusega (<a href="https://et.wikipedia.org/wiki/Punanihe" target="_blank" rel="noopener">punanihkest</a>) annab see <a href="https://et.wikipedia.org/wiki/Hubble'i_konstant" target="_blank" rel="noopener">Hubble'i konstandi</a>.</p>
 
+    <ol class="steps">
+      <li><span>Vali periood-heledus seos ja vajuta „Kasuta seost“, et leida galaktikate kaugused. <a class="go" href="#p3Tabs" data-go="galaxies">Galaktikad →</a></span></li>
+      <li><span>Vaata galaktikate kaugusi tabelis. Klõps galaktika real näitab selle tsefeiide. <a class="go" href="#p3Tabs" data-go="galaxies">Galaktikad →</a></span></li>
+      <li><span>Vali, millised galaktikad lähevad Hubble'i seaduse sobitusse. <a class="go" href="#p3Tabs" data-go="galaxies">Galaktikad →</a></span></li>
+      <li><span>Loe kiiruse ja kauguse seosest Hubble'i konstant H<sub>0</sub>. <a class="go" href="#p3Tabs" data-go="hubble">Hubble'i seadus →</a></span></li>
+    </ol>
+    <p class="hint">Nendes 29 galaktikas on Hubble'i kosmoseteleskoop mõõtnud kokku üle 2000 tsefeiidi.</p>
+    </div>
+
+    <div role="tabpanel" class="pane" id="paneGal" aria-labelledby="tabGal" hidden>
     <section class="card">
       <div class="card-head">
         <div>
           <h2>Tsefeiididega galaktikad</h2>
-          <p class="hint">Nendes 29 galaktikas on Hubble'i kosmoseteleskoop mõõtnud kokku üle 2000 tsefeiidi. Rakenda neile oma periood-heledus seos, et leida galaktikate kaugused.</p>
+          <p class="hint">Rakenda galaktikate tsefeiididele oma periood-heledus seos, et leida galaktikate kaugused.</p>
         </div>
       </div>
       <p class="hint calib-prompt" id="calibPrompt">Vali periood-heledus seos ja vajuta „Kasuta seost“, et leida galaktikate kaugused.</p>
@@ -640,36 +666,67 @@ footer a { color: inherit; }
       <p class="fit" id="calibInfo"></p>
       <p class="hint table-note" id="galNote">Kauguse moodul μ on galaktika tsefeiidide W<sub>H</sub> − M<sub>H</sub><sup>W</sup>(P) kaalutud keskmine. Kiirus v = cz,
         kus z on galaktikas plahvatanud supernoova punanihe, mis on parandatud galaktika omaliikumise jaoks. Klõpsa galaktika real, et näha selle tsefeiide; uus klõps peidab need.</p>
-      <div class="table-wrap" id="galWrap">
-        <table class="data-table">
+      <div id="galWrap">
+        <div class="table-wrap">
+          <table class="data-table">
           <thead><tr>
             <th title="Galaktika nimi">Galaktika</th><th title="Galaktikas plahvatanud Ia tüüpi supernoova">Supernoova</th><th title="Galaktikas mõõdetud tsefeiidide arv">Tsefeiide</th><th title="Kauguse moodul μ = m − M: tsefeiidide W_H − M_H^W(P) kaalutud keskmine">μ (mag)</th><th title="Kaugus d = 10^(μ/5 − 5) megaparsekites">Kaugus (Mpc)</th><th title="Eemaldumiskiirus v = cz supernoova punanihkest">Kiirus (km/s)</th><th title="Selle galaktika kiiruse ja kauguse suhe — üksiku galaktika hinnang Hubble'i konstandile">v / d (km/s/Mpc)</th><th title="Kas galaktikat kasutatakse Hubble'i seaduse sobituses">Sobitusse</th>
           </tr></thead>
-          <tbody id="galBody"></tbody>
-        </table>
+            <tbody id="galBody"></tbody>
+          </table>
+        </div>
+        <div class="pager" id="galPager">
+          <span id="galPageInfo"></span>
+          <button type="button" data-page="first" aria-label="Esimene lehekülg">« Esimene</button>
+          <button type="button" data-page="prev" aria-label="Eelmine lehekülg">‹ Eelmine</button>
+          <button type="button" data-page="next" aria-label="Järgmine lehekülg">Järgmine ›</button>
+          <button type="button" data-page="last" aria-label="Viimane lehekülg">Viimane »</button>
+        </div>
       </div>
     </section>
+    </div>
 
-
-    <section class="card" id="hubCard">
+    <div role="tabpanel" class="pane fit compact" id="paneHub" aria-labelledby="tabHub" hidden>
+    <section class="card fill" id="hubCard">
       <div class="card-head">
         <div>
           <h2>Kiiruse ja kauguse seos</h2>
           <p class="hint">Joon: v = H<sub>0</sub> · d, sobitatud vähimruutude meetodil läbi nullpunkti.</p>
         </div>
       </div>
-      <div class="plot" id="hub"></div>
-      <div id="h0"></div>
+      <div class="plot-side">
+        <div class="plot" id="hub"></div>
+        <div class="side" id="h0"></div>
+      </div>
     </section>
+    <section class="card" id="hubEmpty"><p class="empty">Hubble'i seadus ilmub, kui vahelehel „Galaktikad“ on periood-heledus seos rakendatud.</p></section>
+    </div>
   </div>
 
   <div class="part" id="part4">
-    <h2 class="rung">4. osa: Ia tüüpi supernoovad</h2>
+    <div class="part-head" id="p4Head">
+      <h2 class="rung">4. osa: Ia tüüpi supernoovad</h2>
+      <div class="tabs" role="tablist" id="p4Tabs" aria-label="4. osa">
+        <button type="button" role="tab" id="tabSnIntro" data-tab="snIntro" aria-controls="paneSnIntro" aria-selected="true">Sissejuhatus</button>
+        <button type="button" role="tab" id="tabSn" data-tab="supernovae" aria-controls="paneSn" aria-selected="false" tabindex="-1">Supernoovad</button>
+        <button type="button" role="tab" id="tabSnHub" data-tab="snHubble" aria-controls="paneSnHub" aria-selected="false" tabindex="-1">Hubble'i seadus</button>
+      </div>
+    </div>
+
+    <div role="tabpanel" class="pane" id="paneSnIntro" aria-labelledby="tabSnIntro">
     <p class="lede">Ia tüüpi <a href="https://et.wikipedia.org/wiki/Supernoova" target="_blank" rel="noopener">supernoova</a> on plahvatav <a href="https://et.wikipedia.org/wiki/Valge_k%C3%A4%C3%A4bus" target="_blank" rel="noopener">valge kääbus</a>. Kõik need plahvatused on maksimumis peaaegu ühesuguse heledusega, nii et supernoova sobib
       kauguse mõõtmiseks ja on nähtav ka väga kaugelt. Kõigepealt leia 3. osa galaktikate abil, kui hele on supernoova tegelikult, ja seejärel mõõda
       kaugete supernoovade abil <a href="https://et.wikipedia.org/wiki/Hubble'i_konstant" target="_blank" rel="noopener">Hubble'i konstant</a>. Nii kaugel ei sega galaktikate <a class="en" href="https://en.wikipedia.org/wiki/Peculiar_velocity" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">omaliikumine</a> enam palju.</p>
     <p class="fit" id="snInfo"></p>
 
+    <ol class="steps">
+      <li><span>Vali supernoovade heledus ja vajuta „Kasuta heledust“: galaktikate kaugused tulevad 3. osast. <a class="go" href="#p4Tabs" data-go="supernovae">Supernoovad →</a></span></li>
+      <li><span>Vaata tabelist, kui heledad on supernoovad 3. osa galaktikates. <a class="go" href="#p4Tabs" data-go="supernovae">Supernoovad →</a></span></li>
+      <li><span>Loe kaugete supernoovade kiiruse ja kauguse seosest Hubble'i konstant ja võrdle seda 3. osa ja Plancki satelliidi väärtusega. <a class="go" href="#p4Tabs" data-go="snHubble">Hubble'i seadus →</a></span></li>
+    </ol>
+    </div>
+
+    <div role="tabpanel" class="pane" id="paneSn" aria-labelledby="tabSn" hidden>
     <section class="card" id="snCalCard">
       <div class="card-head">
         <div>
@@ -694,10 +751,19 @@ footer a { color: inherit; }
           <tbody id="snBody"></tbody>
         </table>
       </div>
-      <div id="mb"></div>
+      <div class="pager" id="snPager">
+        <span id="snPageInfo"></span>
+        <button type="button" data-page="first" aria-label="Esimene lehekülg">« Esimene</button>
+        <button type="button" data-page="prev" aria-label="Eelmine lehekülg">‹ Eelmine</button>
+        <button type="button" data-page="next" aria-label="Järgmine lehekülg">Järgmine ›</button>
+        <button type="button" data-page="last" aria-label="Viimane lehekülg">Viimane »</button>
+      </div>
     </section>
+    <section class="card" id="snCalEmpty"><p class="empty">Supernoovade heledus ilmub, kui 3. osas on galaktikate kaugused leitud.</p></section>
+    </div>
 
-    <section class="card" id="snHubCard">
+    <div role="tabpanel" class="pane fit compact" id="paneSnHub" aria-labelledby="tabSnHub" hidden>
+    <section class="card fill" id="snHubCard">
       <div class="card-head">
         <div>
           <h2>Kaugete supernoovade kiirus ja kaugus</h2>
@@ -706,9 +772,13 @@ footer a { color: inherit; }
             Joon: v = H<sub>0</sub> · d.</p>
         </div>
       </div>
-      <div class="plot" id="snHub"></div>
-      <div id="snH0"></div>
+      <div class="plot-side">
+        <div class="plot" id="snHub"></div>
+        <div class="side" id="snH0"></div>
+      </div>
     </section>
+    <section class="card" id="snHubEmpty"><p class="empty">Kaugete supernoovade Hubble'i seadus ilmub, kui vahelehel „Supernoovad“ on heledus rakendatud.</p></section>
+    </div>
   </div>
 
   <div class="reset">
@@ -798,7 +868,7 @@ const ASYNC_LIMIT = 300;   // s; give up on an async job after this long
 const ZP = -0.017;   // mas, Gaia DR3 global parallax zero-point
 const SYS = 0.010;   // mas, systematic floor for a cluster-mean parallax
 const RUWE_MAX = 1.4; // astrometric quality cut applied in every query
-const PAGE_MIN = 10;   // data table rows per page at least; more when they fit the tab
+const PAGE_MIN = 10;   // table rows per page at least; more when they fit the tab
 const PC_LY = 3.261563777;
 const PC_KM = 3.0856775814913673e13;
 const PC_AU = 206264.80624709636;
@@ -932,6 +1002,7 @@ const S = {
   cmdRemoved: [],     // star indices of the removed-star trace in the HR diagram
   idx: null,          // combined selection (sorted indices) or null
   stats: null,
+  pages: { gal: { page: 0, size: PAGE_MIN }, sn: { page: 0, size: PAGE_MIN } },   // galaxy and supernova tables
   pageSize: PAGE_MIN, // data table rows per page, see fitPageSize
   distOn: false,      // cluster distance shown after "Arvuta kaugus"; reset with each new dataset
   rev: 0,             // uirevision, bumped per dataset
@@ -1793,13 +1864,15 @@ function drawHubble() {
   const used = ready && S.calibUsed;
   $("calibPrompt").hidden = $("calibRow").hidden = $("galWrap").hidden = $("galNote").hidden = !ready;
   for (const id of ["hubCard", "snCalCard", "snHubCard"]) $(id).hidden = !used;
+  $("hubEmpty").hidden = $("snCalEmpty").hidden = $("snHubEmpty").hidden = !!used;   // drawSupernovae sets snHubEmpty
+  const [first, last] = pageRange("gal", GALAXIES.length);
   if (!used) {
     S.snUsed = null;
     $("snInfo").textContent = "See osa avaneb, kui 3. osas on galaktikate kaugused leitud.";
   }
   if (ready && !used) {
     $("calibInfo").textContent = "";
-    $("galBody").innerHTML = GALAXIES.map((g) => `<tr><td>${esc(g.name)}</td><td>SN ${esc(g.sn)}</td><td>${fmt(g.c.length / 4)}</td>` +
+    $("galBody").innerHTML = GALAXIES.slice(first, last).map((g) => `<tr><td>${esc(g.name)}</td><td>SN ${esc(g.sn)}</td><td>${fmt(g.c.length / 4)}</td>` +
       `<td class="muted">—</td><td class="muted">—</td><td>${fmtN(C_KMS * g.z, 0)}</td><td class="muted">—</td>` +
       `<td><input type="checkbox" data-use="${esc(g.name)}"${S.galOff.has(g.name) ? "" : " checked"} aria-label="${esc(g.name)} sobitusse"></td></tr>`).join("");
     return;
@@ -1818,7 +1891,7 @@ function drawHubble() {
 
   const gals = GALAXIES.map((g) => galaxyFit(g, cal));
   // a clicked galaxy opens a row with its Cepheid plot right below it; clicking again closes it
-  $("galBody").innerHTML = gals.map((g) => {
+  $("galBody").innerHTML = gals.slice(first, last).map((g) => {
     const [dV, dE] = valErr(g.d, g.eD);
     const open = g.name === S.gal;
     return `<tr data-gal="${esc(g.name)}" aria-expanded="${open}"${open ? ' class="cur"' : ""}><td>${esc(g.name)}</td><td>SN ${esc(g.sn)}</td><td>${fmt(g.ceph.length)}</td>` +
@@ -1870,6 +1943,19 @@ function drawHubble() {
     Lähedaste galaktikate omaliikumised (mõnisada km/s) tekitavad hajuvust. Hubble'i aeg on ligikaudne Universumi vanus.</p>`;
 }
 
+// rows first..last of a paged table (S.pages[key]) with n rows; updates its pager
+function pageRange(key, n) {
+  const p = S.pages[key];
+  const pages = Math.ceil(n / p.size);
+  p.page = Math.min(Math.max(p.page, 0), pages - 1);
+  const first = p.page * p.size, last = Math.min(first + p.size, n);
+  $(`${key}PageInfo`).textContent = `Read ${fmt(first + 1)}–${fmt(last)} / ${fmt(n)} · lehekülg ${fmt(p.page + 1)} / ${fmt(pages)}`;
+  for (const b of $(`${key}Pager`).querySelectorAll("button")) {
+    b.disabled = ["first", "prev"].includes(b.dataset.page) ? p.page === 0 : p.page >= pages - 1;
+  }
+  return [first, last];
+}
+
 /* ---------- Part 4: type Ia supernovae ---------- */
 
 // absolute peak magnitude of the supernovae from the selected Cepheid galaxies, then H0 from the
@@ -1882,10 +1968,12 @@ function drawSupernovae(gals) {
   const used = gals.filter((g) => !S.galOff.has(g.name));
   const dash = `<td class="muted">—</td>`;
   const applied = !!S.snUsed;
-  $("snBody").innerHTML = gals.map((g) =>
+  const [first, last] = pageRange("sn", gals.length);
+  $("snBody").innerHTML = gals.slice(first, last).map((g) =>
     `<tr${applied && !S.galOff.has(g.name) ? ' class="sel"' : ""}><td>${esc(g.name)}</td><td>SN ${esc(g.sn)}</td><td>${fmtN(g.mb, 2)}</td>` +
     (applied ? `<td>${fmtN(g.mu, 2)}</td><td>${fmtN(g.mb - g.mu, 2)}</td>` : dash + dash) + `</tr>`).join("");
   $("snHubCard").hidden = !applied;
+  $("snHubEmpty").hidden = applied;
   if (!applied) {
     $("mb").innerHTML = "";
     return;
@@ -2016,15 +2104,30 @@ function drawTable() {
 
 // as many table rows per page as fit the table tab; the first row shown stays on the page
 function fitPageSize() {
-  const pane = $("paneTable"), card = $("dataCard"), row = $("dataBody").rows[0];
-  if (pane.hidden || card.hidden || !row) return;
+  const size = rowsThatFit($("dataBody"));
+  if (size && size !== S.pageSize) {
+    S.page = Math.floor((S.page * S.pageSize) / size);
+    S.pageSize = size;
+    drawTable();
+  }
+  let redraw = false;
+  for (const [key, body] of [["gal", "galBody"], ["sn", "snBody"]]) {
+    const p = S.pages[key], size = rowsThatFit($(body));
+    if (!size || size === p.size) continue;
+    p.page = Math.floor((p.page * p.size) / size);
+    p.size = size;
+    redraw = true;
+  }
+  if (redraw) drawHubble();   // draws the supernova table too
+}
+// rows of a table that fit the window height of its tab beside the rest of its card (at least
+// PAGE_MIN), or null while the tab is hidden; an opened galaxy row does not count
+function rowsThatFit(body) {
+  const pane = body.closest(".pane"), card = body.closest(".card"), row = body.querySelector("tr:not(.gal-detail)");
+  if (pane.hidden || !row || !row.offsetHeight) return null;
   const room = parseFloat(getComputedStyle(pane).minHeight) - parseFloat(getComputedStyle(pane).paddingTop)
-    - (card.offsetHeight - $("dataBody").offsetHeight);
-  const size = Math.max(PAGE_MIN, Math.floor(room / row.offsetHeight));
-  if (size === S.pageSize) return;
-  S.page = Math.floor((S.page * S.pageSize) / size);
-  S.pageSize = size;
-  drawTable();
+    - (card.offsetHeight - body.offsetHeight);
+  return Math.max(PAGE_MIN, Math.floor(room / row.offsetHeight));
 }
 
 // row order of the data table for the chosen column and direction; missing values go last
@@ -2343,7 +2446,7 @@ function showTab(name) {
     $(b.getAttribute("aria-controls")).hidden = !on;
   }
   for (const el of $(tab.getAttribute("aria-controls")).querySelectorAll(".plot")) resizePlot(el);
-  if (name === "table") fitPageSize();
+  fitPageSize();
   return tab;
 }
 // a tab picked by the user is scrolled into view with its part title when it does not fit below them
@@ -2443,6 +2546,13 @@ $("source").addEventListener("change", () => {
 // the menu only chooses; "Kasuta seost" applies the chosen relation
 $("calib").addEventListener("change", () => { S.calib = $("calib").value; });
 $("calibApply").addEventListener("click", () => { S.calibUsed = S.calib; drawHubble(); });
+for (const key of ["gal", "sn"]) $(`${key}Pager`).addEventListener("click", (e) => {
+  const p = S.pages[key];
+  const step = { first: -Infinity, prev: -1, next: 1, last: Infinity }[e.target.dataset.page];
+  if (!step) return;
+  p.page = isFinite(step) ? p.page + step : step > 0 ? Infinity : 0;   // pageRange clamps it
+  drawHubble();
+});
 $("galBody").addEventListener("change", (e) => {
   const name = e.target.dataset.use;
   if (!name) return;

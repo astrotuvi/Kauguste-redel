@@ -85,7 +85,11 @@ for comparison.
 
 ### Hubble law
 
-The third part uses 29 type Ia supernova host galaxies with Cepheids
+The third part has three tabs: **Sissejuhatus** (the steps), **Galaktikad**
+(the choice of relation and the galaxy table, with as many rows per page as
+fit the window) and **Hubble'i seadus** (the velocity–distance plot and H₀).
+
+It uses 29 type Ia supernova host galaxies with Cepheids
 observed by *HST*. It stays hidden until you have fitted your own W_H
 period-luminosity relation in the second part, which takes at least two
 stored cluster Cepheids. Choose a relation in the menu next to **Kasuta
@@ -104,7 +108,13 @@ time 1/H₀. Galaxies can be left out of the fit with the checkboxes.
 
 ### Type Ia supernovae
 
-The fourth part appears once a relation has been applied in the third. At
+The fourth part has three tabs like the third: **Sissejuhatus** (the
+steps), **Supernoovad** (the choice of luminosity and the paged supernova
+table) and **Hubble'i seadus** (the velocity–distance plot of the distant
+supernovae, with H₀ to the right of it). In both parts the H₀ and Hubble time
+tiles and the explanation sit in a column to the right of the plot.
+
+Its content appears once a relation has been applied in the third part. At
 first it lists only the supernova peak magnitudes. Choose the supernova
 luminosity in the menu next to **Kasuta heledust** and press the button:
 - your own M_B, the mean over the galaxies of the third part;
