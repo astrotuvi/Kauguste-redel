@@ -92,16 +92,33 @@ h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 10px; font-weight: 650; le
 .byline { color: var(--text-2); font-size: 0.9rem; margin: -4px 0 16px; }
 .intro a, .lede a { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
 .intro a:hover, .lede a:hover { color: var(--sel); text-decoration-style: solid; }
-.intro { color: var(--text-1); margin: 0 0 28px; max-width: 75ch; }
+.intro { color: var(--text-1); margin: 0; max-width: 75ch; }
+/* the introduction with a three-rung ladder to the right of it */
+.intro-row { display: grid; grid-template-columns: minmax(0, 75ch) 320px; gap: 16px 40px; align-items: start; margin: 0 0 28px; }
+.ladder-art { margin: 0; }
+.ladder-art svg { display: block; width: 100%; height: auto; font-family: inherit; }
+.ladder-art .rail { stroke: var(--text-3); stroke-width: 5; stroke-linecap: round; }
+.ladder-art .rung { stroke-width: 7; stroke-linecap: round; }
+.ladder-art .rung.r1, .ladder-art .r1 .fill { stroke: var(--sel); fill: var(--sel); }
+.ladder-art .rung.r2, .ladder-art .r2 .fill { stroke: var(--cep); fill: var(--cep); }
+.ladder-art .rung.r3, .ladder-art .r3 .fill { stroke: var(--accent); fill: var(--accent); }
+.ladder-art .orbit, .ladder-art .sight { fill: none; stroke: var(--text-3); stroke-width: 1.2; }
+.ladder-art .sight { stroke-dasharray: 3 2; }
+.ladder-art .earth { fill: var(--text-2); }
+.ladder-art .ring { fill: none; stroke: var(--cep); stroke-width: 1.3; opacity: 0.5; }
+.ladder-art .name { fill: var(--text-1); font-size: 18px; font-weight: 650; }
+.ladder-art .sub { fill: var(--text-2); font-size: 14px; }
 h2.rung { font-size: 1.3rem; margin: 0 0 4px; color: var(--text-2); }
 .lede { color: var(--text-2); margin: 0 0 20px; max-width: 70ch; }
 h2 { font-size: 0.95rem; margin: 0; font-weight: 600; }
 .hint { color: var(--text-3); font-size: 0.82rem; margin: 2px 0 0; }
 
 /* Distance ladder schematic */
-.ladder { margin: 0 0 44px; }
-.ladder[hidden] + .toc { margin-top: 30px; }
-.ladder-toggle { margin: -16px 0 14px; font-size: 0.92rem; }
+.ladder { margin: 0 0 28px; }
+.parallax-link { margin: 0 0 12px; font-size: 0.92rem; }
+.parallax-link a { color: var(--sel); text-decoration: none; }
+.parallax-link a:hover { text-decoration: underline; }
+.ladder-toggle { margin: 16px 0 0; font-size: 0.92rem; }
 .ladder-toggle a { color: var(--sel); text-decoration: none; }
 .ladder-toggle a:hover { text-decoration: underline; }
 .ladder-wrap { overflow-x: auto; }
@@ -341,6 +358,8 @@ footer a { color: inherit; }
 .reset { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 36px; font-size: 0.85rem; color: var(--text-2); }
 
 @media (max-width: 900px) {
+  .intro-row { grid-template-columns: minmax(0, 1fr); }
+  .ladder-art { max-width: 320px; }
   .tiles.four { grid-template-columns: repeat(2, 1fr); }
   .plot { height: 340px; }
   .pane.fit { height: auto; }
@@ -364,13 +383,35 @@ footer a { color: inherit; }
   <div class="home" id="home">
   <h1>Kosmiliste kauguste redel</h1>
   <p class="byline">Taavi Tuvikene<br>TÜ Tartu observatoorium</p>
-  <p class="intro">Kaugusi kosmoses ei saa mõõta ühe meetodiga. Lähedaste tähtede kauguse annab otse <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaks</a> — tähe näiv nihe taevas,
-    mis tekib Maa liikumisest ümber Päikese (vaata <a href="parallaks.html">interaktiivset joonist</a>). Kaugemal on parallaks liiga väike ja appi tulevad <i><a class="en" href="https://en.wikipedia.org/wiki/Cosmic_distance_ladder#Standard_candles" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">standardküünlad</a></i>: objektid, mille
+  <div class="intro-row">
+  <div>
+    <p class="intro">Kaugusi kosmoses ei saa mõõta ühe meetodiga. Lähedaste tähtede kauguse annab otse <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaks</a> — tähe näiv nihe taevas,
+    mis tekib Maa liikumisest ümber Päikese. Kaugemal on parallaks liiga väike ja appi tulevad <i><a class="en" href="https://en.wikipedia.org/wiki/Cosmic_distance_ladder#Standard_candles" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">standardküünlad</a></i>: objektid, mille
     tegelikku heledust me teame, nii et nende näiv heledus annab kauguse. Iga uus meetod kalibreeritakse eelmise abil, nii et meetodid
     moodustavad <a class="en" href="https://en.wikipedia.org/wiki/Cosmic_distance_ladder" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">redeli</a>, mille iga pulk ulatub kaugemale. Sellel lehel ronid redelil neli pulka: <a href="https://et.wikipedia.org/wiki/Hajusparv" target="_blank" rel="noopener">hajusparvede</a> kaugustest <a href="https://et.wikipedia.org/wiki/Gaia_(kosmoseteleskoop)" target="_blank" rel="noopener">Gaia</a> parallaksidega
     (1. osa) <a class="en" href="https://en.wikipedia.org/wiki/Cepheid_variable" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">tsefeiidide</a> <a class="en" href="https://en.wikipedia.org/wiki/Period-luminosity_relation" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">periood-heledus sõltuvuseni</a> (2. osa), sealt tsefeiididega <a href="https://et.wikipedia.org/wiki/Galaktika" target="_blank" rel="noopener">galaktikate</a> kaugusteni ja <a href="https://et.wikipedia.org/wiki/Hubble'i_seadus" target="_blank" rel="noopener">Hubble'i seaduseni</a> (3. osa)
     ning lõpuks Ia tüüpi <a href="https://et.wikipedia.org/wiki/Supernoova" target="_blank" rel="noopener">supernoovadeni</a>, mis näitavad <a href="https://et.wikipedia.org/wiki/Universumi_paisumine" target="_blank" rel="noopener">Universumi paisumist</a> sadade <a href="https://et.wikipedia.org/wiki/Parsek" target="_blank" rel="noopener">megaparsekite</a> kaugusel (4. osa).</p>
-  <p class="ladder-toggle"><a href="#ladder" id="ladderToggle" role="button" aria-controls="ladder" aria-expanded="false">▸ Näita kauguste redeli skeemi</a></p>
+    <p class="ladder-toggle"><a href="#ladder" id="ladderToggle" role="button" aria-controls="ladder" aria-expanded="false">▸ Näita kauguste redeli skeemi</a></p>
+  </div>
+    <figure class="ladder-art" aria-labelledby="artTitle">
+      <svg viewBox="0 0 345 274" role="img" aria-labelledby="artTitle artDesc">
+      <title id="artTitle">Kauguste redeli kolm pulka</title>
+      <desc id="artDesc">Redel, mille alumine pulk on parallaks, keskmine tsefeiidid ja ülemine Ia tüüpi supernoovad; iga pulk ulatub kaugemale.</desc>
+      <line class="rail" x1="52.0" y1="262" x2="74.0" y2="12"/>
+      <line class="rail" x1="152.0" y1="262" x2="130.0" y2="12"/>
+      <line class="rung r1" x1="56.4" y1="212" x2="147.6" y2="212"/>
+      <text class="name" x="172" y="210">Parallaks</text><text class="sub" x="172" y="229">1. osa · kuni ~5 kpc</text>
+      <line class="rung r2" x1="63.0" y1="137" x2="141.0" y2="137"/>
+      <text class="name" x="172" y="135">Tsefeiidid</text><text class="sub" x="172" y="154">2.–3. osa · kuni ~40 Mpc</text>
+      <line class="rung r3" x1="69.6" y1="62" x2="134.4" y2="62"/>
+      <text class="name" x="172" y="60">Ia supernoovad</text><text class="sub" x="172" y="79">4. osa · üle 1 Gpc</text>
+      <g class="icon r1"><ellipse class="orbit" cx="22" cy="224" rx="14" ry="5"/><circle class="fill" cx="22" cy="224" r="3.5"/>
+        <path class="sight" d="M8 224 L22 194 L36 224"/><circle class="fill" cx="22" cy="194" r="3"/><circle class="earth" cx="8" cy="224" r="2.5"/><circle class="earth" cx="36" cy="224" r="2.5"/></g>
+      <g class="icon r2"><circle class="ring" cx="22" cy="137" r="13"/><circle class="ring" cx="22" cy="137" r="9"/><circle class="fill" cx="22" cy="137" r="5"/></g>
+      <g class="icon r3"><polygon class="fill" points="22.0,49.0 23.9,57.4 31.2,52.8 26.6,60.1 35.0,62.0 26.6,63.9 31.2,71.2 23.9,66.6 22.0,75.0 20.1,66.6 12.8,71.2 17.4,63.9 9.0,62.0 17.4,60.1 12.8,52.8 20.1,57.4"/></g>
+      </svg>
+    </figure>
+  </div>
   <figure class="card ladder" id="ladder" hidden>
     <div class="ladder-wrap">
       <svg viewBox="0 52 1000 310" role="img" aria-labelledby="ladderTitle ladderDesc">
@@ -410,6 +451,7 @@ footer a { color: inherit; }
   </figure>
   <nav class="toc" aria-labelledby="tocTitle">
     <h2 id="tocTitle">Sisukord</h2>
+    <p class="parallax-link"><a href="parallaks.html">Parallaksi meetodi interaktiivne joonis →</a></p>
     <ol>
       <li><a class="toc-part" href="#osa-1">1. osa: Hajusparvede kaugused Gaia parallaksidest</a>
         <p>Mõõda hajusparve kaugus selle tähtede Gaia parallaksidest.</p>

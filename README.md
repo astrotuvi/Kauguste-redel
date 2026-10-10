@@ -143,7 +143,7 @@ parameter q₀ = −0.55 as in SH0ES. Without it, H₀ comes out about 3 % low.
 
 ### Parallax demonstration
 
-`parallaks.html`, linked from the introduction, shows the parallax method with
+`parallaks.html`, linked at the top of the table of contents, shows the parallax method with
 an interactive schematic. The left view shows the Sun, the Earth's orbit, the
 star and a plane of distant quasars in 3D; the line from the Earth through the
 star meets the quasar plane at a point that traces an ellipse during the year.
