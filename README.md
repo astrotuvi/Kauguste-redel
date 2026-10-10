@@ -23,6 +23,13 @@ Open `index.html` in a browser. Nothing needs to be built or installed. The
 page needs an internet connection, because it loads Plotly from a CDN and
 queries the data services directly from the browser.
 
+The page opens on the introduction and a table of contents. Clicking a part
+or one of its tabs there shows that part on its own, filling the window, so
+the page does not scroll. Above each part's title are links to the table of
+contents and to the other parts, and below the title are its tabs. The
+address keeps the part or tab (`#osa-2`, `#plots`), so the browser's back
+button and reloading work.
+
 1. Enter a cluster name (e.g. `M67`, `Pleiades`, `NGC 2516`) or coordinates
    in the left box, or decimal-degree coordinates (`132.85 11.81`) in the
    right box. Set the search radius and the G magnitude limit, then press

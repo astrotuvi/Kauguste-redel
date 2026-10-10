@@ -100,7 +100,7 @@ h2 { font-size: 0.95rem; margin: 0; font-weight: 600; }
 
 /* Distance ladder schematic */
 .ladder { margin: 0 0 44px; }
-.ladder[hidden] + .part-head { margin-top: 36px; }
+.ladder[hidden] + .toc { margin-top: 30px; }
 .ladder-toggle { margin: -16px 0 14px; font-size: 0.92rem; }
 .ladder-toggle a { color: var(--sel); text-decoration: none; }
 .ladder-toggle a:hover { text-decoration: underline; }
@@ -189,10 +189,11 @@ ol.steps li > span { padding-top: 4px; }
 .tabs button[aria-selected="true"] { color: var(--text-1); border-bottom-color: var(--btn); }
 /* Every tab is at least one window high (less the tab bar), so switching tabs does not move the page.
    The plot tab is exactly that high, and its four plots on a 2 × 2 grid share the height. */
-/* --head is the height of the part's title and tab bar, measured in the script and set on its tabs */
+/* --head is where the part's links, title and tab bar end on the page, measured in the script and set
+   on its tabs, so that a tab fills the rest of the window */
 .part-head .tabs { margin-bottom: 0; }
-.pane { padding-top: 14px; min-height: max(460px, calc(100dvh - var(--head, 90px))); }
-.pane.fit { height: max(460px, calc(100dvh - var(--head, 90px))); }
+.pane { padding: 14px 0 12px; min-height: max(460px, calc(100dvh - var(--head, 120px))); }
+.pane.fit { height: max(460px, calc(100dvh - var(--head, 120px))); }
 /* a Hubble diagram with its results in a column to the right */
 .plot-side { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; margin-top: 6px; }
 .plot-side .plot { height: auto; min-height: 0; margin-top: 0; }
@@ -287,8 +288,23 @@ table.data-table tr.hl td:first-child { box-shadow: inset 3px 0 0 var(--accent);
 .pager button:disabled { cursor: default; opacity: 0.4; }
 
 /* Part 2: Cepheids */
-.part { margin-top: 44px; }
-.part .card + .card { margin-top: 14px; }
+/* The page shows either the home view (introduction and contents) or one part, which fills the window. */
+body.in-part main { padding-top: 10px; padding-bottom: 0; }
+.part-nav { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; margin: 0 0 8px; font-size: 0.88rem; }
+.part-nav a { color: var(--text-2); text-decoration: none; }
+.part-nav a:hover { color: var(--sel); }
+.part-nav a[aria-current="page"] { color: var(--text-1); font-weight: 600; }
+.part-nav .to-toc { margin-right: 6px; }
+/* Table of contents */
+.toc h2 { font-size: 1.3rem; color: var(--text-2); margin: 0 0 12px; }
+.toc ol { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.toc li { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.toc .toc-part { display: block; color: var(--text-1); font-size: 1.05rem; font-weight: 600; text-decoration: none; }
+.toc .toc-part:hover { color: var(--sel); }
+.toc li p { margin: 4px 0 10px; color: var(--text-2); font-size: 0.9rem; }
+.toc .toc-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.toc .toc-tabs a { font-size: 0.82rem; padding: 3px 10px; border-radius: 999px; background: var(--chip); color: var(--text-2); text-decoration: none; }
+.toc .toc-tabs a:hover { color: var(--text-1); }
 table.data-table td.act { white-space: nowrap; }
 table.data-table td.act button { padding: 3px 10px; font-size: 0.8rem; margin-left: 4px; }
 table.data-table td.muted { color: var(--text-3); }
@@ -331,6 +347,7 @@ footer a { color: inherit; }
   .plot-side { grid-template-columns: minmax(0, 1fr); }
   .plot-side .side .tiles { grid-template-columns: 1fr 1fr; }
   .tiles { grid-template-columns: 1fr; }
+  .toc ol { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
   .tiles.four { grid-template-columns: 1fr; }
@@ -340,6 +357,7 @@ footer a { color: inherit; }
 </head>
 <body>
 <main>
+  <div class="home" id="home">
   <h1>Kosmiliste kauguste redel</h1>
   <p class="byline">Taavi Tuvikene<br>TÜ Tartu observatoorium</p>
   <p class="intro">Kaugusi kosmoses ei saa mõõta ühe meetodiga. Lähedaste tähtede kauguse annab otse <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaks</a> — tähe näiv nihe taevas,
@@ -386,6 +404,26 @@ footer a { color: inherit; }
     <figcaption class="hint">Iga meetod ulatub kaugemale kui eelmine ja kalibreeritakse eelmise abil seal, kus nende ulatused kattuvad. Kauguste skaala on logaritmiline:
       iga jaotis on eelmisest kümme korda kaugemal. Supernoovade riba kriipsjoonega osa jääb väljapoole selle lehe andmeid (kuni ~250 Mpc).</figcaption>
   </figure>
+  <nav class="toc" aria-labelledby="tocTitle">
+    <h2 id="tocTitle">Sisukord</h2>
+    <ol>
+      <li><a class="toc-part" href="#osa-1">1. osa: Hajusparvede kaugused Gaia parallaksidest</a>
+        <p>Mõõda hajusparve kaugus selle tähtede Gaia parallaksidest.</p>
+        <div class="toc-tabs"><a href="#intro">Sissejuhatus</a><a href="#query">Päring</a><a href="#table">Tabel</a><a href="#plots">Joonised</a><a href="#dist">Kaugus</a></div></li>
+      <li><a class="toc-part" href="#osa-2">2. osa: Tsefeiidide periood-heledus sõltuvus</a>
+        <p>Parvede kaugustest leia tsefeiidide heledus ja periood-heledus seos.</p>
+        <div class="toc-tabs"><a href="#cepIntro">Sissejuhatus</a><a href="#cepCluster">Parvede tsefeiidid</a><a href="#cepField">Väljatsefeiidid</a><a href="#cepPL">Periood-heledus</a></div></li>
+      <li><a class="toc-part" href="#osa-3">3. osa: Hubble'i seadus</a>
+        <p>Tsefeiididest leia galaktikate kaugused ja Hubble'i konstant.</p>
+        <div class="toc-tabs"><a href="#hubIntro">Sissejuhatus</a><a href="#galaxies">Galaktikad</a><a href="#hubble">Hubble'i seadus</a></div></li>
+      <li><a class="toc-part" href="#osa-4">4. osa: Ia tüüpi supernoovad</a>
+        <p>Supernoovadega mõõda Universumi paisumist sadade megaparsekite kaugusel.</p>
+        <div class="toc-tabs"><a href="#snIntro">Sissejuhatus</a><a href="#supernovae">Supernoovad</a><a href="#snHubble">Hubble'i seadus</a></div></li>
+    </ol>
+  </nav>
+  </div>
+
+  <div class="part" id="part1" data-short="Parvede kaugused" hidden>
   <div class="part-head" id="p1Head">
     <h2 class="rung">1. osa: Hajusparvede kaugused Gaia parallaksidest</h2>
     <div class="tabs" role="tablist" id="p1Tabs" aria-label="1. osa">
@@ -401,11 +439,11 @@ footer a { color: inherit; }
   <p class="lede">Päri <a href="https://et.wikipedia.org/wiki/Gaia_(kosmoseteleskoop)" target="_blank" rel="noopener">Gaia</a> DR3 tähed <a href="https://et.wikipedia.org/wiki/Hajusparv" target="_blank" rel="noopener">parve</a> ümbrusest, vali välja koos <a class="en" href="https://en.wikipedia.org/wiki/Proper_motion" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">üle taeva liikuvad</a> tähed ja keskmista nende <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaksid</a>, et leida parve kaugus.</p>
 
   <ol class="steps">
-    <li><span>Tee päring parve keskpunkti ümbert. <a class="go" href="#p1Tabs" data-go="query">Päring →</a></span></li>
-    <li><span>Päringuga saadud andmeid saad vaadata tabelist. <a class="go" href="#p1Tabs" data-go="table">Tabel →</a></span></li>
-    <li><span>Märgi lassoga omaliikumiste joonisel koos liikuvate tähtede tihe kogum. <a class="go" href="#p1Tabs" data-go="plots">Joonised →</a></span></li>
-    <li><span>Kontrolli värvus-heledusdiagrammi: parve liikmed moodustavad selge peajada. <a class="go" href="#p1Tabs" data-go="plots">Joonised →</a></span></li>
-    <li><span>Loe keskmine parallaks ja kaugus. <a class="go" href="#p1Tabs" data-go="dist">Kaugus →</a></span></li>
+    <li><span>Tee päring parve keskpunkti ümbert. <a class="go" href="#query" data-go="query">Päring →</a></span></li>
+    <li><span>Päringuga saadud andmeid saad vaadata tabelist. <a class="go" href="#table" data-go="table">Tabel →</a></span></li>
+    <li><span>Märgi lassoga omaliikumiste joonisel koos liikuvate tähtede tihe kogum. <a class="go" href="#plots" data-go="plots">Joonised →</a></span></li>
+    <li><span>Kontrolli värvus-heledusdiagrammi: parve liikmed moodustavad selge peajada. <a class="go" href="#plots" data-go="plots">Joonised →</a></span></li>
+    <li><span>Loe keskmine parallaks ja kaugus. <a class="go" href="#dist" data-go="dist">Kaugus →</a></span></li>
   </ol>
   <button type="button" class="primary go-btn" data-go="query">Alusta päringuga</button>
   </div>
@@ -543,7 +581,9 @@ footer a { color: inherit; }
   </section>
   </div>
 
-  <div class="part" id="part2">
+  </div>
+
+  <div class="part" id="part2" data-short="Tsefeiidid" hidden>
     <div class="part-head" id="p2Head">
       <h2 class="rung">2. osa: Tsefeiidide periood-heledus sõltuvus</h2>
       <div class="tabs" role="tablist" id="p2Tabs" aria-label="2. osa">
@@ -555,14 +595,14 @@ footer a { color: inherit; }
     </div>
 
     <div role="tabpanel" class="pane" id="paneCepIntro" aria-labelledby="tabCepIntro">
-    <p class="lede">Need <a href="https://et.wikipedia.org/wiki/Hajusparv" target="_blank" rel="noopener">hajusparved</a> sisaldavad <a class="en" href="https://en.wikipedia.org/wiki/Classical_Cepheid_variable" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">klassikalisi tsefeiide</a>. Mõõda iga parve kaugus ülal (nupp „Mõõda“ täidab päringu vormi) ja salvesta see.
+    <p class="lede">Need <a href="https://et.wikipedia.org/wiki/Hajusparv" target="_blank" rel="noopener">hajusparved</a> sisaldavad <a class="en" href="https://en.wikipedia.org/wiki/Classical_Cepheid_variable" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">klassikalisi tsefeiide</a>. Mõõda iga parve kaugus 1. osas (nupp „Mõõda“ täidab päringu vormi) ja salvesta see.
       Parve kaugusest saab tsefeiidi <a href="https://et.wikipedia.org/wiki/Absoluutne_t%C3%A4hesuurus" target="_blank" rel="noopener">absoluutse heleduse</a> ning mitme parve põhjal tekib <a class="en" href="https://en.wikipedia.org/wiki/Period-luminosity_relation" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">periood-heledus sõltuvus</a>.</p>
 
     <ol class="steps">
-      <li><span>Vali parv ja vajuta „Mõõda“: see täidab 1. osa päringu vormi. <a class="go" href="#p2Tabs" data-go="cepCluster">Parvede tsefeiidid →</a></span></li>
-      <li><span>Mõõda 1. osas parve kaugus ja salvesta see vahelehel „Kaugus“. Iga salvestatud parv lisab oma tsefeiidid seosesse.</span></li>
-      <li><span>Parvedes on pikaperioodilisi tsefeiide vähe. Soovi korral lisa seosesse väljatsefeiide, mille kauguse annab nende enda Gaia parallaks. <a class="go" href="#p2Tabs" data-go="cepField">Väljatsefeiidid →</a></span></li>
-      <li><span>Vaata periood-heledus sõltuvust ja sinu sobitatud sirget. <a class="go" href="#p2Tabs" data-go="cepPL">Periood-heledus →</a></span></li>
+      <li><span>Vali parv ja vajuta „Mõõda“: see täidab 1. osa päringu vormi. <a class="go" href="#cepCluster" data-go="cepCluster">Parvede tsefeiidid →</a></span></li>
+      <li><span>Mõõda 1. osas parve kaugus ja salvesta see vahelehel „Kaugus“. Iga salvestatud parv lisab oma tsefeiidid seosesse. <a class="go" href="#dist" data-go="dist">1. osa: Kaugus →</a></span></li>
+      <li><span>Parvedes on pikaperioodilisi tsefeiide vähe. Soovi korral lisa seosesse väljatsefeiide, mille kauguse annab nende enda Gaia parallaks. <a class="go" href="#cepField" data-go="cepField">Väljatsefeiidid →</a></span></li>
+      <li><span>Vaata periood-heledus sõltuvust ja sinu sobitatud sirget. <a class="go" href="#cepPL" data-go="cepPL">Periood-heledus →</a></span></li>
     </ol>
     <p class="hint">Periood: Gaia DR3. W<sub>H</sub> = F160W − 0,386 (F555W − F814W) on Hubble'i kosmoseteleskoobi mõõtmistest leitud Wesenheiti tähesuurus,
       mis ei sõltu tähtedevahelisest tolmust. M<sub>H</sub><sup>W</sup> on sama suurus absoluutsena.</p>
@@ -624,7 +664,7 @@ footer a { color: inherit; }
     </div>
   </div>
 
-  <div class="part" id="part3">
+  <div class="part" id="part3" data-short="Hubble'i seadus" hidden>
     <div class="part-head" id="p3Head">
       <h2 class="rung">3. osa: Hubble'i seadus</h2>
       <div class="tabs" role="tablist" id="p3Tabs" aria-label="3. osa">
@@ -639,10 +679,10 @@ footer a { color: inherit; }
       tähesuuruse</a> ning võrdlus <a href="https://et.wikipedia.org/wiki/T%C3%A4hesuurus" target="_blank" rel="noopener">näiva tähesuurusega</a> galaktika kauguse. Koos galaktika eemaldumiskiirusega (<a href="https://et.wikipedia.org/wiki/Punanihe" target="_blank" rel="noopener">punanihkest</a>) annab see <a href="https://et.wikipedia.org/wiki/Hubble'i_konstant" target="_blank" rel="noopener">Hubble'i konstandi</a>.</p>
 
     <ol class="steps">
-      <li><span>Vali periood-heledus seos ja vajuta „Kasuta seost“, et leida galaktikate kaugused. <a class="go" href="#p3Tabs" data-go="galaxies">Galaktikad →</a></span></li>
-      <li><span>Vaata galaktikate kaugusi tabelis. Klõps galaktika real näitab selle tsefeiide. <a class="go" href="#p3Tabs" data-go="galaxies">Galaktikad →</a></span></li>
-      <li><span>Vali, millised galaktikad lähevad Hubble'i seaduse sobitusse. <a class="go" href="#p3Tabs" data-go="galaxies">Galaktikad →</a></span></li>
-      <li><span>Loe kiiruse ja kauguse seosest Hubble'i konstant H<sub>0</sub>. <a class="go" href="#p3Tabs" data-go="hubble">Hubble'i seadus →</a></span></li>
+      <li><span>Vali periood-heledus seos ja vajuta „Kasuta seost“, et leida galaktikate kaugused. <a class="go" href="#galaxies" data-go="galaxies">Galaktikad →</a></span></li>
+      <li><span>Vaata galaktikate kaugusi tabelis. Klõps galaktika real näitab selle tsefeiide. <a class="go" href="#galaxies" data-go="galaxies">Galaktikad →</a></span></li>
+      <li><span>Vali, millised galaktikad lähevad Hubble'i seaduse sobitusse. <a class="go" href="#galaxies" data-go="galaxies">Galaktikad →</a></span></li>
+      <li><span>Loe kiiruse ja kauguse seosest Hubble'i konstant H<sub>0</sub>. <a class="go" href="#hubble" data-go="hubble">Hubble'i seadus →</a></span></li>
     </ol>
     <p class="hint">Nendes 29 galaktikas on Hubble'i kosmoseteleskoop mõõtnud kokku üle 2000 tsefeiidi.</p>
     </div>
@@ -703,7 +743,7 @@ footer a { color: inherit; }
     </div>
   </div>
 
-  <div class="part" id="part4">
+  <div class="part" id="part4" data-short="Supernoovad" hidden>
     <div class="part-head" id="p4Head">
       <h2 class="rung">4. osa: Ia tüüpi supernoovad</h2>
       <div class="tabs" role="tablist" id="p4Tabs" aria-label="4. osa">
@@ -720,9 +760,9 @@ footer a { color: inherit; }
     <p class="fit" id="snInfo"></p>
 
     <ol class="steps">
-      <li><span>Vali supernoovade heledus ja vajuta „Kasuta heledust“: galaktikate kaugused tulevad 3. osast. <a class="go" href="#p4Tabs" data-go="supernovae">Supernoovad →</a></span></li>
-      <li><span>Vaata tabelist, kui heledad on supernoovad 3. osa galaktikates. <a class="go" href="#p4Tabs" data-go="supernovae">Supernoovad →</a></span></li>
-      <li><span>Loe kaugete supernoovade kiiruse ja kauguse seosest Hubble'i konstant ja võrdle seda 3. osa ja Plancki satelliidi väärtusega. <a class="go" href="#p4Tabs" data-go="snHubble">Hubble'i seadus →</a></span></li>
+      <li><span>Vali supernoovade heledus ja vajuta „Kasuta heledust“: galaktikate kaugused tulevad 3. osast. <a class="go" href="#supernovae" data-go="supernovae">Supernoovad →</a></span></li>
+      <li><span>Vaata tabelist, kui heledad on supernoovad 3. osa galaktikates. <a class="go" href="#supernovae" data-go="supernovae">Supernoovad →</a></span></li>
+      <li><span>Loe kaugete supernoovade kiiruse ja kauguse seosest Hubble'i konstant ja võrdle seda 3. osa ja Plancki satelliidi väärtusega. <a class="go" href="#snHubble" data-go="snHubble">Hubble'i seadus →</a></span></li>
     </ol>
     </div>
 
@@ -781,6 +821,7 @@ footer a { color: inherit; }
     </div>
   </div>
 
+  <div class="home" id="homeEnd">
   <div class="reset">
     <button type="button" id="resetAll">Kustuta kõik salvestatud andmed</button>
     <span>Eemaldab sellest brauserist salvestatud parvede kaugused ja seosesse lisatud väljatsefeiidid.</span>
@@ -805,6 +846,7 @@ footer a { color: inherit; }
     Supernoovade punanihked z<sub>HD</sub> ja standardiseeritud maksimumheledused: Pantheon+ (Scolnic jt 2022; Brout jt 2022).
     Võrdluseks H<sub>0</sub> = 67,4 km/s/Mpc: Planck Collaboration (2020).
   </footer>
+  </div>
 </main>
 
 <script>
@@ -1697,7 +1739,7 @@ function measureCluster(cl) {
   S.coordsLabel = `${x.cluster} → α = ${fmtN(x.ra, 4)}°, δ = ${x.dec >= 0 ? "+" : ""}${fmtN(x.dec, 4)}°`;
   $("radius").value = x.r;
   $("gmax").value = x.g;
-  showTab("query");
+  go("query");
   $("form").scrollIntoView({ behavior: "smooth", block: "center" });
   $("go").focus({ preventScroll: true });
 }
@@ -2125,7 +2167,8 @@ function fitPageSize() {
 function rowsThatFit(body) {
   const pane = body.closest(".pane"), card = body.closest(".card"), row = body.querySelector("tr:not(.gal-detail)");
   if (pane.hidden || !row || !row.offsetHeight) return null;
-  const room = parseFloat(getComputedStyle(pane).minHeight) - parseFloat(getComputedStyle(pane).paddingTop)
+  const cs = getComputedStyle(pane);
+  const room = parseFloat(cs.minHeight) - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)
     - (card.offsetHeight - body.offsetHeight);
   return Math.max(PAGE_MIN, Math.floor(room / row.offsetHeight));
 }
@@ -2432,40 +2475,76 @@ $("plxStats").addEventListener("click", (e) => {
 });
 $("resetAll").addEventListener("click", resetAll);
 
-// Tabs of parts 1 and 2. A tab's name (data-tab) is unique on the page. Plotly sizes a hidden plot
-// wrongly, so the plots of a tab are resized when it is shown.
+// Views: the home view (introduction and contents) or one part at a time, chosen by the hash: #osa-N
+// for part N with its current tab, or a tab name (data-tab, unique on the page) for that tab.
+// Plotly sizes a hidden plot wrongly, so the plots of a tab are resized when it is shown.
 const resizePlot = (el) => Plotly.Plots.resize(el).catch(() => { /* hidden or not drawn yet */ });
-const TABLISTS = [...document.querySelectorAll(".part-head [role=tablist]")];
-const tabsOf = (list) => [...list.querySelectorAll("[role=tab]")];
-function showTab(name) {
-  const tab = document.querySelector(`[role=tab][data-tab="${name}"]`);
-  for (const b of tabsOf(tab.parentElement)) {
+const PARTS = [...document.querySelectorAll(".part")];
+const tabsOf = (part) => [...part.querySelectorAll(".part-head [role=tab]")];
+// show a part, with the tab of that name or its current tab; no part shows the home view
+function show(part, name) {
+  document.body.classList.toggle("in-part", !!part);
+  for (const el of document.querySelectorAll(".home")) el.hidden = !!part;
+  for (const p of PARTS) p.hidden = p !== part;
+  for (const a of document.querySelectorAll(".part-nav a[data-part]")) {
+    if (+a.dataset.part === PARTS.indexOf(part)) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  }
+  if (!part) return;
+  const tab = tabsOf(part).find((b) => (name ? b.dataset.tab === name : b.getAttribute("aria-selected") === "true"));
+  for (const b of tabsOf(part)) {
     const on = b === tab;
     b.setAttribute("aria-selected", on);
     b.tabIndex = on ? 0 : -1;
     $(b.getAttribute("aria-controls")).hidden = !on;
   }
+  fitHeads();
   for (const el of $(tab.getAttribute("aria-controls")).querySelectorAll(".plot")) resizePlot(el);
   fitPageSize();
-  return tab;
 }
-// a tab picked by the user is scrolled into view with its part title when it does not fit below them
-function pickTab(name) {
-  const head = showTab(name).closest(".part-head");
-  const top = head.getBoundingClientRect().top;
-  if (top < 0 || top > 0.15 * window.innerHeight) head.scrollIntoView({ behavior: "smooth", block: "start" });
+function route() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  const n = /^osa-(\d)$/.exec(h);
+  const tab = !n && h && document.querySelector(`.part-head [role=tab][data-tab="${CSS.escape(h)}"]`);
+  if (n && PARTS[n[1] - 1]) show(PARTS[n[1] - 1]);
+  else if (tab) show(tab.closest(".part"), h);
+  else show(null);
+  window.scrollTo(0, 0);
 }
-// the tabs fill the window below their part title and tab bar
-const headObserver = new ResizeObserver(() => {
-  for (const list of TABLISTS) {
-    const h = `${list.closest(".part-head").offsetHeight}px`;
-    for (const b of tabsOf(list)) $(b.getAttribute("aria-controls")).style.setProperty("--head", h);
+// go to a part or tab and keep it in the browser history
+function go(hash) {
+  if (location.hash.slice(1) !== hash) history.pushState(null, "", `#${hash}`);
+  route();
+}
+window.addEventListener("hashchange", route);
+// links to the home view and to every part above each part title
+for (const [k, part] of PARTS.entries()) {
+  const nav = document.createElement("nav");
+  nav.className = "part-nav";
+  nav.setAttribute("aria-label", "Osad");
+  nav.innerHTML = `<a class="to-toc" href="#">← Sisukord</a>` +
+    PARTS.map((p, i) => `<a href="#osa-${i + 1}" data-part="${i}">${i + 1}. ${esc(p.dataset.short)}</a>`).join("");
+  part.querySelector(".part-head").prepend(nav);
+}
+// the tabs fill the window below their part links, title and tab bar
+function fitHeads() {
+  for (const part of PARTS) {
+    if (part.hidden) continue;
+    const head = part.querySelector(".part-head");
+    const h = `${head.getBoundingClientRect().bottom + window.scrollY}px`;
+    for (const b of tabsOf(part)) $(b.getAttribute("aria-controls")).style.setProperty("--head", h);
   }
-  fitPageSize();
-});
+}
+const headObserver = new ResizeObserver(() => { fitHeads(); fitPageSize(); });
+for (const part of PARTS) headObserver.observe(part.querySelector(".part-head"));
 window.addEventListener("resize", fitPageSize);
-for (const list of TABLISTS) {
-  headObserver.observe(list.closest(".part-head"));
+// a tab picked in its tab bar replaces the hash, so that the back button leaves the part
+function pickTab(name) {
+  history.replaceState(null, "", `#${name}`);
+  route();
+}
+for (const part of PARTS) {
+  const list = part.querySelector(".part-head [role=tablist]");
   list.addEventListener("click", (e) => {
     const b = e.target.closest("[role=tab]");
     if (b) pickTab(b.dataset.tab);
@@ -2473,18 +2552,18 @@ for (const list of TABLISTS) {
   list.addEventListener("keydown", (e) => {
     const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
     if (!step) return;
-    const tabs = tabsOf(list);
+    const tabs = tabsOf(part);
     const b = tabs[(tabs.indexOf(document.activeElement) + step + tabs.length) % tabs.length];
     pickTab(b.dataset.tab);
     b.focus();
   });
 }
-// the steps in the introductions lead to their tabs
+// the steps in the introductions and the start button lead to their tabs
 document.addEventListener("click", (e) => {
   const a = e.target.closest("[data-go]");
   if (!a) return;
   e.preventDefault();
-  pickTab(a.dataset.go);
+  go(a.dataset.go);
 });
 
 // a plot card enlarged to the full window, or null
@@ -2607,6 +2686,7 @@ S.stored = loadStored();
 try { S.fieldOn = new Set(JSON.parse(localStorage.getItem(FIELD_KEY)) || []); } catch { /* none added */ }
 redrawAll();
 drawResults();
+route();
 </script>
 </body>
 </html>
