@@ -54,7 +54,11 @@ queries the data services directly from the browser.
 
 ### Cepheids
 
-The second part of the page lists 11 classical Cepheids in 11 open clusters, all with *HST* Wesenheit magnitudes W_H.
+The second part of the page has four tabs: **Sissejuhatus** (the steps),
+**Parvede tsefeiidid** (the cluster Cepheids), **Väljatsefeiidid** (the field
+Cepheids) and **Periood-heledus** (the period-luminosity plot and the fit).
+
+The **Parvede tsefeiidid** tab lists 11 classical Cepheids in 11 open clusters, all with *HST* Wesenheit magnitudes W_H.
 **Mõõda** switches to the **Päring** tab and fills in the query form for a
 cluster, but you still start the query yourself. After selecting the cluster
 members, press **Salvesta parve … kaugus** below the distance tiles on the
@@ -65,8 +69,8 @@ the browser (`localStorage`) and can be removed with **Kustuta**. The
 **Kustuta kõik salvestatud andmed** button at the bottom of the page clears
 everything the app has stored, after a confirmation.
 
-Few Cepheids with periods above 10 days sit in nearby clusters. The table
-therefore also lists 12 field Cepheids that are not in clusters: 8 with long
+Few Cepheids with periods above 10 days sit in nearby clusters. The
+**Väljatsefeiidid** tab therefore lists 12 field Cepheids that are not in clusters: 8 with long
 periods (P = 14–39 d) and 4 with shorter periods (P = 3.4–11 d), spread
 evenly in log P. Their distances come from their own *Gaia*
 parallaxes. Each has its own **Lisa seosesse** button, which adds it to the
