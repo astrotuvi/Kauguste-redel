@@ -117,6 +117,7 @@ svg.scene { display: block; width: 100%; height: auto; max-height: calc(100vh - 
 /* Controls */
 .controls { display: flex; flex-direction: column; gap: 12px; }
 .group { display: flex; flex-direction: column; gap: 8px; }
+.playrow { margin: 8px 0; }
 .group + .group { border-top: 1px solid var(--border); padding-top: 12px; }
 .paxout { margin: 0; font-size: 0.85rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .paxout b { color: var(--text-1); font-weight: 600; }
@@ -134,7 +135,7 @@ button {
 }
 button.primary { background: var(--btn); color: var(--btn-text); border-color: transparent; font-weight: 600; min-width: 7.5em; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
-.views-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 4px auto; padding-left: 12px; font-size: 0.82rem; color: var(--text-3); }
+.views-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 8px; font-size: 0.82rem; color: var(--text-3); }
 .views-btns button { font-size: 0.82rem; padding: 3px 10px; border-radius: 999px; background: var(--chip); border-color: transparent; color: var(--text-2); }
 .views-btns button[aria-pressed="true"] { background: var(--btn); color: var(--btn-text); }
 
@@ -181,7 +182,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
   <p class="byline">Taavi Tuvikene<br>TÜ Tartu observatoorium</p>
   <p class="intro">Maa tiirleb ümber <a href="https://et.wikipedia.org/wiki/Päike" target="_blank" rel="noopener">Päikese</a>, seega vaatame lähedast tähte aasta jooksul veidi erinevatest kohtadest.
     Väga kaugete <a href="https://et.wikipedia.org/wiki/Kvasar" target="_blank" rel="noopener">kvasarite</a> taustal näib täht seetõttu liikuvat mööda väikest ellipsit. Seda nihet nimetatakse
-    <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaksiks</a>: mida kaugemal on täht, seda väiksem on ellips. Liiguta aega, muuda tähe kaugust ja asukohta
+    <a href="https://et.wikipedia.org/wiki/Parallaks" target="_blank" rel="noopener">parallaksiks</a>: mida kaugemal on täht, seda väiksem on ellips. Liigu ajas, muuda tähe kaugust ja asukohta
     ning lisa tähele <a class="en" href="https://en.wikipedia.org/wiki/Proper_motion" target="_blank" rel="noopener" title="Ingliskeelne Vikipeedia">omaliikumine</a>, et näha, kuidas ellipsist saavad silmused.</p>
 
   <div class="layout">
@@ -189,17 +190,19 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
       <div class="tabs" role="tablist" aria-label="Vaade">
         <button type="button" role="tab" id="tab3d" aria-controls="pane3d" aria-selected="true">3D vaade</button>
         <button type="button" role="tab" id="tab2d" aria-controls="pane2d" aria-selected="false" tabindex="-1">2D vaade: taevas Maalt</button>
-        <div class="views-btns" id="viewBtns" role="group" aria-label="Vaatenurk">
+        <button type="button" role="tab" id="tabpx" aria-controls="panepx" aria-selected="false" tabindex="-1">Parallaksinurk</button>
+      </div>
+      <div id="pane3d" role="tabpanel" aria-labelledby="tab3d">
+        <div class="views-btns" role="group" aria-label="Vaatenurk">
+          <span>Vaade:</span>
           <button type="button" data-view="oblique">Viltu</button>
           <button type="button" data-view="sun">Päikese tagant</button>
           <button type="button" data-view="side">Kõrvalt</button>
           <button type="button" data-view="pole">Ekliptika pooluselt</button>
         </div>
-      </div>
-      <div id="pane3d" role="tabpanel" aria-labelledby="tab3d">
-        <p class="hint">Lohista joonist, et seda pöörata. Joon Maast läbi tähe tabab kvasarite tausta punktis, mis joonistab aasta jooksul ellipsi.
+        <p class="hint">Lohista joonist, et seda pöörata. Joon Maast läbi tähe tabab taevasfääri punktis, mis joonistab aasta jooksul ellipsi.
           Mõõtkava ei ole õige: ka lähim täht on Päikesest umbes 270 000 korda kaugemal kui Maa.</p>
-        <svg id="space" class="scene" viewBox="0 0 760 520" role="img" aria-label="Ruumiline joonis: Päike, Maa orbiit, täht ja kvasarite taust"></svg>
+        <svg id="space" class="scene" viewBox="0 0 760 520" role="img" aria-label="Ruumiline joonis: Päike, Maa orbiit, täht ja taevasfäär"></svg>
         <div class="legend">
           <span><i style="border-color: var(--accent)"></i>vaatejoon Maast läbi tähe</span>
           <span><i style="border-color: var(--text-3); border-top-style: dashed"></i>suund Päikesest</span>
@@ -214,13 +217,22 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
           <span id="lgTrue" hidden><i style="border-color: var(--text-3); border-top-style: dashed"></i>asukoht Päikesest vaadatuna</span>
         </div>
       </div>
+      <div id="panepx" role="tabpanel" aria-labelledby="tabpx" hidden>
+        <p class="hint">Külgvaade lähemalt, kui Maa on Päikesest 1 aü kaugusel risti tähe suunaga. Muuda tähe kaugust ja vaata, kuidas parallaksinurk p muutub:
+          mida kaugemal on täht, seda väiksem on nurk.</p>
+        <svg id="tri" class="scene" viewBox="0 0 760 250" role="img" aria-label="Parallaksinurk kolmnurgas Päike, Maa ja täht"></svg>
+        <div class="legend">
+          <span><i style="border-color: var(--accent)"></i>vaatejoon Maast läbi tähe</span>
+          <span><i style="border-color: var(--text-3); border-top-style: dashed"></i>suund Päikesest</span>
+        </div>
+      </div>
     </section>
 
     <section class="card controls" aria-label="Seaded">
       <div class="group">
         <div class="slider"><label for="span">Ajavahemik</label><input type="range" id="span" min="1" max="10.5" step="0.5" value="3"><output for="span" id="spanOut"></output></div>
         <div class="slider"><label for="time">Aeg</label><input type="range" id="time" min="0" max="3" step="0.001" value="0"><output for="time" id="timeOut"></output></div>
-        <div><button type="button" class="primary" id="play">▶ Käivita</button></div>
+        <div class="playrow"><button type="button" class="primary" id="play">▶ Käivita</button></div>
       </div>
       <div class="group">
         <div class="slider"><label for="dist">Kaugus (Maa orbiidi raadiustes)</label><input type="range" id="dist" min="4" max="10" step="0.1" value="5"><output for="dist" id="distOut"></output></div>
@@ -254,11 +266,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
   // Schematic units: the Earth's orbit has radius 1, the quasar background is a plane at distance D from the Sun,
   // perpendicular to the direction of the star, and spans ±H in both directions. The time runs from 0 to st.T years.
   const D = 13, H = 5, NS = 'http://www.w3.org/2000/svg';
-  const st = { T: 3, t: 0, d: 5, beta: 50, pm: false, mu: 0.8, phi: 60, az: 50, el: -12, roll: false, view: 'oblique', pax: true, playing: false };
+  const st = { T: 3, t: 0, d: 5, beta: 50, pm: false, mu: 0.8, phi: 60, az: 28, el: 0, roll: false, view: 'oblique', pax: true, playing: false };
   // Preset viewing angles (az, el in the camera's star-based frame, see camera(); roll turns the picture upside down). The pole view depends on β, so the
   // presets are applied again whenever β changes; dragging the view leaves the preset.
   const VIEWS = {
-    oblique: () => [50, -12, false],                      // the default: the orbit, the star and the quasar plane all at an angle
+    oblique: () => [28, 0, false],                        // the default: from behind the Sun, turned just enough to bring the Sun out to the left of the sphere
     sun: () => [0, 0, false],                             // from behind the Sun along the line of sight: the ellipse face-on
     side: () => [90, 0, false],                           // from the side: the orbit and the quasar plane edge-on, the parallax angle in full
     pole: () => [180, Math.min(85, 90 - st.beta), true],  // from above the ecliptic north pole: the orbit face-on, the star up
@@ -379,7 +391,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     el('polyline', { points: pts(S.P.map(cam.p)), class: 'full' }, back);
     el('polyline', { points: pts(upTo(S.P, t).map(cam.p)), class: 'done' }, back);
     const lab = cam.p(onPlane(-H, H));
-    text(back, lab[0], lab[1] - 8, 'Kauged kvasarid', 'lbl', 'middle');
+    text(back, lab[0], lab[1] - 8, 'Taevasfäär', 'lbl', 'middle');
+    // Name the objects on the sphere next to one quasar low in the middle, away from the star's path, unless the sphere
+    // is seen nearly edge-on.
+    if (Math.abs(cam.depth(B.n) - cam.depth([0, 0, 0])) > 0.4) {
+      const q = quasars.filter(([a]) => Math.abs(a) < H / 2).reduce((m, x) => (x[1] < m[1] ? x : m));
+      const [x, y] = cam.p(onPlane(q[0], q[1]));
+      text(back, x, y + 19, 'kauged kvasarid', 'lbl2', 'middle');
+    }
 
     // Sun, orbit, star and the lines of sight.
     const orbit = [];
@@ -399,7 +418,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     // With the parallax angle shown, the other two sides of the triangle: the Earth's orbital radius, 1 aü, and the
     // distance d from the Sun to the star. Each label sits beside the middle of its side, away from the third corner.
     const side = (a, b, away, s) => {
-      const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (L < 30) return;  // seen nearly end-on, the side is too short to label
       let nx = (a[1] - b[1]) / L, ny = (b[0] - a[0]) / L;
       if (nx * (away[0] - m[0]) + ny * (away[1] - m[1]) > 0) { nx = -nx; ny = -ny; }
       text(front, m[0] + nx * 10, m[1] + ny * 10 + 6 + Math.max(0, ny) * 6, s, 'pax', nx > 0.35 ? 'start' : nx < -0.35 ? 'end' : 'middle');
@@ -414,12 +434,18 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     if (cam.depth(E) > cam.depth([0, 0, 0])) { sun(front); earthDot(front); } else { earthDot(front); sun(front); }
     if (st.pax) {
       // The parallax angle at the star, between the directions to the Sun and to the Earth, drawn as a wedge
-      // opening from the star towards them.
+      // opening from the star towards them, and again as the opposite angle between the same two lines where they go on
+      // past the star towards the sphere. Only the first is labelled.
       const unit = v => mul(v, 1 / Math.hypot(...v));
-      const toSun = unit(mul(Sx, -1)), toEarth = unit(sub(E, Sx)), rho = 0.45 * st.d, arc = [];
-      for (let i = 0; i <= 24; i++) arc.push(cam.p(add(Sx, mul(unit(add(mul(toSun, 1 - i / 24), mul(toEarth, i / 24))), rho))));
-      el('polygon', { points: pts([pS, ...arc]), class: 'wedge' }, front);
-      el('polyline', { points: pts(arc), class: 'wedge-arc' }, front);
+      const toSun = unit(mul(Sx, -1)), toEarth = unit(sub(E, Sx)), rho = 0.45 * st.d;
+      const wedge = (u, v, r) => {
+        const arc = [];
+        for (let i = 0; i <= 24; i++) arc.push(cam.p(add(Sx, mul(unit(add(mul(u, 1 - i / 24), mul(v, i / 24))), r))));
+        el('polygon', { points: pts([pS, ...arc]), class: 'wedge' }, front);
+        el('polyline', { points: pts(arc), class: 'wedge-arc' }, front);
+      };
+      wedge(toSun, toEarth, rho);
+      wedge(mul(toSun, -1), mul(toEarth, -1), 0.45 * (D - st.d));
       const m = cam.p(add(Sx, mul(unit(add(toSun, toEarth)), rho * 0.62)));
       text(front, m[0], m[1] + 6, 'p', 'pax', 'middle');
     }
@@ -483,6 +509,54 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     text(sky, 14, SW / 2, 'ida', 'lbl2', 'middle').setAttribute('transform', `rotate(-90 14 ${SW / 2})`);
   }
 
+  /* ---------- Parallax angle view ---------- */
+  // The side view zoomed in on the triangle of the Sun, the Earth and the star, with the Earth a quarter of a year from
+  // the line of sight so that the side of 1 au stands upright. The scale is fixed and the right edge is a little past
+  // the largest star distance, so the angle visibly shrinks as the star moves away. Units are au, y up.
+  const tri = document.getElementById('tri');
+  const TW = 760, TH = 250, TX0 = -0.9, TX1 = +document.getElementById('dist').max + 0.6, TS = (TW - 30) / (TX1 - TX0);
+  const tp = ([x, y]) => [15 + TS * (x - TX0), TH - 115 - TS * y];
+
+  function drawTri() {
+    tri.textContent = '';
+    const d = st.d, S = [0, 0], E = [0, 1], X = [d, 0];
+    const pS = tp(S), pE = tp(E), pX = tp(X);
+    // The lines from the Sun and from the Earth through the star, continued to the right edge.
+    const far = tp([TX1, 0]), farE = tp([TX1, 1 - TX1 / d]);
+    el('line', { x1: pS[0], y1: pS[1], x2: far[0], y2: far[1], class: 'ref' }, tri);
+    el('line', { x1: pE[0], y1: pE[1], x2: farE[0], y2: farE[1], class: 'sight' }, tri);
+    el('line', { x1: pS[0], y1: pS[1], x2: pE[0], y2: pE[1], class: 'axis' }, tri);
+    // The right angle at the Sun, marked the Estonian way with an arc and a dot inside it.
+    const k = 0.4, ra = [];
+    for (let i = 0; i <= 12; i++) ra.push(tp([k * Math.cos(i / 24 * Math.PI), k * Math.sin(i / 24 * Math.PI)]));
+    el('polyline', { points: pts(ra), class: 'offset', fill: 'none' }, tri);
+    const rd = tp([0.25 * Math.SQRT1_2, 0.25 * Math.SQRT1_2]);
+    el('circle', { cx: rd[0], cy: rd[1], r: 2, fill: 'var(--text-2)' }, tri);
+    // The parallax angle at the star towards the Sun, labelled, and the opposite angle past the star, unlabelled.
+    const a0 = Math.PI, a1 = Math.PI - Math.atan2(1, d);
+    const wedge = (from, to, rho) => {
+      const arc = [];
+      for (let i = 0; i <= 24; i++) { const a = from + (to - from) * i / 24; arc.push(tp([d + rho * Math.cos(a), rho * Math.sin(a)])); }
+      el('polygon', { points: pts([pX, ...arc]), class: 'wedge' }, tri);
+      el('polyline', { points: pts(arc), class: 'wedge-arc' }, tri);
+    };
+    const rho = 0.6 * d;
+    wedge(a0, a1, rho);
+    wedge(a0 - Math.PI, a1 - Math.PI, Math.max(0.3, 0.6 * (TX1 - d)));
+    // The value goes above the line of sight where the arc meets it, as the narrow wedge has no room for it.
+    const m = tp([d + rho * Math.cos(a1), rho * Math.sin(a1)]);
+    text(tri, m[0] + 2, m[1] - 10, `p = ${(Math.atan(1 / d) / rad).toFixed(1)}°`, 'pax');
+
+    el('circle', { cx: pS[0], cy: pS[1], r: 9, class: 'sun' }, tri);
+    el('circle', { cx: pE[0], cy: pE[1], r: 6, class: 'earth' }, tri);
+    starGlyph(tri, pX[0], pX[1], 9);
+    text(tri, pS[0], pS[1] + 28, 'Päike', 'lbl', 'middle');
+    text(tri, pE[0], pE[1] - 14, 'Maa', 'lbl', 'middle');
+    text(tri, pX[0] + 4, pX[1] - 16, 'Täht', 'lbl', 'middle');
+    text(tri, pS[0] - 12, (pS[1] + pE[1]) / 2 + 6, '1 aü', 'pax', 'end');
+    text(tri, (pS[0] + pX[0]) / 2, pS[1] + 26, `d = ${d.toFixed(1)} aü`, 'pax', 'middle');
+  }
+
   /* ---------- Controls ---------- */
   const $ = id => document.getElementById(id);
   const fmt = (v, d) => v.toFixed(d);
@@ -495,14 +569,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     $('muOut').textContent = fmt(st.mu, 2);
     $('phiOut').textContent = st.phi + '°';
     // The angle in the drawing, the angle at the star right now, and the angle for a real star as many parsecs away.
-    // In the drawing the star is so close that the angle at the star can reach arcsin(1/d), slightly more than
-    // arctan(1/d), so p is given as arcsin(1/d) to keep the current angle from ever exceeding it.
+    // p is the textbook arctan(1/d), the angle when the Earth is a quarter of a year from the line of sight, as in the
+    // parallax angle view. The star in the drawing is so close that the current angle can briefly exceed it, up to arcsin(1/d).
     const B = basis(), Sx = star(st.t, B), E = earth(st.t);
     const toSun = mul(Sx, -1), toEarth = sub(E, Sx);
     const now = Math.acos(dot(toSun, toEarth) / Math.hypot(...toSun) / Math.hypot(...toEarth)) / rad;
-    const big = Math.asin(1 / st.d) / rad, real = 1 / st.d;
+    const big = Math.atan(1 / st.d) / rad, real = 1 / st.d;
     const ratio = Math.round(big * 3600 / real / 1e4) * 1e4;
-    $('paxOut').innerHTML = `Joonisel: <b>p = arcsin(1/d) = ${fmt(big, 1)}°</b>, praegu on nurk tähe juures ${fmt(now, 1)}°.<br>` +
+    $('paxOut').innerHTML = `Joonisel: <b>p = arctan(1/d) = ${fmt(big, 1)}°</b>, praegu on nurk tähe juures ${fmt(now, 1)}°.<br>` +
       `Päris täht ${fmt(st.d, 1)} pc kaugusel: <b>p = ${fmt(real, 3)}″</b>, umbes ${ratio.toLocaleString('et-EE')} korda väiksem.`;
     $('pmGroup').classList.toggle('off', !st.pm);
     $('mu').disabled = $('phi').disabled = !st.pm;
@@ -513,7 +587,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
     if ($('play').textContent !== label) $('play').textContent = label;
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === st.view));
   }
-  function render() { readouts(); drawSpace(); drawSky(); }
+  function render() { readouts(); drawSpace(); drawSky(); drawTri(); }
 
   // Over a long time span the proper motion would carry the star off the quasar background, so the speed is limited to
   // keep the whole path on it even for the nearest star, whose ellipse has a semi-major axis of D/4 - 1.
@@ -585,7 +659,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outli
       b.tabIndex = on ? 0 : -1;
       $(b.getAttribute('aria-controls')).hidden = !on;
     }
-    $('viewBtns').hidden = tab.id !== 'tab3d';
   }
   tabs.forEach((b, i) => {
     b.addEventListener('click', () => selectTab(b));
